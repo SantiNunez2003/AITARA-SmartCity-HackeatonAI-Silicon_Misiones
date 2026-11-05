@@ -117,3 +117,112 @@ La IA no se incorpora como un adorno ni como un chatbot genérico, sino en dos e
   - Semáforo de riesgo espaciotemporal por nodo.
   - Matriz de Despacho Preventivo sugerida (cantidad de inspectores, conos y puntos de desvío sugeridos).
   - Panel de justificación causal explicable (por qué se dispara la alerta).
+
+
+---
+
+## DÍA 4 — JUEVES 5
+Desarrollo, validación y factibilidad
+
+### 1. Estado actual del prototipo
+Prototipo funcional operativo y ejecutable localmente (MVP interactivo en Streamlit + Python + DuckDB Spatial). Cuenta con ingesta de capas territoriales de IDE Posadas y red vial OSMnx, motor de inferencia de 4 dimensiones calibrado y visualización geoespacial interactiva de los 5 nodos críticos de Posadas.
+
+### 2. ¿Qué funciona actualmente?
+- Selector interactivo de horizonte temporal de anticipación ($T+30$ y $T+60$ minutos).
+- Inyección dinámica de variables meteorológicas (simulación de tasa de precipitaciones en mm/h).
+- Motor de scoring de riesgo espaciotemporal multivariado (0 a 100) con categorización visual (Bajo, Medio, Alto, Crítico).
+- Generación automática de la Matriz de Despacho Preventivo (asignación sugerida de inspectores, conos y balizas).
+- Panel de Explicabilidad Causal (XAI) que traduce en lenguaje natural para el operador qué factores urbanos combinados activaron la alerta.
+
+### 3. ¿Qué falta desarrollar o ajustar?
+- Conexión al feed de API meteorológica continua para automatizar el deslizador de lluvia.
+- Calibración de los pesos de siniestralidad con mayor volumen de noticias históricas geocodificadas.
+- Integración de exportación de órdenes de despacho a PDF/impresión para el cuerpo de inspectores de guardia.
+
+### 4. Herramientas y tecnologías utilizadas
+- **Lenguaje:** Python 3.12.
+- **Almacenamiento & Analítica:** DuckDB con extensión Spatial (arquitectura ELT en memoria de alto rendimiento y costo cero en licencias).
+- **Topología Territorial:** OpenStreetMap (OSMnx / NetworkX) y capas vectoriales abiertas de IDE Posadas (Shapefiles / GeoJSON).
+- **Frontend Interactivo:** Streamlit con visualización cartográfica Leaflet / PyDeck.
+- **Procesamiento de Señales Débiles:** Pipeline NLP con extracción estructurada de entidades (intersecciones y siniestros viales de portales locales).
+
+### 5. Factibilidad técnica
+**¿Es técnicamente posible implementar la solución? ¿Por qué?**  
+Sí, 100% factible. Porque no requiere la compra ni instalación de hardware físico nuevo (cámaras o espiras en calle), utiliza estándares abiertos de datos geoespaciales (OGC `ST_*`) compatibles de forma nativa con las bases relacionales que ya opera el municipio (PostgreSQL/PostGIS), y su consumo computacional es liviano, pudiendo ejecutarse en un servidor local o en la nube municipal sin costos de licenciamiento privativo.
+
+### 6. Factibilidad de datos
+**¿Contamos con los datos necesarios?**  
+[X] Parcialmente.  
+*Observaciones:* Contamos con la red vial completa, la ubicación de escuelas y semáforos de IDE Posadas, los registros meteorológicos de la OPAD y las noticias locales para siniestros. Para la puesta en producción plena, se requerirá acceso a los aforos vehiculares de los controladores semafóricos y al registro municipal de partes diarios de inspectores.
+
+### 7. Riesgos o limitaciones
+- **Riesgo 1 (Sesgo de reporte en medios digitales):** No todos los siniestros menores llegan a la prensa digital. *Mitigación:* El modelo no depende exclusivamente de las noticias; la demanda escolar programada, la topología vial y el clima sostienen la predicción de forma determinística.
+- **Riesgo 2 (Adopción del operador):** Resistencia al cambio del personal municipal acostumbrado a planillas de papel. *Mitigación:* Interfaz minimalista, explicabilidad causal (el sistema no es una caja negra) y respeto estricto al rol humano: el sistema sugiere, el operador decide.
+
+### 8. Posible implementación
+**¿Qué sería necesario para implementar esta propuesta en un contexto real?**  
+- Acople del pipeline de ingesta a la base de datos interna de la Secretaría de Movilidad Urbana de Posadas.
+- Instalación del servicio en un servidor interno municipal o instancia en nube provincial.
+- Capacitación operativa de 2 horas a los operadores de despacho del Centro de Monitoreo / Tránsito.
+- Protocolo de retroalimentación donde el operador valide con un clic si la recomendación preventiva fue acertada, refinando los pesos del modelo.
+
+### 9. Impacto esperado
+**¿Qué mejora podría generar la solución?**  
+- Reducción drástica del tiempo de reacción ante cuellos de botella: paso de una gestión reactiva diferida (30-60 minutos después de ocurrido el colapso) a una gestión preventiva con 30 a 60 minutos de anticipación.
+- Optimización en el despliegue del personal de tránsito: asignación de inspectores por criticidad real explicada en lugar de patrullaje errático.
+- Reducción de siniestralidad vial secundaria por colisiones por alcance y frenadas bruscas en accesos escolares y cruces troncales.
+
+### 10. Correcciones prioritarias antes de la entrega
+- Consolidar la Ficha de Proyecto en el límite estricto de 300 palabras (redactada en 265 palabras).
+- Congelar el pitch de 3 minutos cronometrados y ensayar las respuestas a preguntas complejas del jurado.
+- Asegurar que la demo en Streamlit pueda ejecutarse 100% offline en la notebook durante el Demo Day ante cualquier falla de conectividad en el edificio de Silicon Misiones.
+
+---
+
+## DÍA 5 — VIERNES 6
+Consolidación, ficha de proyecto y preparación del pitch
+
+### 1. Nombre final del proyecto
+AITARA (Sistema de Soporte a Decisiones para la Movilidad Urbana).
+
+### 2. Problema
+La gestión de tránsito en Posadas opera de forma reactiva debido a datos fragmentados, manuales y diferidos (planillas de 15 minutos y noticias tardías), lo que impide predecir cuellos de botella y desplegar operativos preventivos antes del colapso vial.
+
+### 3. Usuario principal
+Operador de Despacho y Planificación de Tránsito / Movilidad Urbana de la Municipalidad de Posadas.
+
+### 4. Solución
+Decision Support System (DSS) que integra datos territoriales abiertos (IDE Posadas), red vial (OSMnx), clima en tiempo real (OPAD) y minería de siniestros en noticias locales mediante un pipeline ELT y un motor explicable de 4 dimensiones para emitir recomendaciones de despacho preventivo.
+
+### 5. Uso de Inteligencia Artificial
+NLP con esquemas estructurados para minar incidentes viales de diarios locales y motor de inferencia espaciotemporal explicable (XAI) que justifica en lenguaje natural cada recomendación de despacho para el operador humano.
+
+### 6. Datos utilizados o necesarios
+Capas vectoriales de IDE Posadas (semáforos, escuelas), red vial de OpenStreetMap, feed meteorológico de la OPAD y archivo de noticias locales.
+
+### 7. Funcionamiento de la solución
+Ingesta continua en DuckDB Spatial -> Evaluación del grafo vial contra 4 dimensiones de riesgo (Demanda, Clima, Capacidad, Siniestralidad) -> Cálculo de criticidad por nodo -> Generación de matriz de despacho y reporte explicable en tablero interactivo para el operador.
+
+### 8. Impacto esperado
+Anticipación operativa de 30 a 60 minutos, optimización del recurso humano municipal y prevención de nudos de congestión en ingresos escolares y avenidas troncales.
+
+### 9. Factibilidad
+100% viable técnica y económicamente; software libre, estándares abiertos SQL OGC `ST_*`, compatible con PostGIS municipal y sin costo de adquisición de sensores.
+
+### 10. Link al prototipo / demo
+Prototipo local en Streamlit (ejecutable en vivo en Demo Day en `http://localhost:8501`) y repositorio con preview interactiva.
+
+### 11. Link al repositorio, si corresponde
+Repositorio Git local / GitHub de AITARA.
+
+### 12. Link a presentación final
+`docs/architecture/pitch_deck.html` (Presentación interactiva con temporizador y atajos de teclado para backups técnicos).
+
+### 13. Integrante/s responsable/s del pitch
+Santiago Agustín Nuñez (Defensa técnica y demo en vivo) y Facundo Fraga / Joaquín Sanchez (Soporte y Q&A).
+
+### 14. Mensaje principal del pitch
+*"Posadas no necesita gastar millones en sensores para anticipar sus colapsos viales: AITARA transforma los datos que la ciudad ya tiene en decisiones preventivas para sus inspectores antes de que el nudo sea irreversible."*
+
+### 15. Correcciones finales luego del taller de pitch
+Incorporar diapositivas de respaldo con atajos rápidos de teclado (`B` para backups, `5` para demo, `1` para portada) para responder preguntas de arquitectura profunda, motor matemático y TCO sin salir del tiempo límite de 3 minutos.
