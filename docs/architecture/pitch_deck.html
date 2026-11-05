@@ -448,25 +448,112 @@
             </div>
         </div>
 
+        <!-- BACKUP SLIDE 7: Pipeline de Datos ELT -->
+        <div class="slide" id="slide-7">
+            <div class="slide-tag" style="background: rgba(248, 113, 113, 0.2); color: #F87171; border-color: rgba(248, 113, 113, 0.4);">BACKUP A / ARQUITECTURA TÉCNICA</div>
+            <h1 class="slide-title">Pipeline de Datos ELT & DuckDB Spatial</h1>
+            <p class="slide-subtitle">
+                Arquitectura analítica en memoria: consultas espaciales en milisegundos sin sobrecargar servidores municipales.
+            </p>
+            <div class="grid-3" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+                <div class="card">
+                    <span class="badge-pill badge-blue">Extract</span>
+                    <h4 class="card-title">Fuentes Heterogéneas</h4>
+                    <p class="card-desc">• IDE Posadas (GeoJSON/SHP): Escuelas, semáforos, paradas.<br>• OpenStreetMap (OSMnx): Grafo vial.<br>• OPAD: Clima en tiempo real.<br>• Noticias locales: RSS scraping.</p>
+                </div>
+                <div class="card">
+                    <span class="badge-pill badge-green">Load & Process</span>
+                    <h4 class="card-title">DuckDB Spatial In-Memory</h4>
+                    <p class="card-desc">• Funciones nativas OGC: <code>ST_DWithin</code> y <code>ST_Distance</code>.<br>• Indexación columnar y cálculo dimensional en < 50 ms.<br>• Compatibilidad directa con PostGIS/PostgreSQL.</p>
+                </div>
+                <div class="card">
+                    <span class="badge-pill badge-amber">Serve</span>
+                    <h4 class="card-title">Inferencia & Visualización</h4>
+                    <p class="card-desc">• Motor XAI: Genera vector de riesgo y justificación textual.<br>• Streamlit + Folium: Renderizado interactivo para el operador.<br>• API REST abierta para centros de monitoreo.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- BACKUP SLIDE 8: Formulación Matemática XAI -->
+        <div class="slide" id="slide-8">
+            <div class="slide-tag" style="background: rgba(251, 191, 36, 0.2); color: #FBBF24; border-color: rgba(251, 191, 36, 0.4);">BACKUP B / MOTOR MATEMÁTICO XAI</div>
+            <h1 class="slide-title">Índice de Riesgo Continuo y Explicabilidad</h1>
+            <p class="slide-subtitle">
+                Ponderación bayesiana multivariada con salida normalizada y matriz de despacho de recursos.
+            </p>
+            <div class="grid-2">
+                <div class="card">
+                    <h3 class="card-title">Fórmula del Índice Dimensional</h3>
+                    <p class="card-desc" style="font-family: 'JetBrains Mono', monospace; font-size: 0.95rem; line-height: 1.6; color: #38BDF8;">
+                        R_nodo(t) = w1·D_esc(t) + w2·M_clima(t) + w3·I_geom + w4·S_hist
+                    </p>
+                    <p class="card-desc" style="margin-top: 10px;">
+                        • <b>w1 = 0.35:</b> Demanda escolar (Peak Gaussiano centrado en horarios de ingreso/salida).<br>
+                        • <b>w2 = 0.25:</b> Factor climático (Tasa lluvia mm/h y coeficiente fricción calzada).<br>
+                        • <b>w3 = 0.20:</b> Vulnerabilidad topológica (Carriles reducidos y radio de giro).<br>
+                        • <b>w4 = 0.20:</b> Siniestralidad histórica (Clustering geoespacial DBSCAN).
+                    </p>
+                </div>
+                <div class="card">
+                    <h3 class="card-title">Matriz Operativa de Despacho</h3>
+                    <p class="card-desc">
+                        • <b>Riesgo Bajo (&lt; 0.40):</b> Tránsito fluido. Monitoreo pasivo en tablero.<br>
+                        • <b>Riesgo Medio (0.40 - 0.70):</b> Alerta preventiva. Se sugiere balizamiento móvil si llueve.<br>
+                        • <b>Riesgo Crítico (&gt; 0.70):</b> Orden de despacho activo: 2 inspectores + conos para canalizar dársena con 30-60 min de anticipación.<br>
+                        • <b>Explicabilidad:</b> Cada alerta detalla el % de aporte de cada dimensión.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- BACKUP SLIDE 9: TCO & GovTech -->
+        <div class="slide" id="slide-9">
+            <div class="slide-tag" style="background: rgba(52, 211, 153, 0.2); color: #34D399; border-color: rgba(52, 211, 153, 0.4);">BACKUP C / TCO & FACTIBILIDAD GOVTECH</div>
+            <h1 class="slide-title">Costo Cero en Licencias & Alta Factibilidad</h1>
+            <p class="slide-subtitle">
+                Diseñado específicamente para municipios intermedios que no pueden asumir licencias privativas millonarias.
+            </p>
+            <div class="grid-3" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+                <div class="card">
+                    <span class="badge-pill badge-green">Infraestructura</span>
+                    <h4 class="card-title">Bajo Costo Cloud / Local</h4>
+                    <p class="card-desc">• Corre en cualquier servidor on-premise de la Municipalidad de Posadas.<br>• En la nube: VPS de $15 USD/mes suficiente para toda la ciudad.<br>• Consumo de memoria: &lt; 512 MB RAM.</p>
+                </div>
+                <div class="card">
+                    <span class="badge-pill badge-blue">Licenciamiento</span>
+                    <h4 class="card-title">100% Código Abierto</h4>
+                    <p class="card-desc">• Sin contratos cerrados de vendor lock-in.<br>• Stack: Python, DuckDB, OpenStreetMap, Leaflet/Folium.<br>• Propiedad intelectual retenida por el municipio.</p>
+                </div>
+                <div class="card">
+                    <span class="badge-pill badge-amber">Despliegue</span>
+                    <h4 class="card-title">Time-to-Pilot Inmediato</h4>
+                    <p class="card-desc">• No requiere meses de instalación ni obras viales.<br>• Puede probarse en 1 corredor piloto (Av. Corrientes) en 7 días.<br>• Fácil integración con la flota de inspectores.</p>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <!-- Footer Controls -->
     <div class="nav-bar">
         <button class="nav-btn" onclick="prevSlide()">← Anterior</button>
         <div class="progress-indicator" id="dotsContainer">
-            <div class="dot active"></div>
-            <div class="dot"></div>
-            <div class="dot"></div>
-            <div class="dot"></div>
-            <div class="dot"></div>
-            <div class="dot"></div>
+            <div class="dot active" title="Slide 1"></div>
+            <div class="dot" title="Slide 2"></div>
+            <div class="dot" title="Slide 3"></div>
+            <div class="dot" title="Slide 4"></div>
+            <div class="dot" title="Slide 5"></div>
+            <div class="dot" title="Slide 6"></div>
+            <div class="dot" title="Backup A: Pipeline" style="border: 1px dashed #F87171;"></div>
+            <div class="dot" title="Backup B: XAI Math" style="border: 1px dashed #FBBF24;"></div>
+            <div class="dot" title="Backup C: TCO GovTech" style="border: 1px dashed #34D399;"></div>
         </div>
         <button class="nav-btn" onclick="nextSlide()">Siguiente →</button>
     </div>
 
     <script>
         let currentSlide = 1;
-        const totalSlides = 6;
+        const totalSlides = 9;
 
         function showSlide(index) {
             document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
@@ -492,6 +579,12 @@
         document.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowRight' || e.key === ' ') nextSlide();
             if (e.key === 'ArrowLeft') prevSlide();
+            // Hotkey 'b' or 'B' to jump directly to Backup Slide 7 (Pipeline)
+            if (e.key === 'b' || e.key === 'B') showSlide(7);
+            // Hotkey '1' to return to slide 1
+            if (e.key === '1') showSlide(1);
+            // Hotkey '5' to jump to live demo slide
+            if (e.key === '5') showSlide(5);
         });
 
         // Countdown Timer Logic (3 minutes = 180s)
