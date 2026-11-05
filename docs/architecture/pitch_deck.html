@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AITARA — Pitch Demo Day | Silicon Misiones 2026</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0B1120;
+            --card-bg: #1E293B;
+            --text-main: #F8FAFC;
+            --text-muted: #94A3B8;
+            --accent-blue: #38BDF8;
+            --accent-green: #34D399;
+            --accent-red: #F87171;
+            --accent-amber: #FBBF24;
+            --border: #334155;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        /* Top Bar */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 40px;
+            border-bottom: 1px solid var(--border);
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(8px);
+            z-index: 10;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 800;
+            font-size: 1.25rem;
+            letter-spacing: 0.05em;
+        }
+
+        .brand-badge {
+            background: rgba(56, 189, 248, 0.15);
+            color: var(--accent-blue);
+            padding: 4px 10px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+        }
+
+        .timer-container {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .timer {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.1rem;
+            font-weight: 600;
+            background: #0f172a;
+            padding: 6px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            color: var(--accent-amber);
+        }
+
+        /* Slide Deck Container */
+        .slide-container {
+            flex: 1;
+            position: relative;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px 60px;
+        }
+
+        .slide {
+            display: none;
+            width: 100%;
+            max-width: 1200px;
+            height: 100%;
+            max-height: 640px;
+            flex-direction: column;
+            justify-content: center;
+            animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .slide.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Typography & Layouts */
+        .slide-tag {
+            color: var(--accent-blue);
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            margin-bottom: 8px;
+        }
+
+        .slide-title {
+            font-size: 2.75rem;
+            font-weight: 800;
+            line-height: 1.15;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #FFFFFF 0%, #CBD5E1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .slide-subtitle {
+            font-size: 1.25rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+            max-width: 850px;
+            margin-bottom: 30px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-top: 10px;
+        }
+
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-top: 15px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            transition: border-color 0.2s;
+        }
+
+        .card:hover {
+            border-color: var(--accent-blue);
+        }
+
+        .card-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+        }
+
+        .card-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #FFFFFF;
+        }
+
+        .card-desc {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            line-height: 1.45;
+        }
+
+        .callout-box {
+            background: rgba(248, 113, 113, 0.1);
+            border-left: 4px solid var(--accent-red);
+            padding: 18px 24px;
+            border-radius: 0 12px 12px 0;
+            margin-top: 16px;
+        }
+
+        .callout-box.success {
+            background: rgba(52, 211, 153, 0.1);
+            border-left: 4px solid var(--accent-green);
+        }
+
+        .badge-pill {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .badge-red { background: rgba(248, 113, 113, 0.2); color: var(--accent-red); }
+        .badge-green { background: rgba(52, 211, 153, 0.2); color: var(--accent-green); }
+        .badge-blue { background: rgba(56, 189, 248, 0.2); color: var(--accent-blue); }
+
+        /* Navigation Bar */
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 40px;
+            border-top: 1px solid var(--border);
+            background: rgba(15, 23, 42, 0.9);
+        }
+
+        .nav-btn {
+            background: #1E293B;
+            border: 1px solid var(--border);
+            color: #FFFFFF;
+            padding: 8px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .nav-btn:hover {
+            background: #334155;
+            border-color: var(--accent-blue);
+        }
+
+        .progress-indicator {
+            display: flex;
+            gap: 8px;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #334155;
+            transition: all 0.3s;
+        }
+
+        .dot.active {
+            background: var(--accent-blue);
+            width: 24px;
+            border-radius: 12px;
+        }
+
+        .demo-link-btn {
+            background: linear-gradient(135deg, #0284C7 0%, #2563EB 100%);
+            color: #FFFFFF;
+            text-decoration: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+            transition: transform 0.2s;
+        }
+
+        .demo-link-btn:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <div class="top-bar">
+        <div class="brand">
+            <span>AITARA</span>
+            <span class="brand-badge">HACKATHON SILICON MISIONES 2026</span>
+        </div>
+        <div class="timer-container">
+            <span class="timer" id="timer">03:00</span>
+            <button class="nav-btn" onclick="toggleTimer()" id="timerBtn">Iniciar</button>
+            <button class="nav-btn" onclick="resetTimer()">Reset</button>
+        </div>
+    </div>
+
+    <!-- Slides Container -->
+    <div class="slide-container">
+
+        <!-- Slide 1: Hook -->
+        <div class="slide active" id="slide-1">
+            <div class="slide-tag">01 / LA REALIDAD EN CALLE</div>
+            <h1 class="slide-title">La gestión de tránsito en Posadas<br>sigue siendo reactiva</h1>
+            <p class="slide-subtitle">
+                Hoy un operador municipal se entera de un siniestro vial media hora tarde por el 911, o releva esquinas con conteos manuales de 15 minutos en planillas de papel.
+            </p>
+            <div class="grid-2">
+                <div class="card">
+                    <span class="badge-pill badge-red">Modo Actual (Reactivo)</span>
+                    <h3 class="card-title">Intervención Tardia</h3>
+                    <p class="card-desc">Los inspectores acuden cuando el nudo en corredores escolares (ej. Corrientes y Tucumán) ya se extendió 150 metros y el colapso es irreversible.</p>
+                </div>
+                <div class="card">
+                    <span class="badge-pill badge-blue">Datos Dispersos</span>
+                    <h3 class="card-title">Silos Desconectados</h3>
+                    <p class="card-desc">Los partes meteorológicos de la OPAD, las capas de IDE Posadas y las crónicas periodísticas no se cruzan para predecir anomalías.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 2: Problema Técnico -->
+        <div class="slide" id="slide-2">
+            <div class="slide-tag">02 / LA OPORTUNIDAD TÉCNICA</div>
+            <h1 class="slide-title">Ruptura en la cadena del dato</h1>
+            <p class="slide-subtitle">
+                A Posadas no le faltan hechos en el territorio: le falta un pipeline técnico que eleve los datos crudos hasta el nivel de sabiduría operativa antes de los incidentes.
+            </p>
+            <div class="grid-4">
+                <div class="card">
+                    <div class="card-num">01</div>
+                    <h4 class="card-title">Datos Crudos</h4>
+                    <p class="card-desc">Noticias locales, clima OPAD, semáforos y escuelas.</p>
+                </div>
+                <div class="card">
+                    <div class="card-num">02</div>
+                    <h4 class="card-title">Información</h4>
+                    <p class="card-desc">Normalización y georreferenciación en DuckDB Spatial.</p>
+                </div>
+                <div class="card">
+                    <div class="card-num">03</div>
+                    <h4 class="card-title">Conocimiento</h4>
+                    <p class="card-desc">Motor XAI que cruza topología con variables exógenas.</p>
+                </div>
+                <div class="card">
+                    <div class="card-num">04</div>
+                    <h4 class="card-title">Sabiduría</h4>
+                    <p class="card-desc">Matriz de despacho preventivo: inspectores y conos.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: Propuesta AITARA -->
+        <div class="slide" id="slide-3">
+            <div class="slide-tag">03 / LA SOLUCIÓN</div>
+            <h1 class="slide-title">AITARA: Decision Support System</h1>
+            <p class="slide-subtitle">
+                Plataforma de apoyo al despachador municipal para anticipar congestión y riesgo vial con 30 a 60 minutos de anticipación operativa.
+            </p>
+            <div class="grid-2">
+                <div class="card">
+                    <span class="badge-pill badge-green">Cumplimiento del Pliego Oficial</span>
+                    <h3 class="card-title">100% Soporte a la Decisión Humana</h3>
+                    <p class="card-desc">Cero intervención física o automática de semáforos; prohibido peritaje o deslinde de culpas. Asiste al operador municipal para ubicar recursos en calle.</p>
+                </div>
+                <div class="card">
+                    <span class="badge-pill badge-blue">Arquitectura ELT Abierta</span>
+                    <h3 class="card-title">Anexable a Sistemas Existentes</h3>
+                    <p class="card-desc">Data Lake (Bronze) + Data Warehouse relacional (Silver/Gold) en DuckDB Spatial, nativamente compatible con PostgreSQL/PostGIS de Posadas.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: Rol de la IA -->
+        <div class="slide" id="slide-4">
+            <div class="slide-tag">04 / INTELIGENCIA ARTIFICIAL REAL</div>
+            <h1 class="slide-title">Inferencia Explicable en 4 Dimensiones</h1>
+            <p class="slide-subtitle">
+                Sin cajas negras. La IA interviene en dos puntos donde el software tradicional falla: NLP estructurado para noticias y evaluación multivariada de riesgo.
+            </p>
+            <div class="grid-4">
+                <div class="card">
+                    <span class="badge-pill badge-blue">Temporal</span>
+                    <h4 class="card-title">Demanda Escolar</h4>
+                    <p class="card-desc">Horarios de entrada y salida escolar y comercial (San Basilio Magno 07:00 AM).</p>
+                </div>
+                <div class="card">
+                    <span class="badge-pill badge-green">Ambiental</span>
+                    <h4 class="card-title">Meteorología OPAD</h4>
+                    <p class="card-desc">Tasa de lluvia (mm/h) y riesgo de anegamiento en calzada.</p>
+                </div>
+                <div class="card">
+                    <span class="badge-pill badge-amber">Topológica</span>
+                    <h4 class="card-title">Capacidad Vial</h4>
+                    <p class="card-desc">Estrangulamiento por carriles (2), paradas de colectivos y giros.</p>
+                </div>
+                <div class="card">
+                    <span class="badge-pill badge-red">Siniestral</span>
+                    <h4 class="card-title">NLP Periodístico</h4>
+                    <p class="card-desc">Minería de notas de Canal 12, El Territorio y Misiones Online.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5: Demo en Vivo -->
+        <div class="slide" id="slide-5">
+            <div class="slide-tag">05 / PROTOTIPO EN VIVO</div>
+            <h1 class="slide-title">Caso Testigo: Corrientes y Tucumán</h1>
+            <p class="slide-subtitle">
+                Simulación: Martes 06:45 AM | Lluvia 15 mm/h | Horizonte T+30 minutos proyectado al ingreso escolar de las 07:15 AM.
+            </p>
+            <div class="callout-box success">
+                <h3 style="color: #34D399; margin-bottom: 6px;">Resultado del Motor de Inferencia AITARA:</h3>
+                <p style="font-size: 1.1rem; line-height: 1.5;">
+                    <b>Alerta CRÍTICA (Score: 0.86)</b> — Causa XAI: <i>"Horario pico escolar matutino + Calzada resbaladiza por lluvia (15 mm/h) + Estrangulamiento de 2 carriles con parada de colectivo."</i>
+                </p>
+                <p style="margin-top: 10px; font-weight: 700; color: #FFFFFF;">
+                    Orden de Despacho Sugerida: Enviar 2 inspectores y 6 conos para encauzar la dársena 30 minutos antes.
+                </p>
+            </div>
+            <div style="margin-top: 25px;">
+                <a href="http://localhost:8501" target="_blank" class="demo-link-btn">
+                    <span>Abrir Prototipo Streamlit en Vivo</span>
+                    <span style="font-size: 1.2rem;">↗</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Slide 6: Factibilidad y Cierre -->
+        <div class="slide" id="slide-6">
+            <div class="slide-tag">06 / IMPACTO Y FUTURO</div>
+            <h1 class="slide-title">Listo para pilotar en Posadas</h1>
+            <p class="slide-subtitle">
+                AITARA no requiere obras civiles millonarias ni compra de sensores importados. Resuelve el 80% de la anticipación con los datos que la ciudad ya produce.
+            </p>
+            <div class="grid-2">
+                <div class="card">
+                    <h3 class="card-title">Impacto Ciudadano Directo</h3>
+                    <p class="card-desc">• Menor riesgo de accidentes viales en ingresos escolares.<br>• Descongestión de arterias troncales antes de los embotellamientos.<br>• Reducción de emisiones de CO₂ por tiempos muertos en ralentí.</p>
+                </div>
+                <div class="card">
+                    <h3 class="card-title">Próximo Paso Inmediato</h3>
+                    <p class="card-desc">Conectar el pipeline continuo a la base de datos municipal y realizar el primer piloto operativo de campo junto al cuerpo de inspectores de Posadas.</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Footer Controls -->
+    <div class="nav-bar">
+        <button class="nav-btn" onclick="prevSlide()">← Anterior</button>
+        <div class="progress-indicator" id="dotsContainer">
+            <div class="dot active"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+        </div>
+        <button class="nav-btn" onclick="nextSlide()">Siguiente →</button>
+    </div>
+
+    <script>
+        let currentSlide = 1;
+        const totalSlides = 6;
+
+        function showSlide(index) {
+            document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.dot').forEach(d => d.classList.remove('active'));
+            
+            document.getElementById(`slide-${index}`).classList.add('active');
+            document.querySelectorAll('.dot')[index - 1].classList.add('active');
+            currentSlide = index;
+        }
+
+        function nextSlide() {
+            if (currentSlide < totalSlides) {
+                showSlide(currentSlide + 1);
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlide > 1) {
+                showSlide(currentSlide - 1);
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') nextSlide();
+            if (e.key === 'ArrowLeft') prevSlide();
+        });
+
+        // Countdown Timer Logic (3 minutes = 180s)
+        let timeLeft = 180;
+        let timerInterval = null;
+
+        function updateTimerDisplay() {
+            const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+            const s = (timeLeft % 60).toString().padStart(2, '0');
+            const el = document.getElementById('timer');
+            el.textContent = `${m}:${s}`;
+            if (timeLeft <= 30) {
+                el.style.color = '#F87171';
+            } else {
+                el.style.color = '#FBBF24';
+            }
+        }
+
+        function toggleTimer() {
+            const btn = document.getElementById('timerBtn');
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+                btn.textContent = 'Reanudar';
+            } else {
+                btn.textContent = 'Pausar';
+                timerInterval = setInterval(() => {
+                    if (timeLeft > 0) {
+                        timeLeft--;
+                        updateTimerDisplay();
+                    } else {
+                        clearInterval(timerInterval);
+                        timerInterval = null;
+                        btn.textContent = 'Fin';
+                    }
+                }, 1000);
+            }
+        }
+
+        function resetTimer() {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            timeLeft = 180;
+            updateTimerDisplay();
+            document.getElementById('timerBtn').textContent = 'Iniciar';
+        }
+    </script>
+</body>
+</html>
