@@ -1,0 +1,64 @@
+digraph AITARA_Architecture {
+    rankdir=LR;
+    node [shape=box, style="rounded,filled", fontname="Arial", fontsize=10];
+    edge [fontname="Arial", fontsize=9];
+
+    subgraph cluster_sources {
+        label = "1. Fuentes Heterogéneas (Sources)";
+        style = "dashed";
+        color = "#7f8c8d";
+        node [fillcolor="#ecf0f1", color="#bdc3c7"];
+        
+        src_news [label="Medios Locales\n(El Territorio, Canal 12,\nMisiones Online)"];
+        src_ide [label="IDE Posadas (GIS)\n(Semáforos, Escuelas,\nLíneas de Colectivo)"];
+        src_weather [label="Datos Meteorológicos\n(OPAD / SMN)"];
+        src_muni [label="Sistemas Municipales\n(Conteos semafóricos,\nPlanillas manuales)"];
+    }
+
+    subgraph cluster_lake {
+        label = "2. Data Lake (Ingesta Raw / Bronze Layer)";
+        style = "solid";
+        color = "#2980b9";
+        node [fillcolor="#d4e6f1", color="#2980b9"];
+        
+        raw_storage [label="Raw Data Lake\n(JSONL / HTML crudo /\nGeoJSON / Parquet)", shape=cylinder];
+    }
+
+    subgraph cluster_transform {
+        label = "3. Transformación & Modelado IA (Silver/Gold Layer)";
+        style = "solid";
+        color = "#8e44ad";
+        node [fillcolor="#e8daef", color="#8e44ad"];
+        
+        proc_nlp [label="Motor NLP / NER\nExtracción de siniestros,\nvehículos y severidad"];
+        proc_score [label="Scoring de Confiabilidad\ny Velocidad Informativa"];
+        proc_gis [label="Fusión Espaciotemporal\nGeorreferenciación sobre\nGrafo Vial (OSM/PostGIS)"];
+        proc_dwh [label="Data Warehouse Estructurado\n(PostgreSQL + PostGIS / DuckDB)", shape=cylinder];
+    }
+
+    subgraph cluster_serving {
+        label = "4. Capa de Aplicación & Productos";
+        style = "solid";
+        color = "#27ae60";
+        node [fillcolor="#d5f5e3", color="#27ae60"];
+        
+        app_dss [label="DSS Operativo (AITARA)\n- Mapa territorial de riesgo T+30\n- Matriz de despacho de inspectores", style="bold,filled", fillcolor="#a9dfbf"];
+        app_api [label="API Interoperable Municipal\n(Integración con sistemas\nexistentes de Posadas)"];
+    }
+
+    // Flujo ELT
+    src_news -> raw_storage [label="Scraping continuo"];
+    src_ide -> raw_storage [label="WFS / GeoJSON"];
+    src_weather -> raw_storage [label="API REST"];
+    src_muni -> raw_storage [label="Batch / CSV"];
+
+    raw_storage -> proc_nlp [label="Procesamiento diferido"];
+    proc_nlp -> proc_score;
+    proc_score -> proc_gis;
+    src_ide -> proc_gis [label="Cruce topológico"];
+    
+    proc_gis -> proc_dwh [label="Carga estructurada"];
+
+    proc_dwh -> app_dss [label="Consultas analíticas"];
+    proc_dwh -> app_api [label="Sincronización"];
+}

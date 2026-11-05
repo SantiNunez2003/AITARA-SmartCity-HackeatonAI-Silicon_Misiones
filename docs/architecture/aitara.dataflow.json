@@ -1,0 +1,202 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "AITARA - Arquitectura de Datos ELT & Decision Support System",
+    "subtitle": "Hackathon Silicon Misiones 2026 - Desafío 1: Movilidad Urbana",
+    "output": "docs/architecture/aitara-archify.html",
+    "viewBox": [1180, 560],
+    "animation": "trace",
+    "quality_profile": "showcase"
+  },
+  "stages": [
+    { "label": "1. Fuentes" },
+    { "label": "2. Data Lake" },
+    { "label": "3. IA & Enriquecimiento" },
+    { "label": "4. Data Warehouse" },
+    { "label": "5. DSS & Productos" }
+  ],
+  "nodes": [
+    {
+      "id": "news",
+      "type": "external",
+      "label": "Medios Locales",
+      "sublabel": "El Territorio / Canal 12 / Misiones Online",
+      "stage": 0,
+      "row": 0,
+      "tag": "Noticias"
+    },
+    {
+      "id": "ide",
+      "type": "database",
+      "label": "IDE Posadas",
+      "sublabel": "Capas WFS: semáforos, escuelas, paradas",
+      "stage": 0,
+      "row": 1,
+      "tag": "GIS Oficial"
+    },
+    {
+      "id": "weather",
+      "type": "cloud",
+      "label": "Meteorología",
+      "sublabel": "OPAD / SMN (lluvias en tiempo real)",
+      "stage": 0,
+      "row": 2,
+      "tag": "Clima"
+    },
+    {
+      "id": "muni",
+      "type": "backend",
+      "label": "Registros Municipales",
+      "sublabel": "Planillas manuales y conteos de semáforos",
+      "stage": 0,
+      "row": 3,
+      "tag": "Sistemas Base"
+    },
+    {
+      "id": "lake",
+      "type": "database",
+      "label": "Raw Data Lake",
+      "sublabel": "Bronze Storage (JSONL / GeoJSON inmutable)",
+      "stage": 1,
+      "row": 1,
+      "tag": "Hechos Crudos"
+    },
+    {
+      "id": "nlp",
+      "type": "backend",
+      "label": "Extracción NLP / LLM",
+      "sublabel": "Esquinas, vehículos, severidad (JSON Schema)",
+      "stage": 2,
+      "row": 0,
+      "tag": "Structured Outputs"
+    },
+    {
+      "id": "score",
+      "type": "security",
+      "label": "Scoring de Fiabilidad",
+      "sublabel": "Validación cruzada y deduplicación",
+      "stage": 2,
+      "row": 1,
+      "tag": "Control de Calidad"
+    },
+    {
+      "id": "spatial",
+      "type": "backend",
+      "label": "Fusión Espaciotemporal",
+      "sublabel": "Cruce con red vial OSM y cuencas bajas",
+      "stage": 2,
+      "row": 2,
+      "tag": "Topología Urbana"
+    },
+    {
+      "id": "dwh",
+      "type": "database",
+      "label": "DuckDB Spatial DWH",
+      "sublabel": "Silver / Gold (Contrato PostGIS ST_*)",
+      "stage": 3,
+      "row": 1,
+      "tag": "Analytics & SQL"
+    },
+    {
+      "id": "dss",
+      "type": "frontend",
+      "label": "DSS AITARA (Streamlit)",
+      "sublabel": "Mapa predictivo T+30 y Despacho de Inspectores",
+      "stage": 4,
+      "row": 0,
+      "tag": "Decision Support"
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API Municipal Anexable",
+      "sublabel": "Adaptador interoperable para sistemas de Posadas",
+      "stage": 4,
+      "row": 2,
+      "tag": "Interoperabilidad"
+    }
+  ],
+  "flows": [
+    {
+      "from": "news",
+      "to": "lake",
+      "label": "scraping de crónicas",
+      "variant": "emphasis"
+    },
+    {
+      "from": "ide",
+      "to": "lake",
+      "label": "capas vectoriales WFS",
+      "variant": "default"
+    },
+    {
+      "from": "weather",
+      "to": "lake",
+      "label": "pluviometría en tiempo real",
+      "variant": "default"
+    },
+    {
+      "from": "muni",
+      "to": "lake",
+      "label": "ingesta batch de planillas",
+      "variant": "dashed"
+    },
+    {
+      "from": "lake",
+      "to": "nlp",
+      "label": "procesamiento de texto",
+      "variant": "emphasis"
+    },
+    {
+      "from": "nlp",
+      "to": "score",
+      "label": "entidades estructuradas",
+      "variant": "emphasis"
+    },
+    {
+      "from": "score",
+      "to": "spatial",
+      "label": "incidentes validados",
+      "variant": "security"
+    },
+    {
+      "from": "spatial",
+      "to": "dwh",
+      "label": "fusión sobre grafo vial",
+      "variant": "emphasis"
+    },
+    {
+      "from": "dwh",
+      "to": "dss",
+      "label": "índice de riesgo explicable (XAI)",
+      "variant": "emphasis"
+    },
+    {
+      "from": "dwh",
+      "to": "api",
+      "label": "consultas analíticas REST",
+      "variant": "default"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Arquitectura ELT Inversa",
+      "items": [
+        "Ingesta primero en Raw Data Lake para no perder ningún dato crudo ni histórico",
+        "Estructuración de crónicas locales con LLM Structured Outputs sin sesgos",
+        "Persistencia analítica en DuckDB Spatial con compatibilidad PostGIS directa"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Decision Support System (DSS)",
+      "items": [
+        "Cálculo de riesgo en ventanas de T+30 y T+60 minutos antes de horarios pico",
+        "Explicabilidad total (XAI) para justificar el despacho de inspectores",
+        "Respeto estricto del pliego: 0% actuadores físicos, 100% soporte de decisiones"
+      ]
+    }
+  ]
+}

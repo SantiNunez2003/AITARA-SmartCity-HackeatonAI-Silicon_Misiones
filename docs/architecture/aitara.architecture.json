@@ -1,0 +1,208 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "AITARA - Arquitectura de Datos ELT & Decision Support System",
+    "output": "aitara-archify.html",
+    "quality_profile": "showcase"
+  },
+  "components": [
+    {
+      "id": "news",
+      "type": "external",
+      "label": "Medios Locales",
+      "sublabel": "El Territorio / Canal 12",
+      "pos": [40, 110],
+      "size": [140, 60]
+    },
+    {
+      "id": "ide",
+      "type": "database",
+      "label": "IDE Posadas",
+      "sublabel": "Capas GIS WFS",
+      "pos": [40, 200],
+      "size": [140, 60]
+    },
+    {
+      "id": "weather",
+      "type": "cloud",
+      "label": "Meteorología",
+      "sublabel": "OPAD / SMN (Lluvia)",
+      "pos": [40, 290],
+      "size": [140, 60]
+    },
+    {
+      "id": "muni",
+      "type": "backend",
+      "label": "Registros Base",
+      "sublabel": "Planillas / Conteos",
+      "pos": [40, 380],
+      "size": [140, 60]
+    },
+    {
+      "id": "lake",
+      "type": "database",
+      "label": "Raw Data Lake",
+      "sublabel": "Bronze Storage (JSONL)",
+      "pos": [260, 240],
+      "size": [150, 70],
+      "tag": "Inmutable"
+    },
+    {
+      "id": "nlp",
+      "type": "backend",
+      "label": "Motor NLP",
+      "sublabel": "LLM Structured Output",
+      "pos": [480, 150],
+      "size": [150, 60],
+      "tag": "Entities"
+    },
+    {
+      "id": "score",
+      "type": "security",
+      "label": "Scoring Fiabilidad",
+      "sublabel": "Deduplicación / Calidad",
+      "pos": [480, 240],
+      "size": [150, 60]
+    },
+    {
+      "id": "spatial",
+      "type": "backend",
+      "label": "Fusión Espacial",
+      "sublabel": "Grafo OSM + Escuelas",
+      "pos": [480, 330],
+      "size": [150, 60]
+    },
+    {
+      "id": "dwh",
+      "type": "database",
+      "label": "DuckDB Spatial",
+      "sublabel": "Silver / Gold DWH",
+      "pos": [700, 240],
+      "size": [150, 70],
+      "tag": "PostGIS ST_*"
+    },
+    {
+      "id": "dss",
+      "type": "frontend",
+      "label": "DSS AITARA",
+      "sublabel": "Streamlit / Leaflet",
+      "pos": [920, 170],
+      "size": [150, 70],
+      "tag": "T+30 Despacho"
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API Municipal",
+      "sublabel": "Adaptador Interoperable",
+      "pos": [920, 310],
+      "size": [150, 60]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "1. Ingesta de Fuentes",
+      "wraps": ["news", "ide", "weather", "muni"]
+    },
+    {
+      "kind": "region",
+      "label": "2. Normalización & IA",
+      "wraps": ["nlp", "score", "spatial"]
+    },
+    {
+      "kind": "region",
+      "label": "3. Decisión & Salidas",
+      "wraps": ["dss", "api"]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c-news-lake",
+      "from": "news",
+      "to": "lake",
+      "label": "scraping",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-ide-lake",
+      "from": "ide",
+      "to": "lake",
+      "label": "WFS"
+    },
+    {
+      "id": "c-weather-lake",
+      "from": "weather",
+      "to": "lake",
+      "label": "REST"
+    },
+    {
+      "id": "c-muni-lake",
+      "from": "muni",
+      "to": "lake",
+      "label": "batch",
+      "variant": "dashed"
+    },
+    {
+      "id": "c-lake-nlp",
+      "from": "lake",
+      "to": "nlp",
+      "label": "crónicas",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-nlp-score",
+      "from": "nlp",
+      "to": "score",
+      "label": "entidades"
+    },
+    {
+      "id": "c-score-spatial",
+      "from": "score",
+      "to": "spatial",
+      "label": "validados",
+      "variant": "security"
+    },
+    {
+      "id": "c-spatial-dwh",
+      "from": "spatial",
+      "to": "dwh",
+      "label": "topología",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-dwh-dss",
+      "from": "dwh",
+      "to": "dss",
+      "label": "riesgo XAI",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-dwh-api",
+      "from": "dwh",
+      "to": "api",
+      "label": "sincronización"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Arquitectura ELT Inversa",
+      "items": [
+        "Ingesta primero en Raw Data Lake para no perder ningún dato crudo ni histórico",
+        "Estructuración de crónicas locales con LLM Structured Outputs sin sesgos",
+        "Persistencia analítica en DuckDB Spatial con compatibilidad PostGIS directa"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Decision Support System (DSS)",
+      "items": [
+        "Cálculo de riesgo en ventanas de T+30 y T+60 minutos antes de horarios pico",
+        "Explicabilidad total (XAI) para justificar el despacho de inspectores",
+        "Respeto estricto del pliego: 0% actuadores físicos, 100% soporte de decisiones"
+      ]
+    }
+  ]
+}
