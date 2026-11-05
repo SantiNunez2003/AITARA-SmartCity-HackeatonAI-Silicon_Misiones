@@ -1,0 +1,147 @@
+﻿HACKATHON IA EN ACCIÓN
+FICHA DE PROYECTO
+Documento de presentación y estructuración de la propuesta
+Formato de entrega
+* Tipografía: Arial o Montserrat
+* Tamaño: 11 pt
+* Títulos principales: 12pt, negrita
+* Alineación: justificada
+* Formato: PDF
+La información deberá ser clara, concreta y estar orientada a explicar el problema, la solución propuesta, el uso de Inteligencia Artificial, los datos necesarios y su factibilidad de implementación.
+
+
+1. IDENTIFICACIÓN DEL PROYECTO
+Nombre del proyecto:
+Integrantes del equipo
+Nombre y apellido
+	Rol / función
+	Formación / experiencia
+	Santiago Agustín Nuñez
+	
+
+	
+
+	Joaquin Sanchez
+	
+
+	
+
+	Facundo Fraga
+	
+
+	
+
+	Ana Florencia Zayas
+	
+
+	
+
+	Responsable y contacto:
+Zayas Ana Florencia 
+* mail: zayasflorenciaana@gmail.com
+* teléfono: 3764662524
+2. RESUMEN DEL PROYECTO
+En un máximo de 300 palabras, describir:
+* Problema que se busca resolver.
+* Usuarios o beneficiarios.
+* Solución propuesta.
+* Uso de Inteligencia Artificial.
+* Principal valor o impacto esperado.
+
+
+3. PROBLEMÁTICA Y USUARIOS
+Problemática
+Describir qué problema se busca resolver, por qué es importante, a quién afecta y qué consecuencias genera actualmente. Incorporar, cuando sea posible, datos, evidencia o información que permita justificar la existencia de la problemática.
+Usuarios y actores involucrados
+Identificar los principales usuarios, beneficiarios y actores involucrados, indicando sus necesidades, dificultades y relación con el problema.
+4. SOLUCIÓN PROPUESTA
+Producto / Servicio
+Describir de manera clara:
+* ¿En qué consiste la solución?
+* ¿Qué necesidad satisface?
+* ¿Cómo funcionaría?
+* ¿Qué valor aporta al usuario?
+Diferencial
+Explicar qué diferencia a la propuesta de las alternativas o soluciones existentes.
+MVP
+Indicar cuáles serían las funcionalidades mínimas necesarias para desarrollar y validar una primera versión de la solución.
+5. INTELIGENCIA ARTIFICIAL
+Explicar específicamente cómo interviene la IA en la propuesta.
+Indicar:
+* ¿Qué tarea realiza la IA?
+* ¿Es central o complementaria?
+* ¿Qué tecnología, modelo o enfoque podría utilizarse?
+* ¿Qué beneficio aporta frente a una solución tradicional?
+Ejemplos: predicción, clasificación, recomendación, análisis de imágenes, procesamiento de lenguaje natural, reconocimiento de patrones, automatización, IA generativa, entre otros.
+6. DATOS Y FUNCIONAMIENTO
+Datos necesarios
+Describir:
+* ¿Qué datos necesita la solución?
+* ¿De dónde provienen?
+* ¿Están disponibles actualmente?
+* ¿Son públicos, privados, sensibles, generados por usuarios, sensores u otras fuentes?
+* ¿Cómo se obtendrían y actualizarían?
+Considerar aspectos relacionados con privacidad, seguridad, confidencialidad, acceso, calidad y posibles sesgos de los datos.
+Flujo de funcionamiento
+Representar o describir el proceso:
+Entrada de datos → Procesamiento → IA → Resultado → Acción / decisión
+7. MERCADO, COMPETENCIA Y MODELO DE NEGOCIO
+Industria / Mercado
+Indicar en qué industria o sectores podría implementarse la solución y describir brevemente el mercado objetivo, sus principales características y tendencias.
+Competencia
+Identificar soluciones existentes y comparar sus principales fortalezas y debilidades con respecto a la propuesta.
+Competidor / alternativa
+	Fortalezas
+	Debilidades
+	Diferencial de nuestra propuesta
+	
+
+	
+
+	
+
+	
+
+	Modelo y canales
+Indicar cómo se podría comercializar, distribuir o implementar la solución y cuál podría ser su modelo de negocio.
+8. FACTIBILIDAD E IMPLEMENTACIÓN
+Describir los principales elementos necesarios para llevar la propuesta a la práctica:
+Recursos y tecnología
+¿Qué recursos, infraestructura y tecnologías serían necesarios?
+Complejidad y tiempo
+¿Cuál es el nivel de complejidad técnica y cuánto tiempo se estima necesario para desarrollar una primera versión?
+Actores y aliados
+¿Qué instituciones, empresas, organismos o profesionales podrían colaborar con el proyecto y qué podrían aportar?
+Riesgos y desafíos
+¿Cuáles son los principales riesgos técnicos, legales, regulatorios, de datos, adopción, financiamiento u otros?
+
+
+9. IMPACTO Y ESCALABILIDAD
+Impacto esperado
+Describir los principales beneficios y resultados esperados en términos de:
+* Impacto social: beneficios para usuarios, pacientes, profesionales o comunidad.
+* Impacto económico: reducción de costos, generación de oportunidades o eficiencia.
+* Impacto en salud: mejora de procesos, servicios, atención o resultados.
+* Otros impactos relevantes.
+Escalabilidad
+Indicar si la solución podría implementarse en otras instituciones, localidades o provincias y cuáles serían sus posibilidades de crecimiento o evolución futura.
+11. SÍNTESIS FINAL
+Completar en forma breve:
+Problema que resolvemos:
+Usuarios / beneficiarios:
+Solución propuesta:
+Uso de Inteligencia Artificial:
+Datos necesarios:
+Principal impacto esperado:
+Próximo paso para implementar la solución:
+
+ANEXOS
+Incluir únicamente material relevante para complementar la propuesta:
+* Mockups o prototipos.
+* Diagramas.
+* Arquitectura de la solución.
+* Flujos de usuario.
+* Resultados de pruebas.
+* Fuentes o datos utilizados.
+* Entrevistas o validaciones.
+* Referencias.

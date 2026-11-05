@@ -1,0 +1,53 @@
+﻿Victoria Sotilde y Tomás Morales - Coordinadores de I+D de Silicón Misiones 
+Speakers
+* Sergio Tarnoski: Consultor vinculado a la dirección de pymes y emprendedurismo municipalidad de posadas 
+Desafíos 
+Sector Pymes
+Sergio Tarnoski:
+Reducción de margen de beneficio inculcado optimización de costos y procesos 
+Factores de estrés para las pymes
+ERP personalizados con más información útil  
+Huella digital interna para aprovechamiento de información 
+Priorización interna y reducción de noción de entronl a causa de problemáticas internas a reducción de beneficios. Se deja de lado nuevas posibilidades, expansión y otros mercados.
+Conciencia de mercado (alcance, limites, indicadores y entorno) e inteligencia comercial 
+“Necesidad de optimizar al máximo los costos debido al cambio de reglas de la economía” - Sergio Tarnoski
+
+
+Track Salud
+90% de los datos fueron creados en los 2 últimos años, estudio realizado
+5% libros
+Valor semántico Información contextualizada - Problema: estructuración: notas, comentarios, datos sueltos, automatizaciones.
+Comportamientos de poblaciones para estructuración de información para salud de profundidad 
+Objetivos de IA:
+* Usabilidad y estructura de información
+* Aumento de valor informativo de datos (patrones y fenotipos) 
+* Salud sana (seguimiento y análisis diario)
+* Población para evitar enfermedades (roces administrativos, comprensión de estados, fricciones)
+* Fricciones administrativas (50% de carga en registro para los médicos en comparación de su dedicación profesional) 
+Innovación en el ámbito de salud
+Forzar incorporación de tecnología genera roces - PMF
+Validación de modelos y productos de tecnología con foco en la rutina del afectado - clave
+Sinergia 
+Aspectos regulatorios en el sector de Salud 
+Centrar el problema en la solución y no l solución en el problema
+
+
+
+
+Streambe
+Gaston
+Gentica studio
+
+
+Smart Citys
+Matías ruiz
+Datos son importantes :v
+Conteo vehiculares 
+Información destructurada
+Datos de trafico. Clima, situaciones, incidentes en intersecciones, reparaciones, bacheos.
+Que, como, cuando y como mejorar - preguntas ante situaciones en movilidad
+Desiciones a tomar 
+* Correlación de datos
+* Gestión de eventos 
+* Trabajos de reparación 
+* Subsanación de incidentes (cortes, construcción, accidentes)
