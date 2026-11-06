@@ -1,185 +1,187 @@
 """AITARA - Explainable AI (XAI) Spatiotemporal Risk Engine.
 
-Evaluates 4 urban mobility dimensions without requiring micro-traffic simulation:
+Implements the 4-dimensional risk model from Joaquín's technical specification:
 1. Dimensión Temporal y Demanda (Event-Driven)
-2. Dimensión Meteorológica de Calzada (Context-Driven)
-3. Dimensión Topológica y Capacidad Vial (Network-Driven)
-4. Dimensión de Riesgo Siniestral (Safety-Driven)
+2. Dimensión Meteorológica de Calzada (Context-Driven - OPAD)
+3. Dimensión Topológica y Capacidad Vial (Network-Driven - IDE Posadas)
+4. Dimensión de Riesgo Siniestral (Safety-Driven - Lector News History)
+
+Calculates:
+- Riesgo Estructural (Línea base histórica)
+- Variación por Escenario (Cociente vs día habitual)
+- Triaje por dotación disponible de patrullas
 """
 
-from dataclasses import dataclass
-from typing import Dict, Any, List
-import datetime
+from typing import List, Dict, Any, Tuple
+from datetime import datetime, time, timedelta
 
-
-@dataclass
-class NodeEvaluation:
-    node_id: str
-    name: str
-    lat: float
-    lon: float
-    corridor_type: str
-    risk_score: float # 0.0 to 1.0
-    risk_level: str   # 'BAJO', 'MEDIO', 'ALTO', 'CRÍTICO'
-    dim_temporal: float
-    dim_clima: float
-    dim_topologia: float
-    dim_siniestral: float
-    dominant_factor: str
-    explanation: str
-    dispatch_recommendation: Dict[str, Any]
+from src.contracts import EvaluacionNodo, OrdenDespacho, ParametrosEscenario
+from src.warehouse.db import get_db_connection, DBWrapper
 
 
 class ExplainableRiskEngine:
-    def __init__(self):
-        pass
+    def __init__(self, db: DBWrapper = None):
+        self.db = db or get_db_connection()
 
-    def evaluate_node(
-        self,
-        node_row: Dict[str, Any],
-        simulated_time: datetime.time,
-        rain_mm_h: float,
-        horizon_minutes: int = 30
-    ) -> NodeEvaluation:
-        # Effective time taking horizon into account
-        eval_dt = datetime.datetime.combine(datetime.date.today(), simulated_time) + datetime.timedelta(minutes=horizon_minutes)
-        eval_time = eval_dt.time()
+    def evaluate_all_nodes(self, params: ParametrosEscenario) -> Tuple[List[EvaluacionNodo], List[OrdenDespacho]]:
+        """Evaluates all monitored nodes under the given scenario parameters,
 
-        # 1. Dimensión Temporal y Demanda (Event-Driven)
-        hour_val = eval_time.hour + eval_time.minute / 60.0
-        is_school = node_row.get("is_school_zone", False)
+        applying capacity triage according to dotacion_patrullas.
+        """
+        # Fetch nodes joined with features
+        query = """
+            SELECT 
+                i.node_id, i.name, i.lat, i.lon, i.corridor_type, i.lanes,
+                i.has_traffic_light, i.has_bus_stop, i.is_school_zone, i.school_name,
+                i.drainage_risk_level,
+                f.base_capacity_veh_hour, f.historical_incident_score,
+                f.school_vulnerability_weight, f.rain_sensitivity_factor
+            FROM silver_intersections i
+            LEFT JOIN gold_node_risk_features f ON i.node_id = f.node_id;
+        """
+        df_nodes = self.db.df(query)
+        if df_nodes is None or not hasattr(df_nodes, "iterrows") or df_nodes.empty:
+            return [], []
+        evaluations = []
 
-        dim_temporal = 0.2 # baseline
-        school_explanation = ""
-        # Peak windows: 06:45 - 07:45 (morning school), 12:00 - 13:15 (noon), 17:15 - 18:30 (evening)
-        if 6.75 <= hour_val <= 7.75:
+        # Parse requested hour (e.g. '07:00' -> 7.0)
+        try:
+            parts = params.franja_horaria.split(":")
+            hour_float = float(parts[0]) + float(parts[1]) / 60.0
+        except Exception:
+            hour_float = 7.0
+
+        for _, row in df_nodes.iterrows():
+            eval_node = self._evaluate_single_node(row, hour_float, params)
+            evaluations.append(eval_node)
+
+        # Sort by final risk descending
+        evaluations.sort(key=lambda x: x.riesgo_final, reverse=True)
+
+        # Generate dispatch orders for Top N nodes based on available patrols
+        dotacion = max(1, params.dotacion_patrullas)
+        top_critical = [n for n in evaluations if n.es_critico][:dotacion]
+        
+        # If fewer critical than patrols, take highest risk available
+        if len(top_critical) < dotacion:
+            top_critical = evaluations[:dotacion]
+
+        ordenes = []
+        for i, node in enumerate(top_critical, 1):
+            hora_str = params.franja_horaria
+            if node.nodo_id == "N1_CORRIENTES_TUCUMAN":
+                instruccion = f"Posicionarse en Av. Corrientes y Catamarca 15 min antes ({hora_str} hs). Colocar 4 conos para encauzar carril izquierdo de flujo continuo y evitar detención en doble fila."
+                desvio = "Sugerir a líneas de colectivos giro preventivo en calle San Lorenzo."
+            elif node.nodo_id == "N2_ROTONDA_URUGUAY":
+                instruccion = f"Ubicar móvil con baliza encendida sobre colectora Sur de Av. Quaranta ({hora_str} hs) para forzar reducción de velocidad de motociclistas ante asfalto mojado."
+                desvio = "Monitoreo visual continuo de incorporación desde Travesía Urbana."
+            elif node.nodo_id == "N4_SAN_MARTIN_ANDRESITO":
+                instruccion = f"Puesto preventivo en Av. San Martín y Andresito ({hora_str} hs) para encauzar vehículos livianos ante acumulación de agua en cota baja."
+                desvio = "Desvío de vehículos bajos por Av. Urquiza."
+            elif node.nodo_id == "N5_CABRED_LOPEZ_TORRES":
+                instruccion = f"Mantener despejado carril de emergencias del Hospital Madariaga sobre Av. López Torres ({hora_str} hs)."
+                desvio = "Desviar transporte pesado por Av. Rademacher."
+            else:
+                instruccion = f"Móvil {i} en puesto fijo de disuasión y control de fluidez en {node.nombre} ({hora_str} hs)."
+                desvio = "Mantener despejada calzada principal."
+
+            ordenes.append(OrdenDespacho(
+                movil_id=f"Móvil {i}",
+                nodo_objetivo=node.nombre,
+                hora_presentacion=hora_str,
+                instruccion_tactica=instruccion,
+                desvio_transporte=desvio
+            ))
+
+        return evaluations, ordenes
+
+    def _evaluate_single_node(self, row: Any, hour_float: float, params: ParametrosEscenario) -> EvaluacionNodo:
+        is_school = bool(row["is_school_zone"]) and params.actividad_escolar
+        rain_mm = params.precipitacion_mm_h
+        historical_score = float(row["historical_incident_score"] or 0.5)
+
+        # 1. Dimensión Temporal y Demanda
+        dim_temporal = 0.25
+        if 6.75 <= hour_float <= 7.75:
             dim_temporal = 0.95 if is_school else 0.70
-            school_explanation = "Horario pico escolar matutino (ingreso 07:00-07:30)"
-        elif 12.0 <= hour_val <= 13.25:
+        elif 11.75 <= hour_float <= 13.25:
             dim_temporal = 0.90 if is_school else 0.75
-            school_explanation = "Horario pico mediodía (egreso escolar y cambio de turno comercial)"
-        elif 17.25 <= hour_val <= 18.5:
+        elif 17.25 <= hour_float <= 18.75:
             dim_temporal = 0.85 if is_school else 0.80
-            school_explanation = "Horario pico vespertino (salida laboral y turno tarde)"
-        else:
-            dim_temporal = 0.30
 
-        # 2. Dimensión Meteorológica (Context-Driven)
-        drainage = node_row.get("drainage_risk_level", "BAJO")
-        drain_mult = 1.3 if drainage == "ALTO" else (1.1 if drainage == "MEDIO" else 0.9)
-        rain_factor = min(1.0, (rain_mm_h / 25.0)) * drain_mult
-        dim_clima = min(1.0, max(0.1, rain_factor))
+        # 2. Dimensión Meteorológica (OPAD)
+        drainage = str(row["drainage_risk_level"] or "BAJO")
+        drain_mult = 1.35 if drainage == "ALTO" else (1.15 if drainage == "MEDIO" else 0.90)
+        dim_clima = min(1.0, (rain_mm / 25.0) * drain_mult)
+        dim_clima = max(0.1, dim_clima)
 
-        # 3. Dimensión Topológica y Capacidad Vial (Network-Driven)
-        lanes = node_row.get("lanes", 2)
-        has_bus = node_row.get("has_bus_stop", False)
-        # Narrow streets with bus stop = higher bottleneck friction
-        dim_topologia = 0.4
+        # 3. Dimensión Topológica (IDE Posadas)
+        lanes = int(row["lanes"] or 2)
+        has_bus = bool(row["has_bus_stop"])
+        dim_topologia = 0.35
         if lanes <= 2:
-            dim_topologia += 0.3
+            dim_topologia += 0.30
         if has_bus:
-            dim_topologia += 0.2
+            dim_topologia += 0.20
         dim_topologia = min(1.0, dim_topologia)
 
-        # 4. Dimensión de Riesgo Siniestral (Safety-Driven)
-        dim_siniestral = float(node_row.get("historical_incident_score", 0.5))
+        # 4. Dimensión Siniestral
+        dim_siniestral = historical_score
 
-        # Composite Weighted Risk Score
-        # Weights: Temporal (35%), Clima (25%), Topología (20%), Siniestral (20%)
-        composite_score = (
+        # Cálculo de Riesgo Estructural (Base histórica sin eventos excepcionales)
+        riesgo_estructural = round(0.40 * dim_topologia + 0.60 * dim_siniestral, 2)
+
+        # Cálculo de Riesgo con Escenario Activo
+        # Ponderación: Temporal (35%), Clima (30%), Topología (20%), Siniestral (15%)
+        riesgo_activo = (
             dim_temporal * 0.35 +
-            dim_clima * 0.25 +
+            dim_clima * 0.30 +
             dim_topologia * 0.20 +
-            dim_siniestral * 0.20
+            dim_siniestral * 0.15
         )
-        composite_score = round(min(1.0, max(0.0, composite_score)), 2)
+        riesgo_final = round(min(1.0, max(0.05, riesgo_activo)), 2)
 
-        # Determine Risk Level
-        if composite_score >= 0.75:
-            risk_level = "CRÍTICO"
-        elif composite_score >= 0.55:
-            risk_level = "ALTO"
-        elif composite_score >= 0.35:
-            risk_level = "MEDIO"
-        else:
-            risk_level = "BAJO"
+        # Variación por Escenario (Cociente vs habitual)
+        variacion_pct = round(((riesgo_final / max(0.20, riesgo_estructural)) - 1.0) * 100, 1)
 
-        # Determine Dominant Factor & Human Explanation (XAI)
-        factors = [
-            ("Demanda Programada / Escolar", dim_temporal),
-            ("Condición Meteorológica / Lluvia", dim_clima),
-            ("Capacidad Vial y Fricción de Carril", dim_topologia),
-            ("Histórico de Siniestralidad", dim_siniestral),
-        ]
-        factors.sort(key=lambda x: x[1], reverse=True)
-        dominant_factor = factors[0][0]
-
-        reasons = []
-        if dim_temporal >= 0.7:
-            reasons.append(school_explanation or "Alta concentración horaria de flujo vehicular")
-        if rain_mm_h > 5.0:
-            reasons.append(f"Calzada resbaladiza por lluvia ({rain_mm_h} mm/h) y drenaje {drainage}")
+        # Factores dominantes
+        factores = []
+        if dim_temporal >= 0.75:
+            factores.append("Concurrencia horaria escolar / laboral")
+        if rain_mm >= 10.0:
+            factores.append(f"Calzada resbaladiza por lluvia OPAD ({rain_mm} mm/h)")
         if lanes <= 2 and has_bus:
-            reasons.append("Estrangulamiento físico (2 carriles con parada de transporte)")
-        if dim_siniestral >= 0.7:
-            reasons.append("Punto caliente histórico de colisiones reiteradas")
+            factores.append("Estrangulamiento de calzada (2 carriles con parada de colectivo)")
+        if dim_siniestral >= 0.75:
+            factores.append("Concentración histórica de siniestros de motovehículos")
 
-        explanation = " | ".join(reasons) if reasons else "Condiciones normales de circulación."
+        if not factores:
+            factores.append("Tránsito habitual sin fricciones atípicas")
 
-        # Dispatch Matrix Recommendation
-        dispatch = self._compute_dispatch(risk_level, node_row, horizon_minutes)
+        desvio = None
+        if row["node_id"] == "N1_CORRIENTES_TUCUMAN":
+            desvio = "Calle San Lorenzo (64% capacidad remanente)"
+        elif row["node_id"] == "N4_SAN_MARTIN_ANDRESITO":
+            desvio = "Av. Urquiza / Av. Tambor de Tacuarí"
 
-        return NodeEvaluation(
-            node_id=node_row["node_id"],
-            name=node_row["name"],
-            lat=node_row["lat"],
-            lon=node_row["lon"],
-            corridor_type=node_row["corridor_type"],
-            risk_score=composite_score,
-            risk_level=risk_level,
-            dim_temporal=round(dim_temporal, 2),
-            dim_clima=round(dim_clima, 2),
-            dim_topologia=round(dim_topologia, 2),
-            dim_siniestral=round(dim_siniestral, 2),
-            dominant_factor=dominant_factor,
-            explanation=explanation,
-            dispatch_recommendation=dispatch
+        return EvaluacionNodo(
+            nodo_id=str(row["node_id"]),
+            nombre=str(row["name"]),
+            lat=float(row["lat"]),
+            lon=float(row["lon"]),
+            riesgo_estructural=riesgo_estructural,
+            variacion_escenario=variacion_pct,
+            riesgo_final=riesgo_final,
+            es_critico=riesgo_final >= 0.65,
+            factores=factores,
+            desvio_sugerido=desvio
         )
 
-    def _compute_dispatch(self, risk_level: str, node: Dict[str, Any], horizon: int) -> Dict[str, Any]:
-        if risk_level == "CRÍTICO":
-            return {
-                "inspectors_count": 2,
-                "motorcycles_count": 1,
-                "cones_count": 6,
-                "priority": "MÁXIMA (Inmediata)",
-                "action": f"Despachar balizamiento preventivo y 2 inspectores para encauzar dársena {horizon} min antes del horario pico.",
-                "suggested_diversion": "Habilitar giro asistido hacia arteria paralela si cola excede 80m."
-            }
-        elif risk_level == "ALTO":
-            return {
-                "inspectors_count": 1,
-                "motorcycles_count": 1,
-                "cones_count": 4,
-                "priority": "ALTA",
-                "action": f"Posicionar móvil de patrulla preventiva {horizon} min antes para disuadir doble fila.",
-                "suggested_diversion": "Monitoreo visual continuo."
-            }
-        elif risk_level == "MEDIO":
-            return {
-                "inspectors_count": 0,
-                "motorcycles_count": 0,
-                "cones_count": 0,
-                "priority": "MONITOREO",
-                "action": "Mantener guardia en Centro de Monitoreo sin requerir desplazamiento de móvil.",
-                "suggested_diversion": "Ninguno."
-            }
-        else:
-            return {
-                "inspectors_count": 0,
-                "motorcycles_count": 0,
-                "cones_count": 0,
-                "priority": "NORMAL",
-                "action": "Sin intervención requerida. Circulación fluida.",
-                "suggested_diversion": "Ninguno."
-            }
+
+if __name__ == "__main__":
+    engine = ExplainableRiskEngine()
+    params = ParametrosEscenario(franja_horaria="07:00", precipitacion_mm_h=15.0, dotacion_patrullas=4)
+    nodes, ordenes = engine.evaluate_all_nodes(params)
+    print(f"Evaluados {len(nodes)} nodos. Órdenes generadas: {len(ordenes)}")
+    for o in ordenes:
+        print(f"- {o.movil_id} -> {o.nodo_objetivo}: {o.instruccion_tactica}")

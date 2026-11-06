@@ -1,0 +1,192 @@
+:root {
+  /* Paleta Estricta de 3 Colores (Modo Claro Geoespacial por defecto) */
+  --bg-canvas: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-glass: rgba(255, 255, 255, 0.92);
+  --bg-subtle: #f1f5f9;
+  --border-color: #e2e8f0;
+  --border-strong: #cbd5e1;
+
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+
+  --accent-blue: #1d4ed8;
+  --accent-blue-soft: #eff6ff;
+  --accent-blue-border: #bfdbfe;
+
+  --alert-crimson: #be123c;
+  --alert-crimson-soft: #fff1f2;
+  --alert-crimson-border: #fecdd3;
+
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
+  --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
+  --shadow-lg: 0 10px 25px rgba(15, 23, 42, 0.12);
+}
+
+[data-theme="dark"] {
+  --bg-canvas: #0b0f19;
+  --bg-surface: #111827;
+  --bg-glass: rgba(17, 24, 39, 0.92);
+  --bg-subtle: #1e293b;
+  --border-color: #1f2937;
+  --border-strong: #374151;
+
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+
+  --accent-blue: #3b82f6;
+  --accent-blue-soft: rgba(59, 130, 246, 0.14);
+  --accent-blue-border: rgba(59, 130, 246, 0.35);
+
+  --alert-crimson: #f43f5e;
+  --alert-crimson-soft: rgba(244, 63, 94, 0.14);
+  --alert-crimson-border: rgba(244, 63, 94, 0.35);
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.6);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background-color: var(--bg-canvas);
+  color: var(--text-primary);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Filtros CSS limpios para mosaicos OpenStreetMap (0% API Key Required, 100% estética Carto/Mapbox) */
+.map-tiles-light .leaflet-tile-pane {
+  filter: grayscale(88%) contrast(105%) brightness(103%);
+}
+
+.map-tiles-dark .leaflet-tile-pane {
+  filter: invert(100%) hue-rotate(180deg) grayscale(65%) brightness(92%) contrast(95%);
+}
+
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  background: var(--bg-canvas) !important;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Pulso animado para nodos críticos en el mapa */
+@keyframes pulse-crimson {
+  0% {
+    box-shadow: 0 0 0 0 rgba(190, 18, 60, 0.55);
+  }
+  70% {
+    box-shadow: 0 0 0 14px rgba(190, 18, 60, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(190, 18, 60, 0);
+  }
+}
+
+.marker-node-critical {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background-color: #be123c;
+  border: 2.5px solid #ffffff;
+  animation: pulse-crimson 2s infinite;
+  cursor: pointer;
+}
+
+.marker-node-normal {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: #1d4ed8;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 5px rgba(29, 78, 216, 0.4);
+  cursor: pointer;
+}
+
+.marker-incident {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.45);
+  transition: transform 0.15s ease;
+  cursor: pointer;
+}
+
+.marker-incident:hover {
+  transform: scale(1.35);
+}
+
+.marker-selected-ring {
+  outline: 3px solid #1d4ed8;
+  outline-offset: 2px;
+}
+
+/* Etiquetas flotantes en el mapa para puntos críticos y corredores de desvío */
+.leaflet-tag-critical {
+  background-color: var(--bg-surface) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-strong) !important;
+  border-left: 3px solid #be123c !important;
+  border-radius: 6px !important;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.18) !important;
+  padding: 4px 8px !important;
+  font-family: 'Inter', sans-serif !important;
+  pointer-events: none !important;
+}
+
+.leaflet-tag-critical::before {
+  display: none !important;
+}
+
+.leaflet-tag-detour {
+  background-color: #1d4ed8 !important;
+  color: #ffffff !important;
+  border: 1px solid #1e40af !important;
+  border-radius: 6px !important;
+  box-shadow: 0 2px 8px rgba(29, 78, 216, 0.35) !important;
+  padding: 3px 8px !important;
+  font-family: 'Inter', sans-serif !important;
+  pointer-events: none !important;
+}
+
+.leaflet-tag-detour::before {
+  display: none !important;
+}
+
+/* Scrollbar limpio y visible para el panel de decisiones y contenedores con scroll */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-canvas);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-blue);
+}
+
+/* Soporte de scroll estándar para Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}

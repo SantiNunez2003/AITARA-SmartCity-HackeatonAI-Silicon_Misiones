@@ -1,0 +1,2152 @@
+import React, { useState, useEffect, useRef } from 'react'
+import L from 'leaflet'
+import AitaraAvatar from './components/AitaraAvatar'
+import {
+  Navigation,
+  ExternalLink,
+  Clock,
+  CloudRain,
+  Users,
+  Send,
+  Layers,
+  Sun,
+  Moon,
+  MapPin,
+  Copy,
+  Check,
+  FileText,
+  AlertTriangle,
+  Folder,
+  FolderOpen,
+  Search,
+  LayoutGrid,
+  List,
+  Newspaper,
+  SlidersHorizontal,
+  CheckCircle2,
+  ArrowRight,
+  Radio,
+  Car,
+  ShieldCheck,
+  Activity,
+  ChevronDown,
+  ChevronUp
+} from 'lucide-react'
+
+const SEVERITY_LABELS = {
+  0: 'Leve · Demora circulatoria',
+  1: 'Moderado · Daños materiales / Calzada reducida',
+  2: 'Prioritario · Personas lesionadas / Asistencia médica',
+  3: 'Crítico · Siniestro grave con derivación hospitalaria'
+}
+
+const SOURCE_LABELS = {
+  primera_edicion: 'Primera Edición',
+  misiones_online: 'Misiones Online',
+  canal_12: 'Canal 12 Misiones',
+  el_territorio: 'El Territorio'
+}
+
+const SOURCE_FOLDERS = [
+  { id: 'all', name: 'Todas las Fuentes Activas', category: 'General', status: 'Activo', count: 12 },
+  { id: 'misiones_online', name: 'Misiones Online', category: 'Prensa Digital', status: 'Monitoreo continuo', count: 7 },
+  { id: 'primera_edicion', name: 'Primera Edición', category: 'Prensa Digital', status: 'Monitoreo continuo', count: 4 },
+  { id: 'canal_12', name: 'Canal 12 Misiones', category: 'Multimedios', status: 'Monitoreo continuo', count: 1 },
+  { id: 'opad_clima', name: 'OPAD Posadas (Meteorología)', category: 'Sensor Oficial', status: 'Sincronizado', count: 'En vivo' },
+  { id: 'ide_cartografia', name: 'IDE Posadas (Red Vial y Escuelas)', category: 'Cartografía Municipal', status: 'Sincronizado', count: '7 corredores' },
+  { id: 'futura_911', name: 'Cámaras CIO 911 / Semáforos', category: 'Próxima Integración', status: 'Expansión prevista', count: 'Módulo listo' }
+]
+
+export default function App() {
+  const [theme, setTheme] = useState('light')
+  const [activeTab, setActiveTab] = useState('tactico') // 'tactico' | 'estrategico' | 'repositorio'
+
+  // Parámetros del Escenario Operativo (ahora en el HUD superior derecho del mapa)
+  const [franja, setFranja] = useState('07:00')
+  const [lluvia, setLluvia] = useState(15.0)
+  const [dotacion, setDotacion] = useState(4)
+
+  // Modo de operación: false = Monitoreo de Noticias, true = Análisis de Corredores y Despacho Táctico
+  const [corridorMode, setCorridorMode] = useState(false)
+
+  // Estados de Revelación Progresiva (Dropdowns y Acordeones Colapsables)
+  const [isScenarioOpen, setIsScenarioOpen] = useState(false)
+  const [showNewsInspector, setShowNewsInspector] = useState(true)
+  const [showDispatchOrders, setShowDispatchOrders] = useState(true)
+  const [showCriticalDetail, setShowCriticalDetail] = useState(false)
+
+  // Capas visibles del mapa (por defecto en modo noticias: solo noticias visibles)
+  const [showNodes, setShowNodes] = useState(false)
+  const [showIncidents, setShowIncidents] = useState(true)
+  const [showDetour, setShowDetour] = useState(false)
+
+  // Funciones de conmutación de modos
+  const activateCorridorAnalysis = () => {
+    setCorridorMode(true)
+    setShowNodes(true)
+    setShowDetour(true)
+    setShowIncidents(false)
+    setShowDispatchOrders(true)
+  }
+
+  const activateNewsMonitoring = () => {
+    setCorridorMode(false)
+    setShowNodes(false)
+    setShowDetour(false)
+    setShowIncidents(true)
+    setShowNewsInspector(true)
+  }
+
+  // Datos del servidor
+  const [status, setStatus] = useState(null)
+  const [incidents, setIncidents] = useState([])
+  const [evalData, setEvalData] = useState(null)
+  const [strategic, setStrategic] = useState(null)
+
+  // Selección activa en el mapa
+  const [selectedIncident, setSelectedIncident] = useState(null)
+  const [selectedNode, setSelectedNode] = useState(null)
+
+  // Consulta al Asistente
+  const [question, setQuestion] = useState('')
+  const [analystReply, setAnalystReply] = useState(null)
+  const [asking, setAsking] = useState(false)
+  const [copied, setCopied] = useState(false)
+
+  // Estado del Gestor Documental (Estilo Drive en Pestaña 3)
+  const [selectedFolder, setSelectedFolder] = useState('all')
+  const [driveViewMode, setDriveViewMode] = useState('grid') // 'grid' | 'list'
+  const [searchQuery, setSearchQuery] = useState('')
+  const [driveSelectedDoc, setDriveSelectedDoc] = useState(null)
+
+  // Referencias de Leaflet
+  const mapContainerRef = useRef(null)
+  const mapInstanceRef = useRef(null)
+  const layersGroupRef = useRef(null)
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+  }, [theme])
+
+  useEffect(() => {
+    Promise.all([
+      fetch('/api/status').then(r => r.ok ? r.json() : null).catch(() => null),
+      fetch('/api/incidents').then(r => r.ok ? r.json() : []).catch(() => []),
+      fetch('/api/strategic').then(r => r.ok ? r.json() : null).catch(() => null)
+    ])
+      .then(([st, inc, strat]) => {
+        if (st) setStatus(st)
+        if (inc && Array.isArray(inc) && inc.length > 0) {
+          setIncidents(inc)
+          setSelectedIncident(inc[0])
+          setDriveSelectedDoc(inc[0])
+        }
+        if (strat) setStrategic(strat)
+      })
+      .catch(err => console.error('Error cargando datos iniciales:', err))
+  }, [])
+
+  useEffect(() => {
+    fetch('/api/evaluate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        franja_horaria: franja,
+        precipitacion_mm_h: Number(lluvia),
+        dotacion_patrullas: Number(dotacion),
+        actividad_escolar: true
+      })
+    })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data) {
+          setEvalData(data)
+          if (data.nodos && data.nodos.length > 0 && !selectedNode) {
+            setSelectedNode(data.nodos[0])
+          }
+        }
+      })
+      .catch(err => console.error('Error evaluando escenario:', err))
+  }, [franja, lluvia, dotacion])
+
+  // Inicializar Mapa Leaflet una sola vez al montar
+  useEffect(() => {
+    if (!mapContainerRef.current || mapInstanceRef.current) return
+
+    const map = L.map(mapContainerRef.current, {
+      center: [-27.3815, -55.9065],
+      zoom: 13,
+      zoomControl: false
+    })
+
+    L.control.zoom({ position: 'bottomleft' }).addTo(map)
+    L.control.scale({ imperial: false, position: 'bottomleft' }).addTo(map)
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap · Red Vial Posadas'
+    }).addTo(map)
+
+    layersGroupRef.current = L.layerGroup().addTo(map)
+    mapInstanceRef.current = map
+  }, [])
+
+  // Al cambiar a la pestaña de mapa, recalcular geometría de Leaflet de inmediato
+  useEffect(() => {
+    if (activeTab === 'tactico' && mapInstanceRef.current) {
+      setTimeout(() => {
+        mapInstanceRef.current?.invalidateSize()
+      }, 50)
+    }
+  }, [activeTab])
+
+  // Actualizar capas sobre el mapa sin recargar
+  useEffect(() => {
+    const map = mapInstanceRef.current
+    const group = layersGroupRef.current
+    if (!map || !group) return
+
+    group.clearLayers()
+
+    // 1. Trazo Ortogonal de Desvío Sugerido (Catamarca -> Calle San Lorenzo -> Mitre)
+    if (showDetour && evalData?.corredor_desvio) {
+      const poly = L.polyline(evalData.corredor_desvio.coordenadas, {
+        color: '#1d4ed8',
+        weight: 4,
+        dashArray: '8, 6',
+        opacity: 0.95
+      })
+      poly.bindTooltip(
+        '<span style="font-weight: 800; font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em;">Desvío Sugerido · Calle San Lorenzo (64% Libre)</span>',
+        { permanent: true, direction: 'center', className: 'leaflet-tag-detour' }
+      )
+      poly.addTo(group)
+    }
+
+    // 2. Zonas de Monitoreo Preventivo (Halos y Etiquetas de Puntos Críticos)
+    if (showNodes && evalData?.nodos) {
+      evalData.nodos.forEach(nodo => {
+        const isCrit = nodo.es_critico
+        const color = isCrit ? '#be123c' : '#1d4ed8'
+
+        const halo = L.circleMarker([nodo.lat, nodo.lon], {
+          radius: isCrit ? 18 : 13,
+          color: color,
+          weight: 2,
+          fillColor: color,
+          fillOpacity: isCrit ? 0.22 : 0.14
+        })
+
+        const signVar = nodo.variacion_escenario > 0 ? `+${nodo.variacion_escenario}` : `${nodo.variacion_escenario}`
+        halo.bindTooltip(
+          `<div><strong>${nodo.nombre}</strong><br/>Nivel de Prioridad: <b>${Math.round(nodo.riesgo_final * 100)}%</b> (${signVar}% sobre lo habitual)</div>`,
+          { direction: 'top' }
+        )
+
+        halo.on('click', () => {
+          setSelectedNode(nodo)
+          if (incidents.length > 0) {
+            let closest = incidents[0]
+            let bestDist = 999
+            incidents.forEach(inc => {
+              const d = Math.hypot(inc.lat - nodo.lat, inc.lon - nodo.lon)
+              if (d < bestDist) {
+                bestDist = d
+                closest = inc
+              }
+            })
+            if (bestDist < 0.018) {
+              setSelectedIncident(closest)
+            }
+          }
+        })
+
+        halo.addTo(group)
+
+        // Etiqueta permanente para puntos críticos identificados
+        if (isCrit) {
+          const shortName = nodo.nombre.replace('Av. ', '').replace('Calle ', '')
+          const tag = L.tooltip({
+            permanent: true,
+            direction: 'right',
+            offset: [16, -2],
+            className: 'leaflet-tag-critical'
+          })
+            .setLatLng([nodo.lat, nodo.lon])
+            .setContent(
+              `<div style="display:flex; align-items:center; gap:5px;">
+                <span style="background-color:#be123c; color:#fff; font-size:9px; font-weight:800; padding:1px 5px; border-radius:3px;">CRÍTICO</span>
+                <strong style="font-size:11px; color:var(--text-primary);">${shortName}</strong>
+                <span style="font-size:10px; font-weight:700; color:#be123c;">${Math.round(nodo.riesgo_final * 100)}%</span>
+              </div>`
+            )
+          tag.addTo(group)
+        }
+      })
+    }
+
+    // 3. Sucesos Viales Reales (Marcadores de Noticias)
+    if (showIncidents && incidents.length > 0) {
+      incidents.forEach(inc => {
+        const isHighSev = Number(inc.severidad) >= 2
+        const isSelected = selectedIncident && selectedIncident.id === inc.id
+        const fillColor = isHighSev ? '#be123c' : '#1d4ed8'
+
+        const marker = L.circleMarker([inc.lat, inc.lon], {
+          radius: isSelected ? 9.5 : 6.5,
+          color: isSelected ? '#0f172a' : '#ffffff',
+          weight: isSelected ? 3 : 2,
+          fillColor: fillColor,
+          fillOpacity: 0.95
+        })
+
+        const medioNombre = SOURCE_LABELS[inc.fuente] || inc.fuente
+        marker.bindTooltip(
+          `<div><strong>[${medioNombre}]</strong> ${inc.titulo}<br/><em>Hacé clic para abrir el recorte en el panel derecho</em></div>`,
+          { direction: 'top' }
+        )
+
+        marker.on('click', () => {
+          setSelectedIncident(inc)
+          setShowNewsInspector(true)
+          map.flyTo([inc.lat, inc.lon], Math.max(map.getZoom(), 14), { duration: 0.5 })
+        })
+
+        marker.addTo(group)
+      })
+    }
+  }, [evalData, incidents, showNodes, showIncidents, showDetour, selectedIncident])
+
+  const handleAskAnalyst = async e => {
+    e.preventDefault()
+    if (!question.trim()) return
+    setAsking(true)
+    try {
+      const res = await fetch('/api/ask', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pregunta: question,
+          franja_horaria: franja,
+          precipitacion_mm_h: Number(lluvia),
+          dotacion_patrullas: Number(dotacion)
+        })
+      })
+      const data = await res.json()
+      setAnalystReply(data.respuesta)
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setAsking(false)
+    }
+  }
+
+  const handleCopyDispatch = () => {
+    if (!evalData?.ordenes_despacho) return
+    let txt = `[PARTE OPERATIVO DE GUARDIA · ${franja} HS · LLUVIA ${lluvia} mm/h]\n`
+    evalData.ordenes_despacho.forEach(o => {
+      txt += `• ${o.movil_id} (${o.nodo_objetivo}): ${o.instruccion_tactica}\n`
+    })
+    navigator.clipboard.writeText(txt)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  const topCritico = evalData?.nodos?.[0] || null
+
+  // Filtrado de documentos para la vista estilo Drive
+  const filteredDriveDocs = incidents.filter(inc => {
+    const matchFolder = selectedFolder === 'all' || inc.fuente === selectedFolder
+    const q = searchQuery.toLowerCase().trim()
+    const matchSearch =
+      !q ||
+      inc.titulo.toLowerCase().includes(q) ||
+      inc.ubicacion_texto.toLowerCase().includes(q) ||
+      inc.calle_1.toLowerCase().includes(q) ||
+      inc.calle_2.toLowerCase().includes(q) ||
+      (inc.vehiculos && inc.vehiculos.toLowerCase().includes(q))
+    return matchFolder && matchSearch
+  })
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw' }}>
+      {/* BARRA SUPERIOR INSTITUCIONAL (CERO JERGA TÉCNICA) */}
+      <header
+        style={{
+          height: '56px',
+          backgroundColor: 'var(--bg-surface)',
+          borderBottom: '1px solid var(--border-color)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '0 20px',
+          zIndex: 1000,
+          flexShrink: 0
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px' }}>
+            <span style={{ fontSize: '20px', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text-primary)' }}>
+              AITARA
+            </span>
+            <span
+              style={{
+                fontSize: '11px',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                color: 'var(--accent-blue)',
+                backgroundColor: 'var(--accent-blue-soft)',
+                padding: '3px 8px',
+                borderRadius: '4px',
+                border: '1px solid var(--accent-blue-border)'
+              }}
+            >
+              Centro de Monitoreo y Movilidad Urbana
+            </span>
+            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>· Municipalidad de Posadas</span>
+          </div>
+
+          {/* Pestañas de Navegación Limpias */}
+          <nav style={{ display: 'flex', gap: '6px' }}>
+            {[
+              { id: 'tactico', label: 'Mapa Operativo y Despacho' },
+              { id: 'estrategico', label: 'Planificación de Obras Viales' },
+              { id: 'repositorio', label: 'Centro de Información y Fuentes' }
+            ].map(tab => {
+              const active = activeTab === tab.id
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  style={{
+                    padding: '7px 14px',
+                    fontSize: '12px',
+                    fontWeight: active ? 700 : 500,
+                    color: active ? '#ffffff' : 'var(--text-secondary)',
+                    backgroundColor: active ? 'var(--accent-blue)' : 'transparent',
+                    border: active ? '1px solid var(--accent-blue)' : '1px solid transparent',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  {tab.label}
+                </button>
+              )
+            })}
+          </nav>
+        </div>
+
+        {/* Estado de Monitoreo y Selector Claro/Oscuro */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontSize: '11.5px',
+              color: 'var(--text-secondary)',
+              backgroundColor: 'var(--bg-subtle)',
+              padding: '5px 11px',
+              borderRadius: '6px',
+              border: '1px solid var(--border-color)'
+            }}
+          >
+            <span
+              style={{
+                width: '8px',
+                height: '8px',
+                borderRadius: '50%',
+                backgroundColor: '#16a34a',
+                display: 'inline-block'
+              }}
+            />
+            <span>Relevamiento de Medios Activo</span>
+            <span style={{ color: 'var(--text-muted)' }}>·</span>
+            <strong>{status?.total_incidentes || 12} sucesos verificados</strong>
+          </div>
+
+          <button
+            onClick={() => setTheme(t => (t === 'light' ? 'dark' : 'light'))}
+            title="Alternar Modo Claro / Modo Oscuro"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 11px',
+              fontSize: '12px',
+              fontWeight: 600,
+              color: 'var(--text-primary)',
+              backgroundColor: 'var(--bg-subtle)',
+              border: '1px solid var(--border-strong)',
+              borderRadius: '6px',
+              cursor: 'pointer'
+            }}
+          >
+            {theme === 'light' ? <Moon size={14} /> : <Sun size={14} />}
+            <span>{theme === 'light' ? 'Modo Oscuro' : 'Modo Claro'}</span>
+          </button>
+        </div>
+      </header>
+
+      {/* =====================================================================
+          PESTAÑA 1: MAPA OPERATIVO Y DESPACHO
+         ===================================================================== */}
+      <div
+        style={{
+          display: activeTab === 'tactico' ? 'flex' : 'none',
+          flex: 1,
+          height: 'calc(100vh - 56px)',
+          maxHeight: 'calc(100vh - 56px)',
+          minHeight: 0,
+          overflow: 'hidden',
+          position: 'relative'
+        }}
+      >
+          {/* CUADRANTE DEL MAPA (IZQUIERDA) */}
+          <div
+            className={theme === 'light' ? 'map-tiles-light' : 'map-tiles-dark'}
+            style={{ flex: 1, position: 'relative', height: '100%' }}
+          >
+            <div ref={mapContainerRef} style={{ width: '100%', height: '100%' }} />
+
+            {/* HUD FLOTANTE SUPERIOR IZQUIERDO: CAPAS CARTOGRÁFICAS Y ACCESO RÁPIDO */}
+            <div
+              style={{
+                position: 'absolute',
+                top: '14px',
+                left: '14px',
+                zIndex: 800,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
+                maxWidth: '350px'
+              }}
+            >
+              <div
+                style={{
+                  backgroundColor: 'var(--bg-glass)',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '8px',
+                  padding: '10px 12px',
+                  boxShadow: 'var(--shadow-md)'
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: '10px',
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.06em',
+                    color: 'var(--text-muted)',
+                    marginBottom: '6px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  <Layers size={12} /> Capas Cartográficas Activas (Posadas)
+                </div>
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '11.5px', cursor: 'pointer', fontWeight: 500 }}>
+                    <input type="checkbox" checked={showNodes} onChange={e => setShowNodes(e.target.checked)} />
+                    <span>Corredores Críticos</span>
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '11.5px', cursor: 'pointer', fontWeight: 500 }}>
+                    <input type="checkbox" checked={showIncidents} onChange={e => setShowIncidents(e.target.checked)} />
+                    <span>Noticias Georreferenciadas</span>
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '11.5px', cursor: 'pointer', fontWeight: 500 }}>
+                    <input type="checkbox" checked={showDetour} onChange={e => setShowDetour(e.target.checked)} />
+                    <span>Desvío Sugerido (San Lorenzo)</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Acceso directo a esquinas con noticias */}
+              <div
+                style={{
+                  backgroundColor: 'var(--bg-glass)',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '8px',
+                  padding: '8px 10px',
+                  boxShadow: 'var(--shadow-sm)'
+                }}
+              >
+                <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '5px' }}>
+                  Foco Rápido en Sucesos Recientes:
+                </div>
+                <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
+                  {incidents.slice(0, 6).map(inc => {
+                    const isSel = selectedIncident?.id === inc.id
+                    return (
+                      <button
+                        key={inc.id}
+                        onClick={() => {
+                          setSelectedIncident(inc)
+                          if (mapInstanceRef.current) {
+                            mapInstanceRef.current.flyTo([inc.lat, inc.lon], 15, { duration: 0.6 })
+                          }
+                        }}
+                        style={{
+                          fontSize: '10.5px',
+                          fontWeight: 600,
+                          padding: '3px 8px',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          backgroundColor: isSel ? 'var(--accent-blue)' : 'var(--bg-subtle)',
+                          color: isSel ? '#ffffff' : 'var(--text-secondary)',
+                          border: '1px solid var(--border-strong)'
+                        }}
+                      >
+                        {inc.calle_1.replace('Av. ', '').replace('Calle ', '')}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* CONTROLES SUPERIORES DERECHOS DEL MAPA (CONMUTACIÓN DE MODO) */}
+            <div
+              style={{
+                position: 'absolute',
+                top: '14px',
+                right: '14px',
+                zIndex: 800
+              }}
+            >
+              {!corridorMode ? (
+                /* BOTÓN PRINCIPAL PARA EJECUTAR ANÁLISIS DE CORREDORES */
+                <button
+                  onClick={activateCorridorAnalysis}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    backgroundColor: '#1d4ed8',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '20px',
+                    padding: '8px 18px',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 14px rgba(29, 78, 216, 0.45)',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <Activity size={14} />
+                  <span>Realizar Análisis de Corredores</span>
+                  <ArrowRight size={13} />
+                </button>
+              ) : (
+                /* MODO CORREDORES ACTIVO: BOTÓN DE RETORNO AL MONITOREO DE NOTICIAS */
+                <button
+                  onClick={activateNewsMonitoring}
+                  title="Ocultar corredores y volver a los puntos de noticias"
+                  style={{
+                    backgroundColor: 'var(--bg-glass)',
+                    backdropFilter: 'blur(10px)',
+                    color: 'var(--text-secondary)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '20px',
+                    padding: '7px 14px',
+                    fontSize: '11.5px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    boxShadow: 'var(--shadow-sm)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  <Newspaper size={13} color="var(--accent-blue)" />
+                  <span>Volver a Noticias de Prensa</span>
+                </button>
+              )}
+            </div>
+
+            {/* Leyenda Inferior Derecha dentro del Mapa (Contextual según Modo) */}
+            <div
+              style={{
+                position: 'absolute',
+                bottom: '16px',
+                right: '14px',
+                zIndex: 800,
+                backgroundColor: 'var(--bg-glass)',
+                backdropFilter: 'blur(8px)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '8px',
+                padding: '8px 12px',
+                boxShadow: 'var(--shadow-md)',
+                display: 'flex',
+                gap: '14px',
+                fontSize: '11px',
+                color: 'var(--text-secondary)'
+              }}
+            >
+              {corridorMode ? (
+                <>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#be123c', display: 'inline-block' }} />
+                    <strong>Nodo Crítico Evaluado (&gt;60% Riesgo)</strong>
+                  </span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#1d4ed8', display: 'inline-block' }} />
+                    <strong>Monitoreo Preventivo</strong>
+                  </span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ width: '16px', height: '3px', backgroundColor: '#1d4ed8', display: 'inline-block' }} />
+                    <strong>Desvío Sugerido (San Lorenzo)</strong>
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#be123c', display: 'inline-block' }} />
+                    <strong>Siniestro Grave en Prensa</strong>
+                  </span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#1d4ed8', display: 'inline-block' }} />
+                    <strong>Incidente / Calzada Reducida</strong>
+                  </span>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* PANEL DERECHO DE DECISIONES E INSPECTOR DE NOTICIAS (495px) */}
+          <aside
+            style={{
+              width: '495px',
+              height: '100%',
+              maxHeight: '100%',
+              backgroundColor: 'var(--bg-surface)',
+              borderLeft: '1px solid var(--border-color)',
+              overflowY: 'auto',
+              overflowX: 'hidden',
+              padding: '16px 18px 60px 18px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '14px',
+              flexShrink: 0,
+              zIndex: 900
+            }}
+          >
+            {/* 1. ASISTENTE DE CONSULTAS Y RECOMENDACIONES CON IA (EN LA PARTE SUPERIOR) */}
+            <div
+              style={{
+                backgroundColor: 'var(--bg-canvas)',
+                border: '1px solid var(--border-strong)',
+                borderRadius: '10px',
+                padding: '14px 16px',
+                boxShadow: 'var(--shadow-sm)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '10px'
+              }}
+            >
+              {/* Cabecera con Avatar estilo Grokbot y Estado en Línea */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <AitaraAvatar state={asking ? 'thinking' : 'idle'} size={46} />
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '13px', fontWeight: 800, color: 'var(--text-primary)' }}>
+                        Asistente AITARA
+                      </span>
+                      <span
+                        style={{
+                          fontSize: '9.5px',
+                          fontWeight: 700,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.04em',
+                          color: '#16a34a',
+                          backgroundColor: 'rgba(22, 163, 74, 0.12)',
+                          padding: '2px 7px',
+                          borderRadius: '4px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}
+                      >
+                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#16a34a' }} />
+                        IA Activa
+                      </span>
+                    </div>
+                    <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                      Inteligencia vial y soporte de decisiones en tiempo real
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Botones de Consulta Rápida (Sugerencias 1-Click) */}
+              <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
+                {[
+                  '¿Cuántos choques hubo sobre Av. Quaranta?',
+                  '¿Dónde posicionar patrullas a las 07:00 hs?',
+                  '¿Cómo afecta lluvia de 40 mm/h en San Martín y Andresito?'
+                ].map((sug, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      setQuestion(sug)
+                    }}
+                    style={{
+                      fontSize: '10px',
+                      fontWeight: 600,
+                      color: 'var(--accent-blue)',
+                      backgroundColor: 'var(--accent-blue-soft)',
+                      border: '1px solid var(--accent-blue-border)',
+                      borderRadius: '5px',
+                      padding: '3px 8px',
+                      cursor: 'pointer',
+                      textAlign: 'left'
+                    }}
+                  >
+                    {sug}
+                  </button>
+                ))}
+              </div>
+
+              {/* Formulario de Consulta */}
+              <form onSubmit={handleAskAnalyst} style={{ display: 'flex', gap: '6px' }}>
+                <input
+                  type="text"
+                  value={question}
+                  onChange={e => setQuestion(e.target.value)}
+                  placeholder="Ej: ¿Cuántos choques suele haber entre las 17 y 18 hs?"
+                  style={{
+                    flex: 1,
+                    padding: '8px 12px',
+                    fontSize: '12px',
+                    borderRadius: '6px',
+                    border: '1px solid var(--border-strong)',
+                    backgroundColor: 'var(--bg-surface)',
+                    color: 'var(--text-primary)',
+                    outline: 'none'
+                  }}
+                />
+                <button
+                  type="submit"
+                  disabled={asking || !question.trim()}
+                  style={{
+                    padding: '8px 14px',
+                    backgroundColor: asking ? 'var(--text-muted)' : 'var(--accent-blue)',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '6px',
+                    fontWeight: 600,
+                    fontSize: '12px',
+                    cursor: asking ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    transition: 'background-color 0.15s ease'
+                  }}
+                >
+                  <span>Consultar</span>
+                  <Send size={12} />
+                </button>
+              </form>
+
+              {/* Estado Animado de Pensamiento / Loading */}
+              {asking && (
+                <div
+                  style={{
+                    backgroundColor: 'var(--accent-blue-soft)',
+                    border: '1px solid var(--accent-blue-border)',
+                    borderRadius: '8px',
+                    padding: '10px 14px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px'
+                  }}
+                >
+                  <div style={{ display: 'flex', gap: '4px' }}>
+                    <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: 'var(--accent-blue)', animation: 'dotPulse 1.2s infinite ease-in-out', animationDelay: '0s' }} />
+                    <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: 'var(--accent-blue)', animation: 'dotPulse 1.2s infinite ease-in-out', animationDelay: '0.2s' }} />
+                    <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: 'var(--accent-blue)', animation: 'dotPulse 1.2s infinite ease-in-out', animationDelay: '0.4s' }} />
+                  </div>
+                  <span style={{ fontSize: '11.5px', fontWeight: 600, color: 'var(--accent-blue)' }}>
+                    AITARA analizando la red vial de Posadas y modelos de tránsito...
+                  </span>
+                </div>
+              )}
+
+              {/* Respuesta del Analista */}
+              {analystReply && !asking && (
+                <div
+                  style={{
+                    backgroundColor: 'var(--accent-blue-soft)',
+                    border: '1px solid var(--accent-blue-border)',
+                    borderRadius: '8px',
+                    padding: '12px 14px',
+                    fontSize: '12px',
+                    color: 'var(--text-primary)',
+                    lineHeight: 1.5
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--accent-blue)' }}>
+                      Recomendación Táctica AITARA
+                    </span>
+                  </div>
+                  <div
+                    style={{ whiteSpace: 'pre-line', lineHeight: '1.6' }}
+                    dangerouslySetInnerHTML={{
+                      __html: analystReply
+                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                        .replace(/^### (.*$)/gim, '<h4 style="margin:8px 0 4px; color:var(--text-primary);">$1</h4>')
+                        .replace(/^## (.*$)/gim, '<h3 style="margin:10px 0 4px; color:var(--text-primary);">$1</h3>')
+                    }}
+                  />
+                  <div style={{ marginTop: '8px', paddingTop: '6px', borderTop: '1px solid var(--border-color)', fontSize: '10px', color: 'var(--text-muted)' }}>
+                    Fuente: Modelos calibrados IDE Posadas · OPAD · Memoria de siniestros
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* =======================================================
+                CONTENIDO DEL PANEL DERECHO SEGÚN EL MODO ACTIVO
+               ======================================================= */}
+
+            {!corridorMode ? (
+              /* =====================================================
+                 MODO 1: MONITOREO DE NOTICIAS DE PRENSA (DEFAULT)
+                 - Muestra el llamador para Análisis de Corredores
+                 - Muestra el Inspector de Noticias
+                 - Variables y órdenes ocultas hasta presionar el botón
+                 ===================================================== */
+              <>
+                {/* Banner de Acción: Realizar Análisis de Corredores */}
+                <div
+                  style={{
+                    backgroundColor: 'var(--accent-blue-soft)',
+                    border: '1px solid var(--accent-blue-border)',
+                    borderRadius: '10px',
+                    padding: '14px 16px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Activity size={16} color="var(--accent-blue)" />
+                    <strong style={{ fontSize: '13px', color: 'var(--text-primary)' }}>
+                      Análisis de Corredores y Despacho Táctico
+                    </strong>
+                  </div>
+                  <p style={{ fontSize: '11.5px', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
+                    Modo actual: <strong>Monitoreo de Prensa</strong> (12 incidentes geolocalizados en el mapa). Presioná el botón para analizar los corredores críticos, ajustar variables operativas y calcular las órdenes de patrullaje.
+                  </p>
+                  <button
+                    onClick={activateCorridorAnalysis}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      backgroundColor: 'var(--accent-blue)',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '6px',
+                      padding: '9px 14px',
+                      fontWeight: 700,
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                      marginTop: '2px',
+                      boxShadow: '0 2px 6px rgba(29, 78, 216, 0.25)'
+                    }}
+                  >
+                    <SlidersHorizontal size={13} />
+                    <span>Realizar Análisis de Corredores</span>
+                    <ArrowRight size={13} />
+                  </button>
+                </div>
+
+                {/* Inspector de Noticias Periodísticas (Desplegado en Modo Prensa) */}
+                <div
+                  style={{
+                    backgroundColor: 'var(--bg-canvas)',
+                    border: '1px solid var(--border-strong)',
+                    borderRadius: '10px',
+                    overflow: 'hidden',
+                    boxShadow: 'var(--shadow-sm)'
+                  }}
+                >
+                  <button
+                    onClick={() => setShowNewsInspector(open => !open)}
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '10px 14px',
+                      backgroundColor: 'transparent',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: 'var(--text-primary)'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Newspaper size={14} color="var(--accent-blue)" />
+                      <span style={{ fontSize: '11.5px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                        Inspector de Prensa y Sucesos Viales
+                      </span>
+                      <span
+                        style={{
+                          fontSize: '10px',
+                          backgroundColor: 'var(--bg-subtle)',
+                          padding: '2px 7px',
+                          borderRadius: '4px',
+                          color: 'var(--text-muted)',
+                          fontWeight: 600
+                        }}
+                      >
+                        {selectedIncident ? '1 activo' : `${incidents.length || 12} disponibles`}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-muted)', fontSize: '11px' }}>
+                      <span>{showNewsInspector ? 'Ocultar' : 'Ver detalle'}</span>
+                      {showNewsInspector ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                    </div>
+                  </button>
+
+                  {showNewsInspector && (
+                    <div style={{ borderTop: '1px solid var(--border-color)', padding: '12px 14px' }}>
+                      {selectedIncident ? (
+                        <div>
+                          {/* Cabecera Editorial del Medio */}
+                          <div
+                            style={{
+                              backgroundColor: Number(selectedIncident.severidad) >= 2 ? 'var(--alert-crimson-soft)' : 'var(--accent-blue-soft)',
+                              borderBottom: '1px solid var(--border-color)',
+                              borderRadius: '6px 6px 0 0',
+                              padding: '9px 12px',
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center'
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <span
+                                style={{
+                                  backgroundColor: Number(selectedIncident.severidad) >= 2 ? 'var(--alert-crimson)' : 'var(--accent-blue)',
+                                  color: '#ffffff',
+                                  fontSize: '10px',
+                                  fontWeight: 800,
+                                  padding: '2px 8px',
+                                  borderRadius: '4px',
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.04em'
+                                }}
+                              >
+                                {SOURCE_LABELS[selectedIncident.fuente] || selectedIncident.fuente}
+                              </span>
+                              <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                                {selectedIncident.fecha_evento ? selectedIncident.fecha_evento.replace('T', ' · ').slice(0, 18) : 'Reciente'} hs
+                              </span>
+                            </div>
+
+                            <span
+                              style={{
+                                fontSize: '10.5px',
+                                fontWeight: 700,
+                                color: Number(selectedIncident.severidad) >= 2 ? 'var(--alert-crimson)' : 'var(--accent-blue)',
+                                textTransform: 'uppercase'
+                              }}
+                            >
+                              {selectedIncident.tipo_incidente?.replace('_', ' ')}
+                            </span>
+                          </div>
+
+                          {/* Cuerpo del Recorte Periodístico */}
+                          <div style={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-color)', borderTop: 'none', borderRadius: '0 0 6px 6px', padding: '12px 14px' }}>
+                            <h3
+                              style={{
+                                fontSize: '13.5px',
+                                fontWeight: 800,
+                                color: 'var(--text-primary)',
+                                lineHeight: 1.35,
+                                marginBottom: '6px'
+                              }}
+                            >
+                              “{selectedIncident.titulo}”
+                            </h3>
+
+                            <p
+                              style={{
+                                fontSize: '11.5px',
+                                color: 'var(--text-secondary)',
+                                lineHeight: 1.45,
+                                marginBottom: '10px',
+                                paddingLeft: '10px',
+                                borderLeft: '2px solid var(--border-strong)'
+                              }}
+                            >
+                              {selectedIncident.resumen}
+                            </p>
+
+                            {/* Ficha de Variables Extraídas Automáticamente */}
+                            <div
+                              style={{
+                                backgroundColor: 'var(--bg-canvas)',
+                                border: '1px solid var(--border-color)',
+                                borderRadius: '6px',
+                                padding: '8px 10px',
+                                marginBottom: '10px'
+                              }}
+                            >
+                              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '8px', fontSize: '11px' }}>
+                                <div>
+                                  <span style={{ fontSize: '9.5px', color: 'var(--text-muted)', display: 'block' }}>Lugar del Hecho</span>
+                                  <strong style={{ color: 'var(--text-primary)' }}>{selectedIncident.ubicacion_texto}</strong>
+                                </div>
+                                <div>
+                                  <span style={{ fontSize: '9.5px', color: 'var(--text-muted)', display: 'block' }}>Calles Identificadas</span>
+                                  <strong style={{ color: 'var(--text-primary)' }}>
+                                    {selectedIncident.calle_1} y {selectedIncident.calle_2?.replace('CalleTucumán', 'Calle Tucumán')?.replace(/Calle([A-Z])/g, 'Calle $1')}
+                                  </strong>
+                                </div>
+                                <div>
+                                  <span style={{ fontSize: '9.5px', color: 'var(--text-muted)', display: 'block' }}>Gravedad Estimada</span>
+                                  <span
+                                    style={{
+                                      fontWeight: 700,
+                                      color: Number(selectedIncident.severidad) >= 2 ? 'var(--alert-crimson)' : 'var(--accent-blue)'
+                                    }}
+                                  >
+                                    {SEVERITY_LABELS[selectedIncident.severidad] || selectedIncident.severidad}
+                                  </span>
+                                </div>
+                                <div>
+                                  <span style={{ fontSize: '9.5px', color: 'var(--text-muted)', display: 'block' }}>Vehículos Involucrados</span>
+                                  <strong style={{ color: 'var(--text-primary)', textTransform: 'capitalize' }}>
+                                    {selectedIncident.vehiculos || 'Afectación de calzada'}
+                                  </strong>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Pie con Coordenadas y Botón al Diario Original */}
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span className="mono" style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
+                                GPS: {Number(selectedIncident.lat).toFixed(4)}, {Number(selectedIncident.lon).toFixed(4)}
+                              </span>
+
+                              <a
+                                href={selectedIncident.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '5px',
+                                  padding: '5px 10px',
+                                  borderRadius: '5px',
+                                  backgroundColor: 'var(--accent-blue)',
+                                  color: '#ffffff',
+                                  fontSize: '11px',
+                                  fontWeight: 600,
+                                  textDecoration: 'none'
+                                }}
+                              >
+                                <span>Leer nota completa</span>
+                                <ExternalLink size={11} />
+                              </a>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div style={{ textAlign: 'center', padding: '16px 12px', color: 'var(--text-muted)', fontSize: '11.5px', lineHeight: 1.5 }}>
+                          Hacé clic sobre cualquier marcador de noticia en el mapa para cargar su recorte periodístico y las variables viales extraídas automáticamente.
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </>
+            ) : (
+              /* =====================================================
+                 MODO 2: ANÁLISIS DE CORREDORES Y DESPACHO TÁCTICO
+                 - Puntos de noticias desaparecen del mapa
+                 - Aparece el ajuste de variables (franja, lluvia, dotación)
+                 - Aparecen el nodo crítico y las órdenes de despacho
+                 ===================================================== */
+              <>
+                {/* Barra de Modo Activo y Retorno */}
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    backgroundColor: 'var(--accent-blue-soft)',
+                    border: '1px solid var(--accent-blue-border)',
+                    borderRadius: '8px',
+                    padding: '8px 12px'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', fontWeight: 700, color: 'var(--accent-blue)' }}>
+                    <Activity size={14} />
+                    <span>Análisis de Corredores Activo</span>
+                  </div>
+                  <button
+                    onClick={activateNewsMonitoring}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      backgroundColor: 'var(--bg-surface)',
+                      border: '1px solid var(--border-strong)',
+                      borderRadius: '5px',
+                      padding: '4px 9px',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      color: 'var(--text-secondary)',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <Newspaper size={12} color="var(--accent-blue)" />
+                    <span>Ver Noticias</span>
+                  </button>
+                </div>
+
+                {/* AJUSTE DE VARIABLES DEL ESCENARIO OPERATIVO (FRANJA, LLUVIA, DOTACIÓN) */}
+                <div
+                  style={{
+                    backgroundColor: 'var(--bg-canvas)',
+                    border: '1px solid var(--border-strong)',
+                    borderRadius: '10px',
+                    padding: '12px 14px',
+                    boxShadow: 'var(--shadow-sm)'
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: '10.5px',
+                      fontWeight: 700,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      color: 'var(--accent-blue)',
+                      marginBottom: '8px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    <SlidersHorizontal size={13} /> Ajuste de Variables del Escenario
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
+                    <div>
+                      <label style={{ fontSize: '9.5px', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '3px' }}>
+                        FRANJA HORARIA
+                      </label>
+                      <select
+                        value={franja}
+                        onChange={e => setFranja(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '5px 6px',
+                          fontSize: '11.5px',
+                          fontWeight: 600,
+                          borderRadius: '5px',
+                          border: '1px solid var(--border-strong)',
+                          backgroundColor: 'var(--bg-surface)',
+                          color: 'var(--text-primary)',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <option value="07:00">07:00 hs (Pico)</option>
+                        <option value="12:00">12:00 hs (Mediodía)</option>
+                        <option value="18:00">18:00 hs (Regreso)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label style={{ fontSize: '9.5px', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '3px' }}>
+                        LLUVIA (OPAD)
+                      </label>
+                      <select
+                        value={lluvia}
+                        onChange={e => setLluvia(Number(e.target.value))}
+                        style={{
+                          width: '100%',
+                          padding: '5px 6px',
+                          fontSize: '11.5px',
+                          fontWeight: 600,
+                          borderRadius: '5px',
+                          border: '1px solid var(--border-strong)',
+                          backgroundColor: 'var(--bg-surface)',
+                          color: 'var(--text-primary)',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <option value={0}>0 mm (Seco)</option>
+                        <option value={15}>15 mm/h (Lluvia)</option>
+                        <option value={40}>40 mm/h (Temporal)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label style={{ fontSize: '9.5px', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '3px' }}>
+                        DOTACIÓN MÓVILES
+                      </label>
+                      <select
+                        value={dotacion}
+                        onChange={e => setDotacion(Number(e.target.value))}
+                        style={{
+                          width: '100%',
+                          padding: '5px 6px',
+                          fontSize: '11.5px',
+                          fontWeight: 600,
+                          borderRadius: '5px',
+                          border: '1px solid var(--border-strong)',
+                          backgroundColor: 'var(--bg-surface)',
+                          color: 'var(--text-primary)',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <option value={1}>1 móvil</option>
+                        <option value={2}>2 móviles</option>
+                        <option value={4}>4 móviles</option>
+                        <option value={6}>6 móviles</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* PUNTO CRÍTICO DE ATENCIÓN PRIORITARIA */}
+                {topCritico && (
+                  <div
+                    style={{
+                      backgroundColor: 'var(--alert-crimson-soft)',
+                      border: '1px solid var(--alert-crimson-border)',
+                      borderLeft: '4px solid var(--alert-crimson)',
+                      borderRadius: '8px',
+                      padding: '9px 12px'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+                        <AlertTriangle size={13} color="var(--alert-crimson)" />
+                        <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: 'var(--alert-crimson)', letterSpacing: '0.04em' }}>
+                          Punto Crítico ({franja} hs):
+                        </span>
+                        <strong style={{ fontSize: '12px', color: 'var(--text-primary)' }}>{topCritico.nombre}</strong>
+                        <span
+                          style={{
+                            backgroundColor: 'var(--alert-crimson)',
+                            color: '#ffffff',
+                            fontSize: '10px',
+                            fontWeight: 700,
+                            padding: '1px 6px',
+                            borderRadius: '3px'
+                          }}
+                        >
+                          {Math.round(topCritico.riesgo_final * 100)}%
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => setShowCriticalDetail(open => !open)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: 'var(--alert-crimson)',
+                          fontSize: '10.5px',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '3px'
+                        }}
+                      >
+                        <span>{showCriticalDetail ? 'Ocultar' : 'Causas'}</span>
+                        {showCriticalDetail ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
+                      </button>
+                    </div>
+                    {showCriticalDetail && (
+                      <p style={{ fontSize: '11px', color: 'var(--text-secondary)', lineHeight: 1.4, marginTop: '6px', paddingTop: '6px', borderTop: '1px solid var(--alert-crimson-border)' }}>
+                        <strong>Factores de riesgo:</strong> {topCritico.factores.join(' · ')}.
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* RECOMENDACIONES OPERATIVAS Y ÓRDENES DE DESPACHO TÁCTICO */}
+                <div
+                  style={{
+                    backgroundColor: 'var(--bg-canvas)',
+                    border: '1px solid var(--border-strong)',
+                    borderRadius: '10px',
+                    overflow: 'hidden',
+                    boxShadow: 'var(--shadow-sm)'
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '10px 14px'
+                    }}
+                  >
+                    <button
+                      onClick={() => setShowDispatchOrders(open => !open)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color: 'var(--text-primary)',
+                        textAlign: 'left'
+                      }}
+                    >
+                      <ShieldCheck size={14} color="#16a34a" />
+                      <span style={{ fontSize: '11.5px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                        Órdenes de Despacho Táctico
+                      </span>
+                      <span
+                        style={{
+                          fontSize: '10px',
+                          backgroundColor: 'rgba(22, 163, 74, 0.12)',
+                          color: '#16a34a',
+                          fontWeight: 700,
+                          padding: '2px 7px',
+                          borderRadius: '4px'
+                        }}
+                      >
+                        {evalData?.ordenes_despacho?.length || 0} móviles
+                      </span>
+                      {showDispatchOrders ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                    </button>
+
+                    <button
+                      onClick={handleCopyDispatch}
+                      title="Copiar instrucciones para Radio / WhatsApp"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        color: 'var(--accent-blue)',
+                        backgroundColor: 'var(--accent-blue-soft)',
+                        border: '1px solid var(--accent-blue-border)',
+                        borderRadius: '6px',
+                        padding: '4px 9px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      {copied ? <Check size={12} /> : <Copy size={12} />}
+                      <span>{copied ? 'Copiado' : 'Copiar'}</span>
+                    </button>
+                  </div>
+
+                  {showDispatchOrders && (
+                    <div style={{ borderTop: '1px solid var(--border-color)', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      {evalData?.ordenes_despacho?.map(ord => (
+                        <div
+                          key={ord.movil_id}
+                          style={{
+                            backgroundColor: 'var(--bg-surface)',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: '6px',
+                            padding: '9px 12px'
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px', marginBottom: '3px' }}>
+                            <strong style={{ color: 'var(--accent-blue)' }}>
+                              {ord.movil_id} · {ord.nodo_objetivo}
+                            </strong>
+                            <span style={{ color: 'var(--text-muted)', fontSize: '11px', fontWeight: 600 }}>
+                              Presentación: {ord.hora_presentacion} hs
+                            </span>
+                          </div>
+                          <p style={{ fontSize: '11.5px', color: 'var(--text-secondary)', lineHeight: 1.38 }}>{ord.instruccion_tactica}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Inspector de Noticias Colapsado (Opcional en Modo Corredores) */}
+                <div
+                  style={{
+                    backgroundColor: 'var(--bg-canvas)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '8px',
+                    overflow: 'hidden'
+                  }}
+                >
+                  <button
+                    onClick={() => setShowNewsInspector(open => !open)}
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '8px 12px',
+                      backgroundColor: 'transparent',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: 'var(--text-secondary)',
+                      fontSize: '11px'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Newspaper size={13} color="var(--text-muted)" />
+                      <span>Ver Recortes de Prensa Históricos ({incidents.length || 12})</span>
+                    </div>
+                    {showNewsInspector ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                  </button>
+
+                  {showNewsInspector && selectedIncident && (
+                    <div style={{ borderTop: '1px solid var(--border-color)', padding: '10px 12px', fontSize: '11.5px' }}>
+                      <strong style={{ color: 'var(--text-primary)' }}>“{selectedIncident.titulo}”</strong>
+                      <p style={{ color: 'var(--text-secondary)', margin: '4px 0' }}>{selectedIncident.resumen}</p>
+                      <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{selectedIncident.ubicacion_texto}</span>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </aside>
+        </div>
+
+      {/* =====================================================================
+          PESTAÑA 2: PLANIFICACIÓN DE OBRAS VIALES (SIN ETIQUETAS TÉCNICAS)
+         ===================================================================== */}
+      <div style={{ display: activeTab === 'estrategico' ? 'block' : 'none', flex: 1, overflowY: 'auto', padding: '28px 36px', maxWidth: '1280px', margin: '0 auto', width: '100%' }}>
+        {strategic && (
+          <>
+            <div style={{ marginBottom: '20px' }}>
+              <h2 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-primary)' }}>
+                Planificación de Infraestructura y Mejora Continua
+              </h2>
+              <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                Diagnóstico acumulado sobre los puntos con siniestralidad reiterada en Posadas para priorizar obras civiles, dársenas escolares y desagües pluviales.
+              </p>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '24px' }}>
+              {strategic.kpis.map((k, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    backgroundColor: 'var(--bg-surface)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '10px',
+                    padding: '18px 20px',
+                    boxShadow: 'var(--shadow-sm)'
+                  }}
+                >
+                  <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '6px' }}>
+                    {k.label}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: '28px',
+                      fontWeight: 800,
+                      color: k.tone === 'red' ? 'var(--alert-crimson)' : k.tone === 'blue' ? 'var(--accent-blue)' : 'var(--text-primary)',
+                      marginBottom: '4px'
+                    }}
+                  >
+                    {k.value === '0 hechos verificados' ? `${incidents.length || 12} hechos verificados` : k.value}
+                  </div>
+                  <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{k.sub}</div>
+                </div>
+              ))}
+            </div>
+
+            <div
+              style={{
+                backgroundColor: 'var(--bg-surface)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '10px',
+                overflow: 'hidden',
+                boxShadow: 'var(--shadow-sm)'
+              }}
+            >
+              <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border-color)', fontWeight: 700, fontSize: '13.5px' }}>
+                Intersecciones con Prioridad de Intervención de Obras Públicas
+              </div>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12.5px', textAlign: 'left' }}>
+                <thead>
+                  <tr style={{ backgroundColor: 'var(--bg-subtle)', color: 'var(--text-muted)', fontSize: '11px', textTransform: 'uppercase' }}>
+                    <th style={{ padding: '12px 16px' }}>Intersección / Corredor</th>
+                    <th style={{ padding: '12px 16px' }}>Ubicación Geográfica</th>
+                    <th style={{ padding: '12px 16px' }}>Problemática Detectada</th>
+                    <th style={{ padding: '12px 16px' }}>Recurrencia Anual</th>
+                    <th style={{ padding: '12px 16px' }}>Obra Pública Propuesta</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {strategic.ranking_infraestructura.map(row => (
+                    <tr key={row.nodo_id} style={{ borderTop: '1px solid var(--border-color)' }}>
+                      <td style={{ padding: '14px 16px', fontWeight: 700, color: 'var(--text-primary)' }}>{row.interseccion}</td>
+                      <td className="mono" style={{ padding: '14px 16px', color: 'var(--text-muted)', fontSize: '11.5px' }}>
+                        {row.coordenadas}
+                      </td>
+                      <td style={{ padding: '14px 16px', color: 'var(--text-secondary)' }}>{row.causa_raiz}</td>
+                      <td style={{ padding: '14px 16px', color: 'var(--alert-crimson)', fontWeight: 600 }}>{row.frecuencia}</td>
+                      <td style={{ padding: '14px 16px', color: 'var(--accent-blue)', fontWeight: 600 }}>{row.obra_recomendada}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* =====================================================================
+          PESTAÑA 3: CENTRO DE INFORMACIÓN Y FUENTES (DIAGRAMA + GESTOR ESTILO DRIVE)
+         ===================================================================== */}
+      <div style={{ display: activeTab === 'repositorio' ? 'flex' : 'none', flex: 1, flexDirection: 'column', overflow: 'hidden', padding: '18px 24px', gap: '16px' }}>
+          {/* BLOQUE SUPERIOR: DIAGRAMA DE FLUJO VISUAL EN VIVO (RELEVAMIENTO Y EXPANSIÓN DE FUENTES) */}
+          <div
+            style={{
+              backgroundColor: 'var(--bg-surface)',
+              border: '1px solid var(--border-color)',
+              borderRadius: '10px',
+              padding: '14px 18px',
+              boxShadow: 'var(--shadow-sm)',
+              flexShrink: 0
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Activity size={16} color="var(--accent-blue)" />
+                <span style={{ fontSize: '13px', fontWeight: 800, color: 'var(--text-primary)' }}>
+                  Circuito Activo de Relevamiento y Procesamiento de Información Vial
+                </span>
+              </div>
+              <span
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  color: '#16a34a',
+                  backgroundColor: 'rgba(22, 163, 74, 0.1)',
+                  padding: '3px 10px',
+                  borderRadius: '999px'
+                }}
+              >
+                ● Monitoreo Automático Activo · Arquitectura Escalable a Nuevas Fuentes
+              </span>
+            </div>
+
+            {/* 4 Etapas del Diagrama de Flujo */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr auto 1fr auto 1fr', alignItems: 'center', gap: '10px' }}>
+              {/* Etapa 1 */}
+              <div
+                style={{
+                  backgroundColor: 'var(--bg-canvas)',
+                  border: '1px solid var(--border-strong)',
+                  borderRadius: '8px',
+                  padding: '10px 12px'
+                }}
+              >
+                <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--accent-blue)', textTransform: 'uppercase', marginBottom: '3px' }}>
+                  1. Fuentes Conectadas y Futuras
+                </div>
+                <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '2px' }}>
+                  Medios Locales, Clima y Sensores
+                </div>
+                <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
+                  Primera Edición, Misiones Online, Canal 12, OPAD, IDE Posadas (+ expansión a 911 / Waze)
+                </div>
+              </div>
+
+              <ArrowRight size={18} color="var(--accent-blue)" />
+
+              {/* Etapa 2 */}
+              <div
+                style={{
+                  backgroundColor: 'var(--bg-canvas)',
+                  border: '1px solid var(--border-strong)',
+                  borderRadius: '8px',
+                  padding: '10px 12px'
+                }}
+              >
+                <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--accent-blue)', textTransform: 'uppercase', marginBottom: '3px' }}>
+                  2. Lectura y Filtrado Inteligente
+                </div>
+                <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '2px' }}>
+                  Detección de Sucesos Viales
+                </div>
+                <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
+                  Identifica choques, cortes de calzada, semáforos fuera de servicio, horarios y vehículos involucrados
+                </div>
+              </div>
+
+              <ArrowRight size={18} color="var(--accent-blue)" />
+
+              {/* Etapa 3 */}
+              <div
+                style={{
+                  backgroundColor: 'var(--bg-canvas)',
+                  border: '1px solid var(--border-strong)',
+                  borderRadius: '8px',
+                  padding: '10px 12px'
+                }}
+              >
+                <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--accent-blue)', textTransform: 'uppercase', marginBottom: '3px' }}>
+                  3. Ubicación en Cuadrícula Vial
+                </div>
+                <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '2px' }}>
+                  Georreferenciación en Posadas
+                </div>
+                <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
+                  Cruza las arterias mencionadas en la noticia con el mapa oficial de calles y zonas escolares
+                </div>
+              </div>
+
+              <ArrowRight size={18} color="var(--accent-blue)" />
+
+              {/* Etapa 4 */}
+              <div
+                style={{
+                  backgroundColor: 'var(--bg-canvas)',
+                  border: '1px solid var(--accent-blue-border)',
+                  borderLeft: '3px solid var(--accent-blue)',
+                  borderRadius: '8px',
+                  padding: '10px 12px'
+                }}
+              >
+                <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--accent-blue)', textTransform: 'uppercase', marginBottom: '3px' }}>
+                  4. Acción Preventiva y Obras
+                </div>
+                <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '2px' }}>
+                  Despacho y Planificación
+                </div>
+                <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
+                  Actualiza el mapa operativo, sugiere desvíos de colectivos y prioriza obras de infraestructura
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* BLOQUE INFERIOR: EXPLORADOR DE INFORMACIÓN ESTILO GOOGLE DRIVE (3 PANELES) */}
+          <div
+            style={{
+              flex: 1,
+              display: 'flex',
+              backgroundColor: 'var(--bg-surface)',
+              border: '1px solid var(--border-color)',
+              borderRadius: '10px',
+              overflow: 'hidden',
+              boxShadow: 'var(--shadow-sm)'
+            }}
+          >
+            {/* COLUMNA 1: ÁRBOL DE CARPETAS Y FUENTES CONECTADAS */}
+            <div
+              style={{
+                width: '265px',
+                borderRight: '1px solid var(--border-color)',
+                backgroundColor: 'var(--bg-canvas)',
+                padding: '14px 12px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '6px',
+                overflowY: 'auto',
+                flexShrink: 0
+              }}
+            >
+              <div
+                style={{
+                  fontSize: '10.5px',
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  color: 'var(--text-muted)',
+                  padding: '0 8px 6px 8px'
+                }}
+              >
+                Unidades de Información y Fuentes
+              </div>
+
+              {SOURCE_FOLDERS.map(folder => {
+                const isSelected = selectedFolder === folder.id
+                const isSelectable = ['all', 'misiones_online', 'primera_edicion', 'canal_12'].includes(folder.id)
+                return (
+                  <div
+                    key={folder.id}
+                    onClick={() => isSelectable && setSelectedFolder(folder.id)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '8px 10px',
+                      borderRadius: '6px',
+                      cursor: isSelectable ? 'pointer' : 'default',
+                      backgroundColor: isSelected ? 'var(--accent-blue-soft)' : 'transparent',
+                      border: isSelected ? '1px solid var(--accent-blue-border)' : '1px solid transparent',
+                      opacity: isSelectable ? 1 : 0.85
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      {isSelected ? (
+                        <FolderOpen size={16} color="var(--accent-blue)" />
+                      ) : (
+                        <Folder size={16} color={isSelectable ? 'var(--accent-blue)' : 'var(--text-muted)'} />
+                      )}
+                      <div>
+                        <div style={{ fontSize: '12px', fontWeight: isSelected ? 700 : 600, color: 'var(--text-primary)' }}>
+                          {folder.name}
+                        </div>
+                        <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{folder.status}</div>
+                      </div>
+                    </div>
+
+                    <span
+                      style={{
+                        fontSize: '10px',
+                        fontWeight: 700,
+                        padding: '2px 6px',
+                        borderRadius: '4px',
+                        backgroundColor: 'var(--bg-subtle)',
+                        color: 'var(--text-secondary)'
+                      }}
+                    >
+                      {folder.count}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* COLUMNA 2: GRILLA / LISTA DE REGISTROS PROCESADOS (ESTILO DRIVE) */}
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+              {/* Barra de herramientas del gestor documental */}
+              <div
+                style={{
+                  padding: '10px 16px',
+                  borderBottom: '1px solid var(--border-color)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  gap: '12px'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, maxWidth: '420px' }}>
+                  <Search size={15} color="var(--text-muted)" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    placeholder="Buscar por avenida, calle, vehículo o suceso..."
+                    style={{
+                      width: '100%',
+                      padding: '6px 10px',
+                      fontSize: '12px',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border-strong)',
+                      backgroundColor: 'var(--bg-canvas)',
+                      color: 'var(--text-primary)'
+                    }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>
+                    Mostrando <strong>{filteredDriveDocs.length}</strong> fichas estructuradas
+                  </span>
+
+                  <div
+                    style={{
+                      display: 'flex',
+                      border: '1px solid var(--border-strong)',
+                      borderRadius: '6px',
+                      overflow: 'hidden'
+                    }}
+                  >
+                    <button
+                      onClick={() => setDriveViewMode('grid')}
+                      style={{
+                        padding: '5px 8px',
+                        backgroundColor: driveViewMode === 'grid' ? 'var(--accent-blue)' : 'var(--bg-surface)',
+                        color: driveViewMode === 'grid' ? '#ffffff' : 'var(--text-secondary)',
+                        border: 'none',
+                        cursor: 'pointer'
+                      }}
+                      title="Vista de tarjetas"
+                    >
+                      <LayoutGrid size={14} />
+                    </button>
+                    <button
+                      onClick={() => setDriveViewMode('list')}
+                      style={{
+                        padding: '5px 8px',
+                        backgroundColor: driveViewMode === 'list' ? 'var(--accent-blue)' : 'var(--bg-surface)',
+                        color: driveViewMode === 'list' ? '#ffffff' : 'var(--text-secondary)',
+                        border: 'none',
+                        cursor: 'pointer'
+                      }}
+                      title="Vista de lista"
+                    >
+                      <List size={14} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Contenido del Gestor (Tarjetas o Lista) */}
+              <div style={{ flex: 1, overflowY: 'auto', padding: '14px 16px' }}>
+                {driveViewMode === 'grid' ? (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(245px, 1fr))', gap: '12px' }}>
+                    {filteredDriveDocs.map(doc => {
+                      const isSel = driveSelectedDoc?.id === doc.id
+                      const isGrave = Number(doc.severidad) >= 2
+                      return (
+                        <div
+                          key={doc.id}
+                          onClick={() => setDriveSelectedDoc(doc)}
+                          style={{
+                            backgroundColor: isSel ? 'var(--accent-blue-soft)' : 'var(--bg-canvas)',
+                            border: isSel ? '1.5px solid var(--accent-blue)' : '1px solid var(--border-color)',
+                            borderRadius: '8px',
+                            padding: '12px',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            justifyContent: 'space-between',
+                            gap: '8px'
+                          }}
+                        >
+                          <div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                              <span
+                                style={{
+                                  fontSize: '9.5px',
+                                  fontWeight: 800,
+                                  textTransform: 'uppercase',
+                                  color: 'var(--accent-blue)'
+                                }}
+                              >
+                                {SOURCE_LABELS[doc.fuente] || doc.fuente}
+                              </span>
+                              <span
+                                style={{
+                                  fontSize: '9.5px',
+                                  fontWeight: 700,
+                                  padding: '2px 6px',
+                                  borderRadius: '4px',
+                                  backgroundColor: isGrave ? 'var(--alert-crimson)' : 'var(--accent-blue)',
+                                  color: '#ffffff',
+                                  textTransform: 'uppercase'
+                                }}
+                              >
+                                {doc.tipo_incidente.replace('_', ' ')}
+                              </span>
+                            </div>
+
+                            <div
+                              style={{
+                                fontSize: '12.5px',
+                                fontWeight: 700,
+                                color: 'var(--text-primary)',
+                                lineHeight: 1.35,
+                                marginBottom: '6px'
+                              }}
+                            >
+                              {doc.titulo}
+                            </div>
+                          </div>
+
+                          <div
+                            style={{
+                              borderTop: '1px solid var(--border-color)',
+                              paddingTop: '6px',
+                              fontSize: '11px',
+                              color: 'var(--text-secondary)',
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center'
+                            }}
+                          >
+                            <span>
+                              {doc.calle_1.replace('Av. ', '')} × {doc.calle_2.replace('Av. ', '')}
+                            </span>
+                            <span style={{ color: '#16a34a', fontWeight: 700, fontSize: '10px' }}>● Verificado</span>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'left' }}>
+                    <thead>
+                      <tr style={{ backgroundColor: 'var(--bg-subtle)', color: 'var(--text-muted)', fontSize: '10.5px', textTransform: 'uppercase' }}>
+                        <th style={{ padding: '9px 12px' }}>Medio / Fuente</th>
+                        <th style={{ padding: '9px 12px' }}>Suceso Relevado</th>
+                        <th style={{ padding: '9px 12px' }}>Esquina / Intersección</th>
+                        <th style={{ padding: '9px 12px' }}>Fecha y Hora</th>
+                        <th style={{ padding: '9px 12px' }}>Estado</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredDriveDocs.map(doc => {
+                        const isSel = driveSelectedDoc?.id === doc.id
+                        return (
+                          <tr
+                            key={doc.id}
+                            onClick={() => setDriveSelectedDoc(doc)}
+                            style={{
+                              borderTop: '1px solid var(--border-color)',
+                              backgroundColor: isSel ? 'var(--accent-blue-soft)' : 'transparent',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            <td style={{ padding: '10px 12px', fontWeight: 700, color: 'var(--accent-blue)' }}>
+                              {SOURCE_LABELS[doc.fuente] || doc.fuente}
+                            </td>
+                            <td style={{ padding: '10px 12px', fontWeight: 600, color: 'var(--text-primary)' }}>{doc.titulo}</td>
+                            <td style={{ padding: '10px 12px', color: 'var(--text-secondary)' }}>
+                              {doc.calle_1} y {doc.calle_2}
+                            </td>
+                            <td className="mono" style={{ padding: '10px 12px', fontSize: '11px' }}>
+                              {doc.fecha_evento.replace('T', ' ').slice(0, 16)} hs
+                            </td>
+                            <td style={{ padding: '10px 12px', color: '#16a34a', fontWeight: 700 }}>Procesado</td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </div>
+
+            {/* COLUMNA 3: PANEL DE DETALLE DEL ARCHIVO SELECCIONADO (ESTILO PREVIEW DE DRIVE) */}
+            {driveSelectedDoc && (
+              <div
+                style={{
+                  width: '340px',
+                  borderLeft: '1px solid var(--border-color)',
+                  backgroundColor: 'var(--bg-canvas)',
+                  padding: '16px',
+                  overflowY: 'auto',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px',
+                  flexShrink: 0
+                }}
+              >
+                <div style={{ fontSize: '10.5px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)' }}>
+                  Ficha de Información Estructurada
+                </div>
+
+                <div
+                  style={{
+                    backgroundColor: 'var(--bg-surface)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '8px',
+                    padding: '12px'
+                  }}
+                >
+                  <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--accent-blue)', marginBottom: '4px' }}>
+                    {SOURCE_LABELS[driveSelectedDoc.fuente] || driveSelectedDoc.fuente}
+                  </div>
+                  <div style={{ fontSize: '13.5px', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.35, marginBottom: '8px' }}>
+                    {driveSelectedDoc.titulo}
+                  </div>
+                  <div style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.45 }}>{driveSelectedDoc.resumen}</div>
+                </div>
+
+                <div
+                  style={{
+                    backgroundColor: 'var(--bg-surface)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '8px',
+                    padding: '12px',
+                    fontSize: '11.5px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px'
+                  }}
+                >
+                  <div>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '10px', display: 'block' }}>INTERSECCIÓN GEORREFERENCIADA</span>
+                    <strong>{driveSelectedDoc.ubicacion_texto}</strong>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '10px', display: 'block' }}>ARTERIAS AFECTADAS</span>
+                    <strong>
+                      {driveSelectedDoc.calle_1} y {driveSelectedDoc.calle_2}
+                    </strong>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '10px', display: 'block' }}>CLASIFICACIÓN Y GRAVEDAD</span>
+                    <strong>{SEVERITY_LABELS[driveSelectedDoc.severidad]}</strong>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '10px', display: 'block' }}>VEHÍCULOS IDENTIFICADOS</span>
+                    <strong style={{ textTransform: 'capitalize' }}>{driveSelectedDoc.vehiculos || 'Calzada'}</strong>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: 'auto' }}>
+                  <button
+                    onClick={() => {
+                      setSelectedIncident(driveSelectedDoc)
+                      setActiveTab('tactico')
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '9px 12px',
+                      backgroundColor: 'var(--accent-blue)',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '6px',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Ver este punto en el Mapa Operativo
+                  </button>
+
+                  <a
+                    href={driveSelectedDoc.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      backgroundColor: 'var(--bg-surface)',
+                      color: 'var(--accent-blue)',
+                      border: '1px solid var(--accent-blue-border)',
+                      borderRadius: '6px',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      textDecoration: 'none',
+                      textAlign: 'center',
+                      display: 'inline-flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    <span>Abrir publicación original</span>
+                    <ExternalLink size={12} />
+                  </a>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+  )
+}
