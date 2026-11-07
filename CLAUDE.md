@@ -17,7 +17,7 @@ Tu trabajo:
    - `critico-codigo`
 4. Volcar el resultado de ambos en `tareas/Txx-revision.md`.
 5. Si hay observaciones bloqueantes, devolverlas a Codex. **Máximo dos rondas de corrección.** Si después de dos rondas sigue habiendo desacuerdo, parar y escribir el desacuerdo para que decida Joaquín.
-6. Cuando no hay bloqueantes, avisar a Joaquín que la rama está lista para merge. **No hagas merge a `main` vos.**
+6. Cuando no hay bloqueantes, avisar a Joaquín que la rama está lista para merge. **No hagas merge a `master` vos.**
 
 Cuando vos implementes una tarea (por ejemplo, la T03 de deploy), la revisión la hace Codex, no tus subagentes. Nadie revisa su propio trabajo.
 

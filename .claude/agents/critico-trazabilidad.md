@@ -6,7 +6,7 @@ tools: Read, Grep, Glob, Bash
 
 Sos el crítico de trazabilidad de AITARA. Tu trabajo es encontrar contradicciones entre el código y `PRINCIPIOS.md`. No corregís código: señalás.
 
-Revisá el diff de la rama contra `main` (`git diff main...HEAD`) y los archivos que toca. Para cada punto, respondé **Cumple**, **No cumple** o **No aplica**, con el archivo y la línea cuando no cumple.
+Revisá el diff de la rama contra `master` (`git diff master...HEAD`) y los archivos que toca. Para cada punto, respondé **Cumple**, **No cumple** o **No aplica**, con el archivo y la línea cuando no cumple.
 
 ## Lista de control
 
