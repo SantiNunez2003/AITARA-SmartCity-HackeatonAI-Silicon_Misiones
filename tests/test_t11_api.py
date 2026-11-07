@@ -34,6 +34,14 @@ def test_respuestas_y_cambios_en_strategic(monkeypatch):
                           evidencia=[])
     with TestClient(api.app) as client:
         estado = {'total_incidentes': 2, 'total_nodos_monitoreados': 1, 'fuentes_activas': ['fuente']}
+        conexion = sqlite3.connect(':memory:', check_same_thread=False)
+        conexion.execute('CREATE TABLE gold_node_risk_features (node_id TEXT, intensidad REAL)')
+        conexion.execute("INSERT INTO gold_node_risk_features VALUES ('n', 0.3)")
+        base = DBWrapper.__new__(DBWrapper)
+        base.con = conexion
+        base._lock = threading.RLock()
+        base.use_duckdb = False
+        monkeypatch.setattr(api, 'db', base)
         monkeypatch.setattr(api, 'get_pipeline_status', lambda db: estado)
         monkeypatch.setattr(api.risk_engine, 'evaluate_all_nodes', lambda params: ([nodo], [prioridad]))
         primera = client.get('/api/strategic').json()
@@ -42,7 +50,10 @@ def test_respuestas_y_cambios_en_strategic(monkeypatch):
         assert primera['ranking_infraestructura'][0]['factor_mayor_aporte']['nombre'] == 'clima'
         estado['total_incidentes'] = 3
         prioridad.nivel = 'no_critico'
+        conexion.execute('UPDATE gold_node_risk_features SET intensidad = 0')
         prioridad.evidencia.append(Evidencia(id='i', fecha=datetime(2025, 1, 1), tipo='choque', fuente='fuente', origen='simulado'))
+        prioridad.total_evidencia = 1
+        prioridad.evidencia_simulada = 1
         segunda = client.get('/api/strategic').json()
         assert [k['value'] for k in segunda['kpis']] == [3, 1, 0]
         assert segunda['ranking_infraestructura'][0]['cantidad_incidentes_evidencia'] == 1

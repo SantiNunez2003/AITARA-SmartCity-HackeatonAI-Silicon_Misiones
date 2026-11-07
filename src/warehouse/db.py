@@ -21,6 +21,7 @@ except ImportError:
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 DB_PATH_DUCKDB = BASE_DIR / "data" / "aitara.duckdb"
 DB_PATH_SQLITE = BASE_DIR / "data" / "aitara.sqlite"
+SIMULADO_JSONL_PATH = BASE_DIR / "data" / "simulado" / "incidentes.jsonl"
 SILVER_JSONL_PATH = BASE_DIR / "data" / "silver" / "incidentes_posadas.jsonl"
 
 
@@ -109,7 +110,9 @@ def init_schema(db: DBWrapper) -> None:
             lon REAL,
             confianza REAL,
             resumen TEXT,
-            origen TEXT
+            origen TEXT,
+            llovia BOOLEAN,
+            precipitacion_mm_h DOUBLE
         );
     """)
     try:
@@ -122,21 +125,23 @@ def init_schema(db: DBWrapper) -> None:
     except Exception:
         pass
 
-    # Gold: Features for risk engine
-    db.execute("""
-        CREATE TABLE IF NOT EXISTS gold_node_risk_features (
-            node_id TEXT PRIMARY KEY,
-            base_capacity_veh_hour INTEGER,
-            historical_incident_score REAL,
-            school_vulnerability_weight REAL,
-            rain_sensitivity_factor REAL,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
-    """)
+    for columna, tipo in (("llovia", "BOOLEAN"), ("precipitacion_mm_h", "DOUBLE")):
+        try:
+            db.execute(f"ALTER TABLE silver_incident_history ADD COLUMN {columna} {tipo}")
+        except Exception:
+            pass
+
+    # La tabla anterior contenía atributos sin fuente; se reemplaza al iniciar.
+    db.execute("DROP TABLE IF EXISTS gold_node_risk_features")
+    db.execute("""CREATE TABLE gold_node_risk_features (
+        node_id TEXT PRIMARY KEY, intensidad REAL, cantidad_incidentes INTEGER
+    )""")
+    db.execute("DROP TABLE IF EXISTS gold_incident_nodes")
+    db.execute("CREATE TABLE gold_incident_nodes (incident_id TEXT PRIMARY KEY, node_id TEXT)")
 
 
 def seed_reference_data(db: DBWrapper) -> None:
-    """Seed verified Posadas nodes and historical incident baselines (exact OSM coordinates)."""
+    """Carga los nodos de referencia de Posadas con sus atributos territoriales."""
     intersections = [
         ("N1_CORRIENTES_TUCUMAN", "Av. Corrientes y Tucumán", -27.372758, -55.901911, "ESCOLAR", 2, 1, 1, 1, "Colegio San Basilio Magno", "ALTO"),
         ("N2_ROTONDA_URUGUAY", "Rotonda Av. Uruguay y Quaranta", -27.403800, -55.902800, "ACCESO_TRONCAL", 4, 1, 1, 0, None, "MEDIO"),
@@ -153,60 +158,43 @@ def seed_reference_data(db: DBWrapper) -> None:
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
         """, node)
 
-    gold_features = [
-        ("N1_CORRIENTES_TUCUMAN", 1200, 0.85, 0.95, 0.90),
-        ("N2_ROTONDA_URUGUAY", 3200, 0.92, 0.10, 0.85),
-        ("N3_QUARANTA_GUIDO", 2800, 0.78, 0.10, 0.60),
-        ("N4_SAN_MARTIN_ANDRESITO", 1400, 0.65, 0.20, 0.95),
-        ("N5_CABRED_LOPEZ_TORRES", 1800, 0.60, 0.40, 0.50),
-        ("N6_CENTENARIO_LAVALLE", 2200, 0.55, 0.30, 0.65),
-        ("N7_URQUIZA_SAN_MARTIN", 2600, 0.45, 0.15, 0.40),
-    ]
-
-    for feat in gold_features:
-        db.execute("""
-            INSERT OR REPLACE INTO gold_node_risk_features (node_id, base_capacity_veh_hour, historical_incident_score, school_vulnerability_weight, rain_sensitivity_factor)
-            VALUES (?, ?, ?, ?, ?);
-        """, feat)
 
 
 def load_silver_incidents_from_jsonl(db: DBWrapper) -> int:
     """Loads curated incidents from data/silver/incidentes_posadas.jsonl into DuckDB/SQLite."""
-    if not SILVER_JSONL_PATH.exists():
-        return 0
-
-    count = 0
-    with open(SILVER_JSONL_PATH, "r", encoding="utf-8") as f:
-        for line in f:
-            if not line.strip():
-                continue
-            item = json.loads(line)
-            veh_str = ", ".join(item.get("vehiculos", []))
-            db.execute("""
-                INSERT OR REPLACE INTO silver_incident_history
-                (id, fuente, titulo, url, fecha_publicacion, fecha_evento, tipo_incidente, severidad, vehiculos, calle_1, calle_2, ubicacion_texto, lat, lon, confianza, resumen, origen)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
-            """, (
-                item.get("id"),
-                item.get("fuente"),
-                item.get("titulo"),
-                item.get("url"),
-                item.get("fecha_publicacion"),
-                item.get("fecha_evento") or item.get("fecha_publicacion"),
-                item.get("tipo_incidente"),
-                item.get("severidad", 1),
-                veh_str,
-                item.get("calle_1"),
-                item.get("calle_2"),
-                item.get("ubicacion_texto"),
-                item.get("lat"),
-                item.get("lon"),
-                item.get("confianza", 0.9),
-                item.get("resumen"),
-                item.get("origen") or "real"
-            ))
-            count += 1
-    return count
+    rows = []
+    for path in (SILVER_JSONL_PATH, SIMULADO_JSONL_PATH):
+        if not path.exists():
+            continue
+        with path.open(encoding="utf-8") as f:
+            for line in f:
+                if not line.strip():
+                    continue
+                item = json.loads(line)
+                rows.append((item.get("id"), item.get("fuente"), item.get("titulo"), item.get("url"),
+                    item.get("fecha_publicacion"), item.get("fecha_evento") or item.get("fecha_publicacion"),
+                    item.get("tipo_incidente"), item.get("severidad"), ", ".join(item.get("vehiculos", [])),
+                    item.get("calle_1"), item.get("calle_2"), item.get("ubicacion_texto"), item.get("lat"),
+                    item.get("lon"), item.get("confianza"), item.get("resumen"), item.get("origen", "real"), item.get("llovia"), item.get("precipitacion_mm_h")))
+    query = """INSERT OR REPLACE INTO silver_incident_history
+        (id, fuente, titulo, url, fecha_publicacion, fecha_evento, tipo_incidente, severidad,
+         vehiculos, calle_1, calle_2, ubicacion_texto, lat, lon, confianza, resumen, origen, llovia, precipitacion_mm_h)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""
+    with db._lock:
+        db.con.execute("BEGIN TRANSACTION")
+        try:
+            if db.use_duckdb and rows:
+                columnas = ["id", "fuente", "titulo", "url", "fecha_publicacion", "fecha_evento", "tipo_incidente", "severidad", "vehiculos", "calle_1", "calle_2", "ubicacion_texto", "lat", "lon", "confianza", "resumen", "origen", "llovia", "precipitacion_mm_h"]
+                db.con.register("lote_incidentes", pd.DataFrame(rows, columns=columnas))
+                db.con.execute(f"INSERT OR REPLACE INTO silver_incident_history ({', '.join(columnas)}) SELECT {', '.join(columnas)} FROM lote_incidentes")
+                db.con.unregister("lote_incidentes")
+            else:
+                db.con.executemany(query, rows)
+            db.con.commit()
+        except Exception:
+            db.con.rollback()
+            raise
+    return len(rows)
 
 
 def get_pipeline_status(db: DBWrapper) -> Dict[str, Any]:
@@ -228,6 +216,7 @@ def get_pipeline_status(db: DBWrapper) -> Dict[str, Any]:
 
     return {
         "total_incidentes": int(incident_count),
+        "incidentes_por_origen": {str(r.origen): int(r.c) for r in db.df("SELECT COALESCE(origen, 'real') AS origen, COUNT(*) AS c FROM silver_incident_history GROUP BY 1").itertuples()},
         "total_nodos_monitoreados": int(node_count),
         "fuentes_activas": fuentes,
     }

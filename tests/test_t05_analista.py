@@ -16,11 +16,11 @@ def prioridad():
                      variacion_escenario=12, riesgo_escenario=0.87,
                      aportes=[AporteFactor(nombre="clima", aporte=0.2, descripcion="lluvia")],
                      evidencia=[Evidencia(id="abc", fecha=datetime(2025, 1, 1), tipo="choque",
-                                          fuente="medio", url="https://ejemplo.test/incidente", origen="real")])
+                                          fuente="medio", url="https://ejemplo.test/incidente", origen="real")], total_evidencia=1, evidencia_real=1)
 
 
 def analista():
-    agente = AgenteAnalista(db=object())
+    agente = AgenteAnalista(db=object(), risk_engine=SimpleNamespace())
     p = prioridad()
     agente.risk_engine = SimpleNamespace(evaluate_all_nodes=lambda params: ([p.nodo], [p]))
     return agente
@@ -39,6 +39,8 @@ def test_respaldo_y_evidencia(monkeypatch):
     assert "rutas alternativas no están" in agente.responder_consulta_operador("¿Qué ruta alternativa hay?", params)
     p = prioridad()
     p.evidencia = []
+    p.total_evidencia = 0
+    p.evidencia_real = 0
     agente.risk_engine.evaluate_all_nodes = lambda params: ([p.nodo], [p])
     assert "no tiene evidencia" in agente.responder_consulta_operador("¿Qué ocurre en Cruce A?", params)
 

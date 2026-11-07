@@ -3,7 +3,7 @@
 from contextlib import asynccontextmanager
 from pathlib import Path
 from types import SimpleNamespace
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Literal
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -30,7 +30,7 @@ async def lifespan(app: FastAPI):
     seed_reference_data(db)
     load_silver_incidents_from_jsonl(db)
     risk_engine = ExplainableRiskEngine(db)
-    analista = AgenteAnalista(db)
+    analista = AgenteAnalista(db, risk_engine)
     investigador = AgenteInvestigador()
     yield
 
@@ -65,11 +65,13 @@ def api_status() -> Dict[str, Any]:
 
 
 @app.get("/api/incidents")
-def api_incidents() -> List[Dict[str, Any]]:
+def api_incidents(origen: Literal["real", "simulado", "todos"] = "real") -> List[Dict[str, Any]]:
     try:
         df = get_all_incidents(db)
         if df is None or not hasattr(df, "to_dict") or df.empty:
             return []
+        if origen != "todos":
+            df = df[df["origen"].fillna("real") == origen]
         records = df.to_dict(orient="records")
         for r in records:
             r["fecha_publicacion"] = str(r.get("fecha_publicacion") or "")
@@ -129,29 +131,39 @@ def api_ask(req: AskRequest) -> Dict[str, Any]:
     }
 
 
+# Percentil 75 de los riesgos estructurales de los nodos con incidentes.
+UMBRAL_ZONA_CRITICA = 0.75
+
+
 @app.get("/api/strategic")
 def api_strategic() -> Dict[str, Any]:
     status = get_pipeline_status(db)
     _, prioridades = risk_engine.evaluate_all_nodes(ESCENARIO_REFERENCIA)
+    riesgos = dict(db.df("SELECT node_id, intensidad FROM gold_node_risk_features").itertuples(index=False, name=None))
+    distribucion = sorted(riesgos[p.nodo.nodo_id] for p in prioridades if riesgos.get(p.nodo.nodo_id, 0) > 0)
+    from math import ceil
+    umbral = distribucion[ceil(UMBRAL_ZONA_CRITICA * len(distribucion)) - 1] if distribucion else None
     ranking = []
-    for prioridad in prioridades:
+    for prioridad in sorted(prioridades, key=lambda p: riesgos.get(p.nodo.nodo_id, p.riesgo_estructural), reverse=True):
         nodo = prioridad.nodo
         factor = max(prioridad.aportes, key=lambda aporte: aporte.aporte, default=None)
         ranking.append({
             "nodo_id": nodo.nodo_id,
             "interseccion": nodo.nombre,
             "coordenadas": [nodo.lat, nodo.lon],
-            "nivel": prioridad.nivel,
+            "nivel": "critico" if umbral is not None and riesgos.get(nodo.nodo_id, prioridad.riesgo_estructural) >= umbral else "no_critico",
             "riesgo_estructural": prioridad.riesgo_estructural,
             "factor_mayor_aporte": factor.model_dump() if factor else None,
-            "cantidad_incidentes_evidencia": len(prioridad.evidencia),
+            "cantidad_incidentes_evidencia": prioridad.total_evidencia,
+            "evidencia_real": prioridad.evidencia_real,
+            "evidencia_simulada": prioridad.evidencia_simulada,
         })
     return {
         "escenario_referencia": ESCENARIO_REFERENCIA.model_dump(),
         "kpis": [
-            {"label": "Incidentes registrados", "value": status["total_incidentes"]},
+            {"label": "Incidentes registrados", "value": status["total_incidentes"], "reales": status.get("incidentes_por_origen", {}).get("real", 0), "simulados": status.get("incidentes_por_origen", {}).get("simulado", 0)},
             {"label": "Nodos", "value": status["total_nodos_monitoreados"]},
-            {"label": "Prioridades críticas", "value": sum(p.nivel == "critico" for p in prioridades)},
+            {"label": "Zonas críticas", "value": sum(r["nivel"] == "critico" for r in ranking)},
         ],
         "ranking_infraestructura": ranking,
     }

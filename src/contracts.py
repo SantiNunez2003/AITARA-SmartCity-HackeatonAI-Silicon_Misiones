@@ -74,6 +74,9 @@ class Prioridad(BaseModel):
     riesgo_escenario: float
     aportes: List[AporteFactor]
     evidencia: List[Evidencia]
+    total_evidencia: int = 0
+    evidencia_real: int = 0
+    evidencia_simulada: int = 0
 
 
 class InformeOperativoAnalista(BaseModel):
