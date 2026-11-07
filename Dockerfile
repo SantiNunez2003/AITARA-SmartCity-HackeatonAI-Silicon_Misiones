@@ -13,4 +13,4 @@ COPY api.py ./
 COPY src/ ./src/
 COPY data/silver/ ./data/silver/
 COPY --from=frontend /app/frontend/dist/ ./frontend/dist/
-CMD ["sh", "-c", "uvicorn api:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["sh", "-c", "exec uvicorn api:app --host 0.0.0.0 --port ${PORT:-8000}"]
