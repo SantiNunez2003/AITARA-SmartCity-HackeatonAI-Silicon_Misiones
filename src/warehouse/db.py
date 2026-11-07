@@ -221,15 +221,15 @@ def get_pipeline_status(db: DBWrapper) -> Dict[str, Any]:
     except Exception:
         node_count = 0
 
+    try:
+        fuentes = db.df("SELECT DISTINCT fuente FROM silver_incident_history WHERE fuente IS NOT NULL AND TRIM(fuente) <> '' ORDER BY fuente")["fuente"].tolist()
+    except Exception:
+        fuentes = []
+
     return {
-        "engine": "Sistema de Inteligencia Territorial Activo",
-        "mode": "Sincronizado con Medios Locales y Red Vial",
-        "is_online": True,
         "total_incidentes": int(incident_count),
         "total_nodos_monitoreados": int(node_count),
-        "fuentes_activas": ["Primera Edición", "Misiones Online", "Canal 12 Misiones", "El Territorio", "IDE Posadas", "OPAD Posadas"],
-        "latencia_consulta_ms": 1.4,
-        "estado": "EN_LINEA"
+        "fuentes_activas": fuentes,
     }
 
 

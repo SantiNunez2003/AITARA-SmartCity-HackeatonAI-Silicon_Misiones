@@ -1,12 +1,4 @@
-"""AITARA — FastAPI Geospatial Backend & Multi-Agent Orchestrator.
-
-Exposes REST endpoints for the Vite + React Geospatial Command Center:
-- GET  /api/status       -> Estado del almacén DuckDB, latencia y conectividad
-- GET  /api/incidents    -> Los 12 siniestros reales georreferenciados (Agente Lector)
-- POST /api/evaluate     -> Evaluación de riesgo XAI 4D + Prioridades + Geometrías
-- POST /api/ask          -> Consulta SQL + Explicación del Agente Analista
-- GET  /api/strategic    -> Métricas y ranking de deuda de infraestructura ("¿Cómo Mejorar?")
-"""
+"""API de soporte a decisiones para la movilidad urbana de Posadas."""
 
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -64,6 +56,9 @@ class AskRequest(BaseModel):
     precipitacion_mm_h: float = 15.0
 
 
+ESCENARIO_REFERENCIA = ParametrosEscenario()
+
+
 @app.get("/api/status")
 def api_status() -> Dict[str, Any]:
     return get_pipeline_status(db)
@@ -108,19 +103,6 @@ def api_evaluate(params: ParametrosEscenario) -> Dict[str, Any]:
             recomendacion_estrategica="Informe no disponible. Consultar los resultados por nodo.",
         )
 
-    # Corredor ortogonal real verificado sobre OSM (Av. Corrientes y Catamarca -> San Lorenzo -> Mitre)
-    corredor_desvio = {
-        "id": "CORREDOR_SAN_LORENZO",
-        "nombre": "Desvío Ortogonal Transporte Público: Catamarca → Calle San Lorenzo → Av. Mitre",
-        "capacidad_remanente_pct": 64,
-        "coordenadas": [
-            [-27.371812, -55.901793],  # Av. Corrientes y Calle Catamarca
-            [-27.370525, -55.896203],  # Calle Catamarca y Calle San Lorenzo
-            [-27.372414, -55.896466],  # Calle San Lorenzo y Calle Tucumán
-            [-27.374256, -55.896695],  # Calle San Lorenzo y Av. Mitre
-        ],
-    }
-
     return {
         "escenario": params.model_dump(),
         "nodos": [n.model_dump() for n in evaluaciones],
@@ -130,7 +112,6 @@ def api_evaluate(params: ParametrosEscenario) -> Dict[str, Any]:
             "alerta_meteorologica": informe.alerta_meteorologica,
             "recomendacion_estrategica": informe.recomendacion_estrategica,
         },
-        "corredor_desvio": corredor_desvio,
     }
 
 
@@ -151,56 +132,28 @@ def api_ask(req: AskRequest) -> Dict[str, Any]:
 @app.get("/api/strategic")
 def api_strategic() -> Dict[str, Any]:
     status = get_pipeline_status(db)
+    _, prioridades = risk_engine.evaluate_all_nodes(ESCENARIO_REFERENCIA)
+    ranking = []
+    for prioridad in prioridades:
+        nodo = prioridad.nodo
+        factor = max(prioridad.aportes, key=lambda aporte: aporte.aporte, default=None)
+        ranking.append({
+            "nodo_id": nodo.nodo_id,
+            "interseccion": nodo.nombre,
+            "coordenadas": [nodo.lat, nodo.lon],
+            "nivel": prioridad.nivel,
+            "riesgo_estructural": prioridad.riesgo_estructural,
+            "factor_mayor_aporte": factor.model_dump() if factor else None,
+            "cantidad_incidentes_evidencia": len(prioridad.evidencia),
+        })
     return {
+        "escenario_referencia": ESCENARIO_REFERENCIA.model_dump(),
         "kpis": [
-            {
-                "label": "Sucesos Viales Registrados en Ciudad",
-                "value": f"{status['total_incidentes']} hechos verificados",
-                "sub": "Relevados de Primera Edición, Misiones Online y Canal 12",
-                "tone": "blue",
-            },
-            {
-                "label": "Puntos con Prioridad de Obra Vial",
-                "value": "3 intersecciones",
-                "sub": "Requieren intervención de infraestructura a mediano plazo",
-                "tone": "red",
-            },
-            {
-                "label": "Demora Evitada en Transporte Urbano",
-                "value": "32 min promedio",
-                "sub": "Mediante desvío preventivo 15 min antes de la hora pico",
-                "tone": "slate",
-            },
+            {"label": "Incidentes registrados", "value": status["total_incidentes"]},
+            {"label": "Nodos", "value": status["total_nodos_monitoreados"]},
+            {"label": "Prioridades críticas", "value": sum(p.nivel == "critico" for p in prioridades)},
         ],
-        "ranking_infraestructura": [
-            {
-                "nodo_id": "N4_SAN_MARTIN_ANDRESITO",
-                "interseccion": "Av. San Martín y Av. Comandante Andresito",
-                "coordenadas": "-27.39723, -55.92066",
-                "causa_raiz": "Cota topográfica baja y saturación de desagües pluviales (>12 mm/h)",
-                "frecuencia": "18 anegamientos anuales + colisiones por frenado",
-                "obra_recomendada": "Ampliación de bocas de tormenta y badén de derivación pluvial",
-                "prioridad": "ALTA",
-            },
-            {
-                "nodo_id": "N2_ROTONDA_URUGUAY",
-                "interseccion": "Rotonda Av. Uruguay y Av. Quaranta (RN12)",
-                "coordenadas": "-27.40380, -55.90280",
-                "causa_raiz": "Pérdida de adherencia de motocicletas al ingresar al anillo giratorio",
-                "frecuencia": "34 siniestros viales anuales (78% motovehículos)",
-                "obra_recomendada": "Fresado de calzada antideslizante y reductores ópticos en colectora Sur",
-                "prioridad": "ALTA",
-            },
-            {
-                "nodo_id": "N1_CORRIENTES_TUCUMAN",
-                "interseccion": "Av. Corrientes y Calle Tucumán (Zona Escolar)",
-                "coordenadas": "-27.37276, -55.90191",
-                "causa_raiz": "Doble fila de ascenso escolar y reducción de calzada a un solo carril",
-                "frecuencia": "Congestión diaria en ingreso y egreso escolar",
-                "obra_recomendada": "Dársena exclusiva de ascenso y descenso rápido (máximo 3 min)",
-                "prioridad": "MEDIA-ALTA",
-            },
-        ],
+        "ranking_infraestructura": ranking,
     }
 
 
