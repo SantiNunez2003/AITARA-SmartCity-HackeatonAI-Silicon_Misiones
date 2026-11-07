@@ -8,6 +8,7 @@ Includes offline dataset loader and pipeline status monitoring.
 from pathlib import Path
 import json
 import sqlite3
+import threading
 import pandas as pd
 from typing import Dict, Any, List
 
@@ -26,6 +27,7 @@ SILVER_JSONL_PATH = BASE_DIR / "data" / "silver" / "incidentes_posadas.jsonl"
 class DBWrapper:
     def __init__(self, use_duckdb: bool = HAS_DUCKDB):
         self.use_duckdb = use_duckdb
+        self._lock = threading.RLock()
         if self.use_duckdb:
             DB_PATH_DUCKDB.parent.mkdir(parents=True, exist_ok=True)
             try:
@@ -39,18 +41,20 @@ class DBWrapper:
 
     def execute(self, query: str, params: tuple = ()):
         if self.use_duckdb:
-            return self.con.execute(query, params)
+            return self.con.cursor().execute(query, params)
         else:
-            cur = self.con.cursor()
-            cur.execute(query, params)
-            self.con.commit()
-            return cur
+            with self._lock:
+                cur = self.con.cursor()
+                cur.execute(query, params)
+                self.con.commit()
+                return cur
 
     def df(self, query: str, params: tuple = ()) -> pd.DataFrame:
         if self.use_duckdb:
-            return self.con.execute(query, params).df()
+            return self.con.cursor().execute(query, params).df()
         else:
-            return pd.read_sql_query(query, self.con, params=params if params else None)
+            with self._lock:
+                return pd.read_sql_query(query, self.con, params=params if params else None)
 
 
 def get_db_connection() -> DBWrapper:
