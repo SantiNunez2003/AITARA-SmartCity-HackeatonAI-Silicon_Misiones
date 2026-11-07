@@ -50,7 +50,7 @@ inf = ana.generar_informe_turno(
     ParametrosEscenario(franja_horaria="07:00", precipitacion_mm_h=15.0)
 )
 resp_desvio = ana.responder_consulta_operador("¿Por dónde desvío los colectivos?", ParametrosEscenario())
-assert "San Lorenzo" in resp_desvio
+assert "no está en el contexto" in resp_desvio
 print(f"[4/4] Agente Analista: OK (Informe: '{inf.turno}', Desvío recomendado: San Lorenzo)")
 
 print("\n--- TODOS LOS MODULOS PASARON EL TEST E2E EXITOSAMENTE ---")

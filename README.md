@@ -1,6 +1,6 @@
-# AITARA ? Soporte a decisiones para la movilidad urbana
+# AITARA — Soporte a decisiones para la movilidad urbana
 
-AITARA integra información en una memoria común de la movilidad de Posadas. Analiza seguridad vial y fluidez para recomendar prioridades con evidencia; la decisi?n es humana. Los datos simulados se identifican como tales y permiten demostrar el sistema y validar el m?todo.
+AITARA integra información en una memoria común de la movilidad de Posadas. Analiza seguridad vial y fluidez para recomendar prioridades con evidencia; la decisión es humana. Los datos simulados se identifican como tales y permiten demostrar el sistema y validar el m?todo.
 
 ## Caso piloto
 
@@ -23,9 +23,8 @@ cd frontend && npm ci && npm run dev
 
 - `api.py`: API y entrega del frontend compilado.
 - `frontend/`: interfaz.
-- `src/ingesta/`, `src/lector/`: ingesta y extracción.
 - `src/warehouse/`, `src/engine/`: almacenamiento y análisis.
-- `docs/`: documentación t?cnica.
+- `docs/`: documentación técnica.
 
 ## 👥 Equipo AITARA
 - **Santiago Agustín Nuñez** — Lead Architect & ML Engineer
