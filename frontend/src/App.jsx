@@ -34,10 +34,10 @@ import {
 } from 'lucide-react'
 
 const SEVERITY_LABELS = {
-  0: 'Leve · Demora circulatoria',
-  1: 'Moderado · Daños materiales / Calzada reducida',
-  2: 'Prioritario · Personas lesionadas / Asistencia médica',
-  3: 'Crítico · Siniestro grave con derivación hospitalaria'
+  0: 'Sin daños',
+  1: 'Daños materiales',
+  2: 'Personas lesionadas',
+  3: 'Fatal'
 }
 
 const SOURCE_LABELS = {
@@ -47,15 +47,9 @@ const SOURCE_LABELS = {
   el_territorio: 'El Territorio'
 }
 
-const SOURCE_FOLDERS = [
-  { id: 'all', name: 'Todas las Fuentes Activas', category: 'General', status: 'Activo', count: 12 },
-  { id: 'misiones_online', name: 'Misiones Online', category: 'Prensa Digital', status: 'Monitoreo continuo', count: 7 },
-  { id: 'primera_edicion', name: 'Primera Edición', category: 'Prensa Digital', status: 'Monitoreo continuo', count: 4 },
-  { id: 'canal_12', name: 'Canal 12 Misiones', category: 'Multimedios', status: 'Monitoreo continuo', count: 1 },
-  { id: 'opad_clima', name: 'OPAD Posadas (Meteorología)', category: 'Sensor Oficial', status: 'Sincronizado', count: 'En vivo' },
-  { id: 'ide_cartografia', name: 'IDE Posadas (Red Vial y Escuelas)', category: 'Cartografía Municipal', status: 'Sincronizado', count: '7 corredores' },
-  { id: 'futura_911', name: 'Cámaras CIO 911 / Semáforos', category: 'Próxima Integración', status: 'Expansión prevista', count: 'Módulo listo' }
-]
+function MarcaSimulado({ origen }) {
+  return origen === 'simulado' ? <span style={{ background: '#92400e', color: '#fff', fontSize: '10px', fontWeight: 800, padding: '2px 5px', borderRadius: '4px', marginLeft: '5px' }}>SIMULADO</span> : null
+}
 
 export default function App() {
   const [theme, setTheme] = useState('light')
@@ -64,35 +58,31 @@ export default function App() {
   // Parámetros del Escenario Operativo (ahora en el HUD superior derecho del mapa)
   const [franja, setFranja] = useState('07:00')
   const [lluvia, setLluvia] = useState(15.0)
-  const [dotacion, setDotacion] = useState(4)
 
-  // Modo de operación: false = Monitoreo de Noticias, true = Análisis de Corredores y Despacho Táctico
+  // Modo de operación: false = Monitoreo de Noticias, true = Análisis de prioridades
   const [corridorMode, setCorridorMode] = useState(false)
 
   // Estados de Revelación Progresiva (Dropdowns y Acordeones Colapsables)
   const [isScenarioOpen, setIsScenarioOpen] = useState(false)
   const [showNewsInspector, setShowNewsInspector] = useState(true)
-  const [showDispatchOrders, setShowDispatchOrders] = useState(true)
+  const [showPriorities, setShowPriorities] = useState(true)
   const [showCriticalDetail, setShowCriticalDetail] = useState(false)
 
   // Capas visibles del mapa (por defecto en modo noticias: solo noticias visibles)
   const [showNodes, setShowNodes] = useState(false)
   const [showIncidents, setShowIncidents] = useState(true)
-  const [showDetour, setShowDetour] = useState(false)
 
   // Funciones de conmutación de modos
   const activateCorridorAnalysis = () => {
     setCorridorMode(true)
     setShowNodes(true)
-    setShowDetour(true)
     setShowIncidents(false)
-    setShowDispatchOrders(true)
+    setShowPriorities(true)
   }
 
   const activateNewsMonitoring = () => {
     setCorridorMode(false)
     setShowNodes(false)
-    setShowDetour(false)
     setShowIncidents(true)
     setShowNewsInspector(true)
   }
@@ -141,7 +131,7 @@ export default function App() {
           setSelectedIncident(inc[0])
           setDriveSelectedDoc(inc[0])
         }
-        if (strat) setStrategic(strat)
+        if (strat && (strat.kpis?.length || strat.ranking_infraestructura?.length)) setStrategic(strat)
       })
       .catch(err => console.error('Error cargando datos iniciales:', err))
   }, [])
@@ -153,12 +143,12 @@ export default function App() {
       body: JSON.stringify({
         franja_horaria: franja,
         precipitacion_mm_h: Number(lluvia),
-        dotacion_patrullas: Number(dotacion),
         actividad_escolar: true
       })
     })
       .then(r => r.ok ? r.json() : null)
       .then(data => {
+        if (!data) setEvalData(null)
         if (data) {
           setEvalData(data)
           if (data.nodos && data.nodos.length > 0 && !selectedNode) {
@@ -166,8 +156,8 @@ export default function App() {
           }
         }
       })
-      .catch(err => console.error('Error evaluando escenario:', err))
-  }, [franja, lluvia, dotacion])
+      .catch(err => { setEvalData(null); console.error('Error evaluando escenario:', err) })
+  }, [franja, lluvia])
 
   // Inicializar Mapa Leaflet una sola vez al montar
   useEffect(() => {
@@ -208,21 +198,6 @@ export default function App() {
 
     group.clearLayers()
 
-    // 1. Trazo Ortogonal de Desvío Sugerido (Catamarca -> Calle San Lorenzo -> Mitre)
-    if (showDetour && evalData?.corredor_desvio) {
-      const poly = L.polyline(evalData.corredor_desvio.coordenadas, {
-        color: '#1d4ed8',
-        weight: 4,
-        dashArray: '8, 6',
-        opacity: 0.95
-      })
-      poly.bindTooltip(
-        '<span style="font-weight: 800; font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em;">Desvío Sugerido · Calle San Lorenzo (64% Libre)</span>',
-        { permanent: true, direction: 'center', className: 'leaflet-tag-detour' }
-      )
-      poly.addTo(group)
-    }
-
     // 2. Zonas de Monitoreo Preventivo (Halos y Etiquetas de Puntos Críticos)
     if (showNodes && evalData?.nodos) {
       evalData.nodos.forEach(nodo => {
@@ -237,9 +212,9 @@ export default function App() {
           fillOpacity: isCrit ? 0.22 : 0.14
         })
 
-        const signVar = nodo.variacion_escenario > 0 ? `+${nodo.variacion_escenario}` : `${nodo.variacion_escenario}`
+        const signVar = nodo.variacion_escenario
         halo.bindTooltip(
-          `<div><strong>${nodo.nombre}</strong><br/>Nivel de Prioridad: <b>${Math.round(nodo.riesgo_final * 100)}%</b> (${signVar}% sobre lo habitual)</div>`,
+          `<div><strong>${nodo.nombre}</strong><br/>Riesgo del escenario: <b>${nodo.riesgo_final}</b><br/>Riesgo estructural: ${nodo.riesgo_estructural}<br/>Variación: ${signVar}×</div>`,
           { direction: 'top' }
         )
 
@@ -302,7 +277,7 @@ export default function App() {
 
         const medioNombre = SOURCE_LABELS[inc.fuente] || inc.fuente
         marker.bindTooltip(
-          `<div><strong>[${medioNombre}]</strong> ${inc.titulo}<br/><em>Hacé clic para abrir el recorte en el panel derecho</em></div>`,
+          `<div><strong>[${medioNombre}]</strong> ${inc.titulo}<br/>${inc.origen === 'simulado' ? '<strong style="background:#92400e;color:white">SIMULADO</strong>' : ''}</div>`,
           { direction: 'top' }
         )
 
@@ -315,7 +290,7 @@ export default function App() {
         marker.addTo(group)
       })
     }
-  }, [evalData, incidents, showNodes, showIncidents, showDetour, selectedIncident])
+  }, [evalData, incidents, showNodes, showIncidents, selectedIncident])
 
   const handleAskAnalyst = async e => {
     e.preventDefault()
@@ -328,31 +303,34 @@ export default function App() {
         body: JSON.stringify({
           pregunta: question,
           franja_horaria: franja,
-          precipitacion_mm_h: Number(lluvia),
-          dotacion_patrullas: Number(dotacion)
+          precipitacion_mm_h: Number(lluvia)
         })
       })
+      if (!res.ok) throw new Error('Consulta no disponible')
       const data = await res.json()
-      setAnalystReply(data.respuesta)
+      setAnalystReply(data?.respuesta || 'Sin respuesta disponible.')
     } catch (err) {
+      setAnalystReply('Sin respuesta disponible.')
       console.error(err)
     } finally {
       setAsking(false)
     }
   }
 
-  const handleCopyDispatch = () => {
-    if (!evalData?.ordenes_despacho) return
-    let txt = `[PARTE OPERATIVO DE GUARDIA · ${franja} HS · LLUVIA ${lluvia} mm/h]\n`
-    evalData.ordenes_despacho.forEach(o => {
-      txt += `• ${o.movil_id} (${o.nodo_objetivo}): ${o.instruccion_tactica}\n`
-    })
-    navigator.clipboard.writeText(txt)
+  const handleCopyPriorities = () => {
+    const prioridades = evalData?.prioridades || []
+    if (!prioridades.length) return
+    navigator.clipboard.writeText(prioridades.map(p => `${p.nodo.nombre} · ${p.nivel} · ${p.riesgo_escenario}`).join('\n'))
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
 
-  const topCritico = evalData?.nodos?.[0] || null
+  const topCritico = evalData?.nodos?.find(nodo => nodo.es_critico) || null
+
+  const sourceFolders = [
+    { id: 'all', name: 'Todas las fuentes', count: incidents.length },
+    ...Array.from(new Set(incidents.map(inc => inc.fuente).filter(Boolean))).map(id => ({ id, name: SOURCE_LABELS[id] || id, count: incidents.filter(inc => inc.fuente === id).length }))
+  ]
 
   // Filtrado de documentos para la vista estilo Drive
   const filteredDriveDocs = incidents.filter(inc => {
@@ -360,11 +338,11 @@ export default function App() {
     const q = searchQuery.toLowerCase().trim()
     const matchSearch =
       !q ||
-      inc.titulo.toLowerCase().includes(q) ||
-      inc.ubicacion_texto.toLowerCase().includes(q) ||
-      inc.calle_1.toLowerCase().includes(q) ||
-      inc.calle_2.toLowerCase().includes(q) ||
-      (inc.vehiculos && inc.vehiculos.toLowerCase().includes(q))
+      (inc.titulo || '').toLowerCase().includes(q) ||
+      (inc.ubicacion_texto || '').toLowerCase().includes(q) ||
+      (inc.calle_1 || '').toLowerCase().includes(q) ||
+      (inc.calle_2 || '').toLowerCase().includes(q) ||
+      String(inc.vehiculos || '').toLowerCase().includes(q)
     return matchFolder && matchSearch
   })
 
@@ -402,7 +380,7 @@ export default function App() {
                 border: '1px solid var(--accent-blue-border)'
               }}
             >
-              Centro de Monitoreo y Movilidad Urbana
+              Movilidad Urbana
             </span>
             <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>· Municipalidad de Posadas</span>
           </div>
@@ -410,8 +388,8 @@ export default function App() {
           {/* Pestañas de Navegación Limpias */}
           <nav style={{ display: 'flex', gap: '6px' }}>
             {[
-              { id: 'tactico', label: 'Mapa Operativo y Despacho' },
-              { id: 'estrategico', label: 'Planificación de Obras Viales' },
+              { id: 'tactico', label: 'Mapa de prioridades' },
+              { id: 'estrategico', label: 'Análisis estratégico' },
               { id: 'repositorio', label: 'Centro de Información y Fuentes' }
             ].map(tab => {
               const active = activeTab === tab.id
@@ -462,9 +440,9 @@ export default function App() {
                 display: 'inline-block'
               }}
             />
-            <span>Relevamiento de Medios Activo</span>
+            <span>Incidentes registrados</span>
             <span style={{ color: 'var(--text-muted)' }}>·</span>
-            <strong>{status?.total_incidentes || 12} sucesos verificados</strong>
+            <strong>{status?.total_incidentes ?? 'Sin datos'}</strong>
           </div>
 
           <button
@@ -491,7 +469,7 @@ export default function App() {
       </header>
 
       {/* =====================================================================
-          PESTAÑA 1: MAPA OPERATIVO Y DESPACHO
+          PESTAÑA 1: MAPA DE PRIORIDADES
          ===================================================================== */}
       <div
         style={{
@@ -558,10 +536,6 @@ export default function App() {
                     <input type="checkbox" checked={showIncidents} onChange={e => setShowIncidents(e.target.checked)} />
                     <span>Noticias Georreferenciadas</span>
                   </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '11.5px', cursor: 'pointer', fontWeight: 500 }}>
-                    <input type="checkbox" checked={showDetour} onChange={e => setShowDetour(e.target.checked)} />
-                    <span>Desvío Sugerido (San Lorenzo)</span>
-                  </label>
                 </div>
               </div>
 
@@ -602,7 +576,7 @@ export default function App() {
                           border: '1px solid var(--border-strong)'
                         }}
                       >
-                        {inc.calle_1.replace('Av. ', '').replace('Calle ', '')}
+                        {(inc.calle_1 || inc.ubicacion_texto || 'Sin ubicación').replace('Av. ', '').replace('Calle ', '')}<MarcaSimulado origen={inc.origen} />
                       </button>
                     )
                   })}
@@ -693,15 +667,11 @@ export default function App() {
                 <>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#be123c', display: 'inline-block' }} />
-                    <strong>Nodo Crítico Evaluado (&gt;60% Riesgo)</strong>
+                    <strong>Nodo crítico</strong>
                   </span>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#1d4ed8', display: 'inline-block' }} />
                     <strong>Monitoreo Preventivo</strong>
-                  </span>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span style={{ width: '16px', height: '3px', backgroundColor: '#1d4ed8', display: 'inline-block' }} />
-                    <strong>Desvío Sugerido (San Lorenzo)</strong>
                   </span>
                 </>
               ) : (
@@ -775,11 +745,11 @@ export default function App() {
                         }}
                       >
                         <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#16a34a' }} />
-                        IA Activa
+                        Analista
                       </span>
                     </div>
                     <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                      Inteligencia vial y soporte de decisiones en tiempo real
+                      Información vial y soporte de decisiones
                     </span>
                   </div>
                 </div>
@@ -788,9 +758,8 @@ export default function App() {
               {/* Botones de Consulta Rápida (Sugerencias 1-Click) */}
               <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
                 {[
-                  '¿Cuántos choques hubo sobre Av. Quaranta?',
-                  '¿Dónde posicionar patrullas a las 07:00 hs?',
-                  '¿Cómo afecta lluvia de 40 mm/h en San Martín y Andresito?'
+                  '¿Cuáles son las prioridades del escenario?',
+                  '¿Qué factores explican el riesgo?'
                 ].map((sug, idx) => (
                   <button
                     key={idx}
@@ -821,7 +790,7 @@ export default function App() {
                   type="text"
                   value={question}
                   onChange={e => setQuestion(e.target.value)}
-                  placeholder="Ej: ¿Cuántos choques suele haber entre las 17 y 18 hs?"
+                  placeholder="Consulta al Analista"
                   style={{
                     flex: 1,
                     padding: '8px 12px',
@@ -923,7 +892,7 @@ export default function App() {
                  MODO 1: MONITOREO DE NOTICIAS DE PRENSA (DEFAULT)
                  - Muestra el llamador para Análisis de Corredores
                  - Muestra el Inspector de Noticias
-                 - Variables y órdenes ocultas hasta presionar el botón
+                 - Variables disponibles en el análisis
                  ===================================================== */
               <>
                 {/* Banner de Acción: Realizar Análisis de Corredores */}
@@ -941,11 +910,11 @@ export default function App() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <Activity size={16} color="var(--accent-blue)" />
                     <strong style={{ fontSize: '13px', color: 'var(--text-primary)' }}>
-                      Análisis de Corredores y Despacho Táctico
+                      Análisis de prioridades
                     </strong>
                   </div>
                   <p style={{ fontSize: '11.5px', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
-                    Modo actual: <strong>Monitoreo de Prensa</strong> (12 incidentes geolocalizados en el mapa). Presioná el botón para analizar los corredores críticos, ajustar variables operativas y calcular las órdenes de patrullaje.
+                    El monitoreo reúne incidentes disponibles. El análisis permite consultar prioridades para el escenario seleccionado.
                   </p>
                   <button
                     onClick={activateCorridorAnalysis}
@@ -1011,7 +980,7 @@ export default function App() {
                           fontWeight: 600
                         }}
                       >
-                        {selectedIncident ? '1 activo' : `${incidents.length || 12} disponibles`}
+                        {selectedIncident ? 'Seleccionado' : `${incidents.length} disponibles`}
                       </span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-muted)', fontSize: '11px' }}>
@@ -1049,7 +1018,7 @@ export default function App() {
                                   letterSpacing: '0.04em'
                                 }}
                               >
-                                {SOURCE_LABELS[selectedIncident.fuente] || selectedIncident.fuente}
+                                {SOURCE_LABELS[selectedIncident.fuente] || selectedIncident.fuente}<MarcaSimulado origen={selectedIncident.origen} />
                               </span>
                               <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 600 }}>
                                 {selectedIncident.fecha_evento ? selectedIncident.fecha_evento.replace('T', ' · ').slice(0, 18) : 'Reciente'} hs
@@ -1113,7 +1082,7 @@ export default function App() {
                                 <div>
                                   <span style={{ fontSize: '9.5px', color: 'var(--text-muted)', display: 'block' }}>Calles Identificadas</span>
                                   <strong style={{ color: 'var(--text-primary)' }}>
-                                    {selectedIncident.calle_1} y {selectedIncident.calle_2?.replace('CalleTucumán', 'Calle Tucumán')?.replace(/Calle([A-Z])/g, 'Calle $1')}
+                                    {selectedIncident.calle_1} y {selectedIncident.calle_2}
                                   </strong>
                                 </div>
                                 <div>
@@ -1130,7 +1099,7 @@ export default function App() {
                                 <div>
                                   <span style={{ fontSize: '9.5px', color: 'var(--text-muted)', display: 'block' }}>Vehículos Involucrados</span>
                                   <strong style={{ color: 'var(--text-primary)', textTransform: 'capitalize' }}>
-                                    {selectedIncident.vehiculos || 'Afectación de calzada'}
+                                    {selectedIncident.vehiculos || 'Sin datos'}
                                   </strong>
                                 </div>
                               </div>
@@ -1167,7 +1136,7 @@ export default function App() {
                         </div>
                       ) : (
                         <div style={{ textAlign: 'center', padding: '16px 12px', color: 'var(--text-muted)', fontSize: '11.5px', lineHeight: 1.5 }}>
-                          Hacé clic sobre cualquier marcador de noticia en el mapa para cargar su recorte periodístico y las variables viales extraídas automáticamente.
+                          {incidents.length ? 'Hay incidentes disponibles en el mapa.' : 'Sin incidentes disponibles.'}
                         </div>
                       )}
                     </div>
@@ -1176,10 +1145,10 @@ export default function App() {
               </>
             ) : (
               /* =====================================================
-                 MODO 2: ANÁLISIS DE CORREDORES Y DESPACHO TÁCTICO
+                 MODO 2: ANÁLISIS DE PRIORIDADES
                  - Puntos de noticias desaparecen del mapa
-                 - Aparece el ajuste de variables (franja, lluvia, dotación)
-                 - Aparecen el nodo crítico y las órdenes de despacho
+                 - Aparece el ajuste de variables
+                 - Aparecen las prioridades y su evidencia
                  ===================================================== */
               <>
                 {/* Barra de Modo Activo y Retorno */}
@@ -1219,7 +1188,7 @@ export default function App() {
                   </button>
                 </div>
 
-                {/* AJUSTE DE VARIABLES DEL ESCENARIO OPERATIVO (FRANJA, LLUVIA, DOTACIÓN) */}
+                {/* AJUSTE DE VARIABLES DEL ESCENARIO OPERATIVO (FRANJA Y LLUVIA) */}
                 <div
                   style={{
                     backgroundColor: 'var(--bg-canvas)',
@@ -1265,15 +1234,15 @@ export default function App() {
                           cursor: 'pointer'
                         }}
                       >
-                        <option value="07:00">07:00 hs (Pico)</option>
-                        <option value="12:00">12:00 hs (Mediodía)</option>
-                        <option value="18:00">18:00 hs (Regreso)</option>
+                        <option value="07:00">07:00 hs</option>
+                        <option value="12:00">12:00 hs</option>
+                        <option value="18:00">18:00 hs</option>
                       </select>
                     </div>
 
                     <div>
                       <label style={{ fontSize: '9.5px', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '3px' }}>
-                        LLUVIA (OPAD)
+                        PRECIPITACIÓN (mm/h)
                       </label>
                       <select
                         value={lluvia}
@@ -1296,31 +1265,6 @@ export default function App() {
                       </select>
                     </div>
 
-                    <div>
-                      <label style={{ fontSize: '9.5px', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '3px' }}>
-                        DOTACIÓN MÓVILES
-                      </label>
-                      <select
-                        value={dotacion}
-                        onChange={e => setDotacion(Number(e.target.value))}
-                        style={{
-                          width: '100%',
-                          padding: '5px 6px',
-                          fontSize: '11.5px',
-                          fontWeight: 600,
-                          borderRadius: '5px',
-                          border: '1px solid var(--border-strong)',
-                          backgroundColor: 'var(--bg-surface)',
-                          color: 'var(--text-primary)',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        <option value={1}>1 móvil</option>
-                        <option value={2}>2 móviles</option>
-                        <option value={4}>4 móviles</option>
-                        <option value={6}>6 móviles</option>
-                      </select>
-                    </div>
                   </div>
                 </div>
 
@@ -1369,7 +1313,7 @@ export default function App() {
                           gap: '3px'
                         }}
                       >
-                        <span>{showCriticalDetail ? 'Ocultar' : 'Causas'}</span>
+                        <span>{showCriticalDetail ? 'Ocultar' : 'Factores'}</span>
                         {showCriticalDetail ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
                       </button>
                     </div>
@@ -1381,99 +1325,43 @@ export default function App() {
                   </div>
                 )}
 
-                {/* RECOMENDACIONES OPERATIVAS Y ÓRDENES DE DESPACHO TÁCTICO */}
-                <div
-                  style={{
-                    backgroundColor: 'var(--bg-canvas)',
-                    border: '1px solid var(--border-strong)',
-                    borderRadius: '10px',
-                    overflow: 'hidden',
-                    boxShadow: 'var(--shadow-sm)'
-                  }}
-                >
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      padding: '10px 14px'
-                    }}
-                  >
-                    <button
-                      onClick={() => setShowDispatchOrders(open => !open)}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        background: 'none',
-                        border: 'none',
-                        cursor: 'pointer',
-                        color: 'var(--text-primary)',
-                        textAlign: 'left'
-                      }}
-                    >
-                      <ShieldCheck size={14} color="#16a34a" />
-                      <span style={{ fontSize: '11.5px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                        Órdenes de Despacho Táctico
-                      </span>
-                      <span
-                        style={{
-                          fontSize: '10px',
-                          backgroundColor: 'rgba(22, 163, 74, 0.12)',
-                          color: '#16a34a',
-                          fontWeight: 700,
-                          padding: '2px 7px',
-                          borderRadius: '4px'
-                        }}
-                      >
-                        {evalData?.ordenes_despacho?.length || 0} móviles
-                      </span>
-                      {showDispatchOrders ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                {/* Prioridades y trazabilidad del escenario */}
+                <div style={{ backgroundColor: 'var(--bg-canvas)', border: '1px solid var(--border-strong)', borderRadius: '10px', overflow: 'hidden', boxShadow: 'var(--shadow-sm)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px' }}>
+                    <button onClick={() => setShowPriorities(open => !open)} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                      <ShieldCheck size={14} color="#16a34a" /> <strong>Prioridades</strong>
+                      {showPriorities ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
                     </button>
-
-                    <button
-                      onClick={handleCopyDispatch}
-                      title="Copiar instrucciones para Radio / WhatsApp"
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        fontSize: '11px',
-                        fontWeight: 600,
-                        color: 'var(--accent-blue)',
-                        backgroundColor: 'var(--accent-blue-soft)',
-                        border: '1px solid var(--accent-blue-border)',
-                        borderRadius: '6px',
-                        padding: '4px 9px',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      {copied ? <Check size={12} /> : <Copy size={12} />}
-                      <span>{copied ? 'Copiado' : 'Copiar'}</span>
+                    <button onClick={handleCopyPriorities} style={{ color: 'var(--accent-blue)', cursor: 'pointer' }}>
+                      {copied ? <Check size={12} /> : <Copy size={12} />} {copied ? 'Copiado' : 'Copiar'}
                     </button>
                   </div>
-
-                  {showDispatchOrders && (
-                    <div style={{ borderTop: '1px solid var(--border-color)', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      {evalData?.ordenes_despacho?.map(ord => (
-                        <div
-                          key={ord.movil_id}
-                          style={{
-                            backgroundColor: 'var(--bg-surface)',
-                            border: '1px solid var(--border-color)',
-                            borderRadius: '6px',
-                            padding: '9px 12px'
-                          }}
-                        >
-                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px', marginBottom: '3px' }}>
-                            <strong style={{ color: 'var(--accent-blue)' }}>
-                              {ord.movil_id} · {ord.nodo_objetivo}
-                            </strong>
-                            <span style={{ color: 'var(--text-muted)', fontSize: '11px', fontWeight: 600 }}>
-                              Presentación: {ord.hora_presentacion} hs
-                            </span>
-                          </div>
-                          <p style={{ fontSize: '11.5px', color: 'var(--text-secondary)', lineHeight: 1.38 }}>{ord.instruccion_tactica}</p>
+                  {showPriorities && (
+                    <div style={{ borderTop: '1px solid var(--border-color)', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {!evalData?.prioridades?.length && <p>Sin prioridades disponibles para este escenario.</p>}
+                      {(evalData?.prioridades || []).map(prioridad => (
+                        <div key={prioridad.nodo.nodo_id} style={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-color)', borderRadius: '6px', padding: '10px 12px' }}>
+                          <strong>{prioridad.nodo.nombre}</strong> · {prioridad.nivel === 'critico' ? 'Crítico' : 'No crítico'}
+                          <div>Riesgo del escenario: {prioridad.riesgo_escenario}</div>
+                          <div>Riesgo estructural: {prioridad.riesgo_estructural}</div>
+                          <div>Variación por escenario: {prioridad.variacion_escenario}×</div>
+                          <div style={{ marginTop: '6px', fontWeight: 700 }}>Aportes por factor</div>
+                          {(prioridad.aportes || []).map(aporte => (
+                            <div key={aporte.nombre} style={{ marginTop: '5px', fontSize: '11px' }}>
+                              <div>{aporte.nombre}: {aporte.aporte} · {aporte.descripcion}</div>
+                              <div style={{ height: '6px', backgroundColor: 'var(--bg-subtle)', borderRadius: '4px' }}>
+                                <div style={{ height: '100%', width: `${Math.max(0, Math.min(100, aporte.aporte * 100))}%`, backgroundColor: 'var(--accent-blue)', borderRadius: '4px' }} />
+                              </div>
+                            </div>
+                          ))}
+                          <div style={{ marginTop: '8px', fontWeight: 700 }}>Evidencia</div>
+                          {!prioridad.evidencia?.length && <div>Sin incidentes de evidencia registrados</div>}
+                          {(prioridad.evidencia || []).map(ev => (
+                            <div key={ev.id} style={{ fontSize: '11px', marginTop: '4px' }}>
+                              {ev.url ? <a href={ev.url} target="_blank" rel="noreferrer">{ev.fuente} · {ev.tipo}</a> : <span>{ev.fuente} · {ev.tipo} (sin enlace)</span>}
+                              {' · '}{ev.fecha}<MarcaSimulado origen={ev.origen} />
+                            </div>
+                          ))}
                         </div>
                       ))}
                     </div>
@@ -1506,14 +1394,14 @@ export default function App() {
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <Newspaper size={13} color="var(--text-muted)" />
-                      <span>Ver Recortes de Prensa Históricos ({incidents.length || 12})</span>
+                      <span>Ver Recortes de Prensa Históricos ({incidents.length})</span>
                     </div>
                     {showNewsInspector ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                   </button>
 
                   {showNewsInspector && selectedIncident && (
                     <div style={{ borderTop: '1px solid var(--border-color)', padding: '10px 12px', fontSize: '11.5px' }}>
-                      <strong style={{ color: 'var(--text-primary)' }}>“{selectedIncident.titulo}”</strong>
+                      <strong style={{ color: 'var(--text-primary)' }}>“{selectedIncident.titulo}”</strong><MarcaSimulado origen={selectedIncident.origen} />
                       <p style={{ color: 'var(--text-secondary)', margin: '4px 0' }}>{selectedIncident.resumen}</p>
                       <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{selectedIncident.ubicacion_texto}</span>
                     </div>
@@ -1528,19 +1416,19 @@ export default function App() {
           PESTAÑA 2: PLANIFICACIÓN DE OBRAS VIALES (SIN ETIQUETAS TÉCNICAS)
          ===================================================================== */}
       <div style={{ display: activeTab === 'estrategico' ? 'block' : 'none', flex: 1, overflowY: 'auto', padding: '28px 36px', maxWidth: '1280px', margin: '0 auto', width: '100%' }}>
-        {strategic && (
+        {strategic ? (
           <>
             <div style={{ marginBottom: '20px' }}>
               <h2 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-primary)' }}>
-                Planificación de Infraestructura y Mejora Continua
+                Análisis estratégico de prioridades
               </h2>
               <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                Diagnóstico acumulado sobre los puntos con siniestralidad reiterada en Posadas para priorizar obras civiles, dársenas escolares y desagües pluviales.
+                Escenario de referencia: {strategic.escenario_referencia ? `día ${strategic.escenario_referencia.dia_semana}, ${strategic.escenario_referencia.franja_horaria}, ${strategic.escenario_referencia.precipitacion_mm_h} mm/h, actividad escolar ${strategic.escenario_referencia.actividad_escolar ? 'sí' : 'no'}` : 'no disponible'}.
               </p>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '24px' }}>
-              {strategic.kpis.map((k, idx) => (
+              {(strategic.kpis || []).map((k, idx) => (
                 <div
                   key={idx}
                   style={{
@@ -1562,7 +1450,7 @@ export default function App() {
                       marginBottom: '4px'
                     }}
                   >
-                    {k.value === '0 hechos verificados' ? `${incidents.length || 12} hechos verificados` : k.value}
+                    {k.value}
                   </div>
                   <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{k.sub}</div>
                 </div>
@@ -1579,35 +1467,35 @@ export default function App() {
               }}
             >
               <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border-color)', fontWeight: 700, fontSize: '13.5px' }}>
-                Intersecciones con Prioridad de Intervención de Obras Públicas
+                Ranking de prioridades
               </div>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12.5px', textAlign: 'left' }}>
                 <thead>
                   <tr style={{ backgroundColor: 'var(--bg-subtle)', color: 'var(--text-muted)', fontSize: '11px', textTransform: 'uppercase' }}>
                     <th style={{ padding: '12px 16px' }}>Intersección / Corredor</th>
                     <th style={{ padding: '12px 16px' }}>Ubicación Geográfica</th>
-                    <th style={{ padding: '12px 16px' }}>Problemática Detectada</th>
-                    <th style={{ padding: '12px 16px' }}>Recurrencia Anual</th>
-                    <th style={{ padding: '12px 16px' }}>Obra Pública Propuesta</th>
+                    <th style={{ padding: '12px 16px' }}>Nivel</th>
+                    <th style={{ padding: '12px 16px' }}>Riesgo estructural</th>
+                    <th style={{ padding: '12px 16px' }}>Factor de mayor aporte / Evidencia</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {strategic.ranking_infraestructura.map(row => (
+                  {(strategic.ranking_infraestructura || []).map(row => (
                     <tr key={row.nodo_id} style={{ borderTop: '1px solid var(--border-color)' }}>
                       <td style={{ padding: '14px 16px', fontWeight: 700, color: 'var(--text-primary)' }}>{row.interseccion}</td>
                       <td className="mono" style={{ padding: '14px 16px', color: 'var(--text-muted)', fontSize: '11.5px' }}>
-                        {row.coordenadas}
+                        {row.coordenadas?.join(', ')}
                       </td>
-                      <td style={{ padding: '14px 16px', color: 'var(--text-secondary)' }}>{row.causa_raiz}</td>
-                      <td style={{ padding: '14px 16px', color: 'var(--alert-crimson)', fontWeight: 600 }}>{row.frecuencia}</td>
-                      <td style={{ padding: '14px 16px', color: 'var(--accent-blue)', fontWeight: 600 }}>{row.obra_recomendada}</td>
+                      <td style={{ padding: '14px 16px', color: 'var(--text-secondary)' }}>{row.nivel}</td>
+                      <td style={{ padding: '14px 16px', color: 'var(--alert-crimson)', fontWeight: 600 }}>{row.riesgo_estructural}</td>
+                      <td style={{ padding: '14px 16px', color: 'var(--accent-blue)', fontWeight: 600 }}>{row.factor_mayor_aporte ? `${row.factor_mayor_aporte.nombre}: ${row.factor_mayor_aporte.aporte}` : 'Sin factor disponible'} · {row.cantidad_incidentes_evidencia} incidentes</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           </>
-        )}
+        ) : <p>Sin datos estratégicos disponibles.</p>}
       </div>
 
       {/* =====================================================================
@@ -1629,7 +1517,7 @@ export default function App() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Activity size={16} color="var(--accent-blue)" />
                 <span style={{ fontSize: '13px', fontWeight: 800, color: 'var(--text-primary)' }}>
-                  Circuito Activo de Relevamiento y Procesamiento de Información Vial
+                  Circuito de información vial
                 </span>
               </div>
               <span
@@ -1642,7 +1530,7 @@ export default function App() {
                   borderRadius: '999px'
                 }}
               >
-                ● Monitoreo Automático Activo · Arquitectura Escalable a Nuevas Fuentes
+                Fuentes y procesamiento
               </span>
             </div>
 
@@ -1661,10 +1549,10 @@ export default function App() {
                   1. Fuentes Conectadas y Futuras
                 </div>
                 <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '2px' }}>
-                  Medios Locales, Clima y Sensores
+                  Fuentes de incidentes
                 </div>
                 <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
-                  Primera Edición, Misiones Online, Canal 12, OPAD, IDE Posadas (+ expansión a 911 / Waze)
+                  {sourceFolders.slice(1).map(folder => folder.name).join(' · ') || 'Sin fuentes disponibles'}
                 </div>
               </div>
 
@@ -1708,7 +1596,7 @@ export default function App() {
                   Georreferenciación en Posadas
                 </div>
                 <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
-                  Cruza las arterias mencionadas en la noticia con el mapa oficial de calles y zonas escolares
+                  Ubicación de los incidentes registrados
                 </div>
               </div>
 
@@ -1725,13 +1613,13 @@ export default function App() {
                 }}
               >
                 <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--accent-blue)', textTransform: 'uppercase', marginBottom: '3px' }}>
-                  4. Acción Preventiva y Obras
+                  4. Análisis de prioridades
                 </div>
                 <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '2px' }}>
-                  Despacho y Planificación
+                  Análisis y planificación
                 </div>
                 <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
-                  Actualiza el mapa operativo, sugiere desvíos de colectivos y prioriza obras de infraestructura
+                  Presenta prioridades y su evidencia
                 </div>
               </div>
             </div>
@@ -1776,9 +1664,9 @@ export default function App() {
                 Unidades de Información y Fuentes
               </div>
 
-              {SOURCE_FOLDERS.map(folder => {
+              {sourceFolders.map(folder => {
                 const isSelected = selectedFolder === folder.id
-                const isSelectable = ['all', 'misiones_online', 'primera_edicion', 'canal_12'].includes(folder.id)
+                const isSelectable = true
                 return (
                   <div
                     key={folder.id}
@@ -1805,7 +1693,7 @@ export default function App() {
                         <div style={{ fontSize: '12px', fontWeight: isSelected ? 700 : 600, color: 'var(--text-primary)' }}>
                           {folder.name}
                         </div>
-                        <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{folder.status}</div>
+                        <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{folder.id === 'all' ? 'Incidentes' : 'Fuente'}</div>
                       </div>
                     </div>
 
@@ -1903,6 +1791,7 @@ export default function App() {
 
               {/* Contenido del Gestor (Tarjetas o Lista) */}
               <div style={{ flex: 1, overflowY: 'auto', padding: '14px 16px' }}>
+                {!filteredDriveDocs.length && <p>Sin incidentes disponibles.</p>}
                 {driveViewMode === 'grid' ? (
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(245px, 1fr))', gap: '12px' }}>
                     {filteredDriveDocs.map(doc => {
@@ -1935,7 +1824,7 @@ export default function App() {
                                   color: 'var(--accent-blue)'
                                 }}
                               >
-                                {SOURCE_LABELS[doc.fuente] || doc.fuente}
+                                {SOURCE_LABELS[doc.fuente] || doc.fuente}<MarcaSimulado origen={doc.origen} />
                               </span>
                               <span
                                 style={{
@@ -1977,9 +1866,9 @@ export default function App() {
                             }}
                           >
                             <span>
-                              {doc.calle_1.replace('Av. ', '')} × {doc.calle_2.replace('Av. ', '')}
+                              {doc.calle_1?.replace('Av. ', '')} × {doc.calle_2?.replace('Av. ', '')}
                             </span>
-                            <span style={{ color: '#16a34a', fontWeight: 700, fontSize: '10px' }}>● Verificado</span>
+                            <span style={{ color: '#16a34a', fontWeight: 700, fontSize: '10px' }}>{doc.estado_verificacion || 'Sin estado'}</span>
                           </div>
                         </div>
                       )
@@ -2010,16 +1899,16 @@ export default function App() {
                             }}
                           >
                             <td style={{ padding: '10px 12px', fontWeight: 700, color: 'var(--accent-blue)' }}>
-                              {SOURCE_LABELS[doc.fuente] || doc.fuente}
+                              {SOURCE_LABELS[doc.fuente] || doc.fuente}<MarcaSimulado origen={doc.origen} />
                             </td>
                             <td style={{ padding: '10px 12px', fontWeight: 600, color: 'var(--text-primary)' }}>{doc.titulo}</td>
                             <td style={{ padding: '10px 12px', color: 'var(--text-secondary)' }}>
                               {doc.calle_1} y {doc.calle_2}
                             </td>
                             <td className="mono" style={{ padding: '10px 12px', fontSize: '11px' }}>
-                              {doc.fecha_evento.replace('T', ' ').slice(0, 16)} hs
+                              {(doc.fecha_evento || '').replace('T', ' ').slice(0, 16)} hs
                             </td>
-                            <td style={{ padding: '10px 12px', color: '#16a34a', fontWeight: 700 }}>Procesado</td>
+                            <td style={{ padding: '10px 12px', color: '#16a34a', fontWeight: 700 }}>{doc.estado_verificacion || 'Sin estado'}</td>
                           </tr>
                         )
                       })}
@@ -2057,7 +1946,7 @@ export default function App() {
                   }}
                 >
                   <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--accent-blue)', marginBottom: '4px' }}>
-                    {SOURCE_LABELS[driveSelectedDoc.fuente] || driveSelectedDoc.fuente}
+                    {SOURCE_LABELS[driveSelectedDoc.fuente] || driveSelectedDoc.fuente}<MarcaSimulado origen={driveSelectedDoc.origen} />
                   </div>
                   <div style={{ fontSize: '13.5px', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.35, marginBottom: '8px' }}>
                     {driveSelectedDoc.titulo}
@@ -2093,7 +1982,7 @@ export default function App() {
                   </div>
                   <div>
                     <span style={{ color: 'var(--text-muted)', fontSize: '10px', display: 'block' }}>VEHÍCULOS IDENTIFICADOS</span>
-                    <strong style={{ textTransform: 'capitalize' }}>{driveSelectedDoc.vehiculos || 'Calzada'}</strong>
+                    <strong style={{ textTransform: 'capitalize' }}>{driveSelectedDoc.vehiculos || 'Sin datos'}</strong>
                   </div>
                 </div>
 
