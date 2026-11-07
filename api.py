@@ -3,7 +3,7 @@
 from contextlib import asynccontextmanager
 from pathlib import Path
 from types import SimpleNamespace
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Literal
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -30,7 +30,7 @@ async def lifespan(app: FastAPI):
     seed_reference_data(db)
     load_silver_incidents_from_jsonl(db)
     risk_engine = ExplainableRiskEngine(db)
-    analista = AgenteAnalista(db)
+    analista = AgenteAnalista(db, risk_engine)
     investigador = AgenteInvestigador()
     yield
 
@@ -65,11 +65,13 @@ def api_status() -> Dict[str, Any]:
 
 
 @app.get("/api/incidents")
-def api_incidents() -> List[Dict[str, Any]]:
+def api_incidents(origen: Literal["real", "simulado", "todos"] = "real") -> List[Dict[str, Any]]:
     try:
         df = get_all_incidents(db)
         if df is None or not hasattr(df, "to_dict") or df.empty:
             return []
+        if origen != "todos":
+            df = df[df["origen"].fillna("real") == origen]
         records = df.to_dict(orient="records")
         for r in records:
             r["fecha_publicacion"] = str(r.get("fecha_publicacion") or "")
@@ -134,7 +136,7 @@ def api_strategic() -> Dict[str, Any]:
     status = get_pipeline_status(db)
     _, prioridades = risk_engine.evaluate_all_nodes(ESCENARIO_REFERENCIA)
     ranking = []
-    for prioridad in prioridades:
+    for prioridad in sorted(prioridades, key=lambda p: p.riesgo_estructural, reverse=True):
         nodo = prioridad.nodo
         factor = max(prioridad.aportes, key=lambda aporte: aporte.aporte, default=None)
         ranking.append({
@@ -144,7 +146,7 @@ def api_strategic() -> Dict[str, Any]:
             "nivel": prioridad.nivel,
             "riesgo_estructural": prioridad.riesgo_estructural,
             "factor_mayor_aporte": factor.model_dump() if factor else None,
-            "cantidad_incidentes_evidencia": len(prioridad.evidencia),
+            "cantidad_incidentes_evidencia": prioridad.total_evidencia,
         })
     return {
         "escenario_referencia": ESCENARIO_REFERENCIA.model_dump(),

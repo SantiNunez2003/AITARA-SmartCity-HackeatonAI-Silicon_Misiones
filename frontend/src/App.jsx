@@ -442,7 +442,7 @@ export default function App() {
             />
             <span>Incidentes registrados</span>
             <span style={{ color: 'var(--text-muted)' }}>·</span>
-            <strong>{status?.total_incidentes ?? 'Sin datos'}</strong>
+            <strong>{status?.incidentes_por_origen?.real ?? 0} reales · {status?.incidentes_por_origen?.simulado ?? 0} SIMULADOS</strong>
           </div>
 
           <button
@@ -1357,6 +1357,8 @@ export default function App() {
                             </div>
                           ))}
                           <div style={{ marginTop: '8px', fontWeight: 700 }}>Evidencia</div>
+                          <div>Mostrando {prioridad.evidencia?.length || 0} de {prioridad.total_evidencia} · {prioridad.evidencia_real} reales · {prioridad.evidencia_simulada} SIMULADOS</div>
+                          {prioridad.evidencia_simulada > 0 && prioridad.evidencia_real === 0 && <div>Evidencia solo SIMULADA</div>}
                           {!prioridad.evidencia?.length && <div>Sin incidentes de evidencia registrados</div>}
                           {(prioridad.evidencia || []).map(ev => (
                             <div key={ev.id} style={{ fontSize: '11px', marginTop: '4px' }}>

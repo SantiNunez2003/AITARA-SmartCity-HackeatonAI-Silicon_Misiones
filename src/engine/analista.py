@@ -72,7 +72,9 @@ def _contexto(params, prioridades):
         )
         for aporte in prioridad.aportes:
             lineas.append(f"Aporte {aporte.nombre}: {aporte.aporte:.2f} ({aporte.descripcion}).")
-        lineas.append(f"Incidentes de evidencia: {len(prioridad.evidencia)}.")
+        lineas.append(f"Incidentes de evidencia: {prioridad.total_evidencia}.")
+        if prioridad.evidencia_simulada and not prioridad.evidencia_real:
+            lineas.append("La evidencia de este nodo es solo SIMULADA.")
         if not prioridad.evidencia:
             lineas.append("Este nodo no tiene evidencia de incidentes.")
         for evidencia in prioridad.evidencia:
@@ -116,7 +118,7 @@ def _resumen_prioridades(prioridades):
         factor = f"{mayor.nombre} ({mayor.aporte:.2f})" if mayor else "sin aportes disponibles"
         lineas.append(f"{prioridad.nodo.nombre}: {_nivel(prioridad)}; riesgo "
                       f"{prioridad.riesgo_escenario:.2f}; mayor aporte: {factor}; "
-                      f"incidentes: {len(prioridad.evidencia)}.")
+                      f"incidentes: {prioridad.total_evidencia}.")
     return "\n".join(lineas) if lineas else "No hay prioridades disponibles."
 
 
@@ -133,9 +135,9 @@ def _respaldo(pregunta, params, prioridades):
 
 
 class AgenteAnalista:
-    def __init__(self, db=None):
+    def __init__(self, db=None, risk_engine=None):
         self.db = db or get_db_connection()
-        self.risk_engine = ExplainableRiskEngine(self.db)
+        self.risk_engine = risk_engine or ExplainableRiskEngine(self.db)
         self._genai_client = None
 
     def _get_genai_client(self):

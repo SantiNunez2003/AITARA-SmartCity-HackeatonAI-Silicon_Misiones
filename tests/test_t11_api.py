@@ -43,6 +43,8 @@ def test_respuestas_y_cambios_en_strategic(monkeypatch):
         estado['total_incidentes'] = 3
         prioridad.nivel = 'no_critico'
         prioridad.evidencia.append(Evidencia(id='i', fecha=datetime(2025, 1, 1), tipo='choque', fuente='fuente', origen='simulado'))
+        prioridad.total_evidencia = 1
+        prioridad.evidencia_simulada = 1
         segunda = client.get('/api/strategic').json()
         assert [k['value'] for k in segunda['kpis']] == [3, 1, 0]
         assert segunda['ranking_infraestructura'][0]['cantidad_incidentes_evidencia'] == 1
