@@ -36,7 +36,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="AITARA — Copiloto Táctico de Movilidad Urbana API",
+    title="AITARA — Soporte a decisiones de movilidad urbana API",
     version="2.1.0",
     description="Backend Analítico Geoespacial (DuckDB + Modelos XAI + Agentes Lector, Investigador y Analista)",
     lifespan=lifespan,

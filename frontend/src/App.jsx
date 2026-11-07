@@ -212,9 +212,9 @@ export default function App() {
           fillOpacity: isCrit ? 0.22 : 0.14
         })
 
-        const signVar = nodo.variacion_escenario
+        const signVar = `${nodo.variacion_escenario >= 0 ? '+' : ''}${String(nodo.variacion_escenario).replace('.', ',')} %`
         halo.bindTooltip(
-          `<div><strong>${nodo.nombre}</strong><br/>Riesgo del escenario: <b>${nodo.riesgo_final}</b><br/>Riesgo estructural: ${nodo.riesgo_estructural}<br/>Variación: ${signVar}×</div>`,
+          `<div><strong>${nodo.nombre}</strong><br/>Riesgo del escenario: <b>${nodo.riesgo_final}</b><br/>Riesgo estructural: ${nodo.riesgo_estructural}<br/>Variación: ${signVar}</div>`,
           { direction: 'top' }
         )
 
@@ -382,7 +382,7 @@ export default function App() {
             >
               Movilidad Urbana
             </span>
-            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>· Municipalidad de Posadas</span>
+            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>· Posadas</span>
           </div>
 
           {/* Pestañas de Navegación Limpias */}
@@ -864,21 +864,23 @@ export default function App() {
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
                     <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--accent-blue)' }}>
-                      Recomendación Táctica AITARA
+                      Resumen del Analista
                     </span>
                   </div>
                   <div
                     style={{ whiteSpace: 'pre-line', lineHeight: '1.6' }}
                     dangerouslySetInnerHTML={{
                       __html: analystReply
+                        .replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;')
+                        .replace(/"/g, '&quot;')
+                        .replace(/'/g, '&#39;')
                         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
                         .replace(/^### (.*$)/gim, '<h4 style="margin:8px 0 4px; color:var(--text-primary);">$1</h4>')
                         .replace(/^## (.*$)/gim, '<h3 style="margin:10px 0 4px; color:var(--text-primary);">$1</h3>')
                     }}
                   />
-                  <div style={{ marginTop: '8px', paddingTop: '6px', borderTop: '1px solid var(--border-color)', fontSize: '10px', color: 'var(--text-muted)' }}>
-                    Fuente: Modelos calibrados IDE Posadas · OPAD · Memoria de siniestros
-                  </div>
                 </div>
               )}
             </div>
@@ -1021,7 +1023,7 @@ export default function App() {
                                 {SOURCE_LABELS[selectedIncident.fuente] || selectedIncident.fuente}<MarcaSimulado origen={selectedIncident.origen} />
                               </span>
                               <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 600 }}>
-                                {selectedIncident.fecha_evento ? selectedIncident.fecha_evento.replace('T', ' · ').slice(0, 18) : 'Reciente'} hs
+                                {selectedIncident.fecha_evento ? `${selectedIncident.fecha_evento.replace('T', ' ').slice(0, 16)} hs` : 'Reciente'}
                               </span>
                             </div>
 
@@ -1344,11 +1346,11 @@ export default function App() {
                           <strong>{prioridad.nodo.nombre}</strong> · {prioridad.nivel === 'critico' ? 'Crítico' : 'No crítico'}
                           <div>Riesgo del escenario: {prioridad.riesgo_escenario}</div>
                           <div>Riesgo estructural: {prioridad.riesgo_estructural}</div>
-                          <div>Variación por escenario: {prioridad.variacion_escenario}×</div>
+                          <div>Variación por escenario: {prioridad.variacion_escenario >= 0 ? '+' : ''}{String(prioridad.variacion_escenario).replace('.', ',')} %</div>
                           <div style={{ marginTop: '6px', fontWeight: 700 }}>Aportes por factor</div>
                           {(prioridad.aportes || []).map(aporte => (
                             <div key={aporte.nombre} style={{ marginTop: '5px', fontSize: '11px' }}>
-                              <div>{aporte.nombre}: {aporte.aporte} · {aporte.descripcion}</div>
+                              <div>{aporte.nombre}: {Number(aporte.aporte).toFixed(2)} · {aporte.descripcion}</div>
                               <div style={{ height: '6px', backgroundColor: 'var(--bg-subtle)', borderRadius: '4px' }}>
                                 <div style={{ height: '100%', width: `${Math.max(0, Math.min(100, aporte.aporte * 100))}%`, backgroundColor: 'var(--accent-blue)', borderRadius: '4px' }} />
                               </div>
@@ -1484,11 +1486,11 @@ export default function App() {
                     <tr key={row.nodo_id} style={{ borderTop: '1px solid var(--border-color)' }}>
                       <td style={{ padding: '14px 16px', fontWeight: 700, color: 'var(--text-primary)' }}>{row.interseccion}</td>
                       <td className="mono" style={{ padding: '14px 16px', color: 'var(--text-muted)', fontSize: '11.5px' }}>
-                        {row.coordenadas?.join(', ')}
+                        {row.coordenadas?.map(c => Number(c).toFixed(5)).join(', ')}
                       </td>
-                      <td style={{ padding: '14px 16px', color: 'var(--text-secondary)' }}>{row.nivel}</td>
+                      <td style={{ padding: '14px 16px', color: 'var(--text-secondary)' }}>{row.nivel === 'critico' ? 'Crítico' : 'No crítico'}</td>
                       <td style={{ padding: '14px 16px', color: 'var(--alert-crimson)', fontWeight: 600 }}>{row.riesgo_estructural}</td>
-                      <td style={{ padding: '14px 16px', color: 'var(--accent-blue)', fontWeight: 600 }}>{row.factor_mayor_aporte ? `${row.factor_mayor_aporte.nombre}: ${row.factor_mayor_aporte.aporte}` : 'Sin factor disponible'} · {row.cantidad_incidentes_evidencia} incidentes</td>
+                      <td style={{ padding: '14px 16px', color: 'var(--accent-blue)', fontWeight: 600 }}>{row.factor_mayor_aporte ? `${row.factor_mayor_aporte.nombre}: ${Number(row.factor_mayor_aporte.aporte).toFixed(2)}` : 'Sin factor disponible'} · {row.cantidad_incidentes_evidencia} incidentes</td>
                     </tr>
                   ))}
                 </tbody>

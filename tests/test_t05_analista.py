@@ -92,6 +92,16 @@ def test_formato_y_control_de_redondeo(monkeypatch):
     assert not _numeros_validos("aporte 34 %", contexto)
 
 
+def test_numeros_junto_a_unidades_y_marcadores_de_lista():
+    contexto = "Distancia 500 m, velocidad 45 km/h, duración 30 min y valor 0.99."
+    for texto in ("500m", "45km/h", "30min", "_0.99_"):
+        assert _numeros_validos(texto, contexto)
+        assert not _numeros_validos(texto, "Sin valores disponibles")
+    assert _numeros_validos("1. Primero\n2) Segundo", "Sin valores disponibles")
+    assert not _numeros_validos("99. inventado", "Sin valores disponibles")
+    assert not _numeros_validos("1. Primero\n3. inventado", "Sin valores disponibles")
+
+
 def test_respaldo_seleccion_y_prioridades(monkeypatch):
     import re
     agente = analista()
