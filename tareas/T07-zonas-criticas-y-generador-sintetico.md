@@ -13,6 +13,9 @@ Que el riesgo estructural y el ranking de zonas críticas se calculen a partir d
 - `src/engine/risk_model.py`
 - `data/simulado/` (nuevo)
 - `tests/`
+- `src/contracts.py`, `src/engine/analista.py` y `api.py` (solo lo que exige la sección "Convivencia con los datos reales")
+- `frontend/src/App.jsx` (solo esa sección)
+- `Dockerfile` (copiar `data/simulado/`)
 
 ## Qué hacer
 1. **Generador sintético** (`src/ingesta/generador_sintetico.py`):
@@ -46,3 +49,12 @@ python -m pytest -q tests
 
 ## Fuera de alcance
 El eje de fluidez y el feed con formato Waze (pueden quedar para una tarea posterior).
+
+## Convivencia con los datos reales
+1. Volumen: del orden de 1500 eventos simulados, para que el arranque siga siendo rápido con poca CPU. Carga en bloque, con una sola transacción.
+2. La asignación a nodo y el riesgo estructural se calculan una vez al arrancar y se guardan en la base; no por pedido.
+3. `/api/incidents` devuelve por defecto solo los incidentes reales, para no llenar el mapa. `?origen=simulado` o `?origen=todos` permiten pedir los demás.
+4. `Prioridad` lleva como máximo 5 evidencias, primero las reales y luego las más graves y recientes, más `total_evidencia`, `evidencia_real` y `evidencia_simulada`. El Analista y `/api/strategic` usan esos totales, no el largo de la lista.
+5. `/api/status` agrega `incidentes_por_origen`. La interfaz muestra por separado reales y simulados, con la marca SIMULADO, y "Mostrando N de M" en la evidencia.
+6. Un nodo con evidencia solo simulada tiene que verse así: la interfaz y el Analista lo aclaran.
+7. La severidad 3 es fatal: las noticias reales conservan la gravedad que informa la nota.
