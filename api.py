@@ -8,9 +8,13 @@ Exposes REST endpoints for the Vite + React Geospatial Command Center:
 - GET  /api/strategic    -> Métricas y ranking de deuda de infraestructura ("¿Cómo Mejorar?")
 """
 
+from contextlib import asynccontextmanager
+from pathlib import Path
+from types import SimpleNamespace
 from typing import List, Dict, Any
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from src.contracts import ParametrosEscenario
@@ -26,10 +30,24 @@ from src.engine.risk_model import ExplainableRiskEngine
 from src.engine.analista import AgenteAnalista
 from src.engine.investigador import AgenteInvestigador
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global db, risk_engine, analista, investigador
+    db = get_db_connection()
+    init_schema(db)
+    seed_reference_data(db)
+    load_silver_incidents_from_jsonl(db)
+    risk_engine = ExplainableRiskEngine(db)
+    analista = AgenteAnalista(db)
+    investigador = AgenteInvestigador()
+    yield
+
+
 app = FastAPI(
     title="AITARA — Copiloto Táctico de Movilidad Urbana API",
     version="2.1.0",
     description="Backend Analítico Geoespacial (DuckDB + Modelos XAI + Agentes Lector, Investigador y Analista)",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -39,17 +57,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Inicializar almacén DuckDB al levantar el servidor
-db = get_db_connection()
-init_schema(db)
-seed_reference_data(db)
-load_silver_incidents_from_jsonl(db)
-
-risk_engine = ExplainableRiskEngine(db)
-analista = AgenteAnalista(db)
-investigador = AgenteInvestigador()
-
 
 class AskRequest(BaseModel):
     pregunta: str
@@ -96,12 +103,10 @@ def api_evaluate(params: ParametrosEscenario) -> Dict[str, Any]:
         informe = analista.generar_informe_turno(params)
     except Exception as e:
         print(f"Error generando informe de turno: {e}")
-        from src.contracts import InformeTurno
-        informe = InformeTurno(
+        informe = SimpleNamespace(
             turno=f"Guardia Operativa ({params.franja_horaria} hs)",
-            alerta_meteorologica="Condición normal",
-            recomendacion_estrategica="Monitoreo y patrullaje preventivo",
-            nodos_criticos=[]
+            alerta_meteorologica="No disponible",
+            recomendacion_estrategica="Informe no disponible. Consultar los resultados por nodo.",
         )
 
     # Corredor ortogonal real verificado sobre OSM (Av. Corrientes y Catamarca -> San Lorenzo -> Mitre)
@@ -199,3 +204,8 @@ def api_strategic() -> Dict[str, Any]:
             },
         ],
     }
+
+
+frontend_dist = Path(__file__).resolve().parent / "frontend" / "dist"
+if frontend_dist.is_dir():
+    app.mount("/", StaticFiles(directory=frontend_dist, html=True), name="frontend")
