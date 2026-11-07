@@ -26,5 +26,5 @@ Por decisión de Joaquín, implementó Codex y revisaron los críticos de Claude
 - `Dockerfile`: el contenedor corre como root.
 
 ## Pendientes
-- Probar la interfaz en un navegador y obtener la URL pública.
+- URL pública publicada y verificada por HTTP: https://aitara-smartcity-hackeatonai-silicon.onrender.com/ (interfaz, API y 400 de 400 pedidos simultáneos). Falta probar la interfaz en un navegador.
 - Preexistente, fuera de alcance (T04 a T07): cifras a mano en `/api/strategic`, `ordenes_despacho`, latencia fija y vocabulario de despacho. No poner el link en la ficha hasta resolverlo.
