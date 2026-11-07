@@ -1,10 +1,10 @@
 """Contratos de datos tipados (Pydantic) de AITARA.
 
 Garantiza desacoplamiento limpio entre Ingesta (Ana), Almacén/Modelos (Joaquín/Core)
-y la Interfaz/Agente de Despacho (Persona 2).
+y la interfaz y el Analista.
 """
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Literal
 from pydantic import BaseModel, Field
 
 
@@ -27,15 +27,15 @@ class IncidenteSilver(BaseModel):
     confianza: float = Field(ge=0.0, le=1.0)
     estado_verificacion: str = "curado"  # 'curado', 'investigado', 'pendiente'
     resumen: str
+    origen: Literal["real", "simulado"] = "real"
 
 
 class ParametrosEscenario(BaseModel):
-    """Parámetros operacionales definidos en la interfaz por el despachador."""
+    """Parámetros operacionales definidos por el usuario."""
     dia_semana: int = 1  # 0=Lunes ... 4=Viernes
     franja_horaria: str = "07:00"  # '07:00', '12:00', '18:00'
-    precipitacion_mm_h: float = 0.0  # Dato OPAD
+    precipitacion_mm_h: float = 0.0  # Dato ingresado por el usuario
     actividad_escolar: bool = True
-    dotacion_patrullas: int = 4  # Capacidad de móviles disponibles
 
 
 class EvaluacionNodo(BaseModel):
@@ -48,17 +48,32 @@ class EvaluacionNodo(BaseModel):
     variacion_escenario: float  # Cociente vs habitual (ej. 1.52 = +52%)
     riesgo_final: float  # Ponderación combinada
     es_critico: bool
-    factores: List[str]  # ['lluvia_opad', 'ingreso_escolar', 'motos_recurrentes']
-    desvio_sugerido: Optional[str] = None
+    factores: List[str]
 
 
-class OrdenDespacho(BaseModel):
-    """Instrucción prescriptiva para una patrulla en calle."""
-    movil_id: str
-    nodo_objetivo: str
-    hora_presentacion: str
-    instruccion_tactica: str
-    desvio_transporte: Optional[str] = None
+class AporteFactor(BaseModel):
+    nombre: str
+    aporte: float
+    descripcion: str
+
+
+class Evidencia(BaseModel):
+    id: str
+    fecha: datetime
+    tipo: str
+    fuente: str
+    url: Optional[str] = None
+    origen: Literal["real", "simulado"]
+
+
+class Prioridad(BaseModel):
+    nodo: EvaluacionNodo
+    nivel: Literal["critico", "no_critico"]
+    riesgo_estructural: float
+    variacion_escenario: float
+    riesgo_escenario: float
+    aportes: List[AporteFactor]
+    evidencia: List[Evidencia]
 
 
 class InformeOperativoAnalista(BaseModel):
@@ -67,5 +82,5 @@ class InformeOperativoAnalista(BaseModel):
     turno: str
     alerta_meteorologica: str
     nodos_criticos: List[EvaluacionNodo]
-    ordenes_despacho: List[OrdenDespacho]
+    prioridades: List[Prioridad]
     recomendacion_estrategica: str

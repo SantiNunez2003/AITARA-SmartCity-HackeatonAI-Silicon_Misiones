@@ -18,7 +18,6 @@ def test_api_con_lifespan():
 ESCENARIO = {
     "franja_horaria": "07:00",
     "precipitacion_mm_h": 15,
-    "dotacion_patrullas": 4,
 }
 
 
@@ -43,6 +42,8 @@ def test_pedidos_simultaneos():
             assert datos["ranking_infraestructura"]
         else:
             assert datos["nodos"]
+            assert datos["prioridades"]
+            assert "ordenes_despacho" not in datos
 
     with TestClient(app) as client:
         with ThreadPoolExecutor(max_workers=16) as executor:

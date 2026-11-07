@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import List, Dict, Any
 from dotenv import load_dotenv
 
-from src.contracts import EvaluacionNodo, OrdenDespacho, InformeOperativoAnalista, ParametrosEscenario
+from src.contracts import EvaluacionNodo, Prioridad, InformeOperativoAnalista, ParametrosEscenario
 from src.engine.risk_model import ExplainableRiskEngine
 from src.warehouse.db import get_db_connection, DBWrapper
 
@@ -62,7 +62,7 @@ class AgenteAnalista:
             turno=f"Guardia Operativa ({params.franja_horaria} hs)",
             alerta_meteorologica=clima_txt,
             nodos_criticos=criticos,
-            ordenes_despacho=ordenes,
+            prioridades=ordenes,
             recomendacion_estrategica=recomendacion_estrategica
         )
 
@@ -135,7 +135,7 @@ class AgenteAnalista:
         df_inc: Any,
         nodes: List[EvaluacionNodo],
         criticos: List[EvaluacionNodo],
-        ordenes: List[OrdenDespacho]
+        ordenes: List[Prioridad]
     ) -> str:
         """Motor determinista con respuestas predefinidas ricas, estructuradas y calibradas para modo offline."""
         p_lower = pregunta.lower()

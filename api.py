@@ -3,7 +3,7 @@
 Exposes REST endpoints for the Vite + React Geospatial Command Center:
 - GET  /api/status       -> Estado del almacén DuckDB, latencia y conectividad
 - GET  /api/incidents    -> Los 12 siniestros reales georreferenciados (Agente Lector)
-- POST /api/evaluate     -> Evaluación de riesgo XAI 4D + Triaje de Patrullas + Geometrías
+- POST /api/evaluate     -> Evaluación de riesgo XAI 4D + Prioridades + Geometrías
 - POST /api/ask          -> Consulta SQL + Explicación del Agente Analista
 - GET  /api/strategic    -> Métricas y ranking de deuda de infraestructura ("¿Cómo Mejorar?")
 """
@@ -62,7 +62,6 @@ class AskRequest(BaseModel):
     pregunta: str
     franja_horaria: str = "07:00"
     precipitacion_mm_h: float = 15.0
-    dotacion_patrullas: int = 4
 
 
 @app.get("/api/status")
@@ -94,10 +93,10 @@ def api_incidents() -> List[Dict[str, Any]]:
 @app.post("/api/evaluate")
 def api_evaluate(params: ParametrosEscenario) -> Dict[str, Any]:
     try:
-        evaluaciones, ordenes = risk_engine.evaluate_all_nodes(params)
+        evaluaciones, prioridades = risk_engine.evaluate_all_nodes(params)
     except Exception as e:
         print(f"Error evaluando nodos: {e}")
-        evaluaciones, ordenes = [], []
+        evaluaciones, prioridades = [], []
 
     try:
         informe = analista.generar_informe_turno(params)
@@ -125,7 +124,7 @@ def api_evaluate(params: ParametrosEscenario) -> Dict[str, Any]:
     return {
         "escenario": params.model_dump(),
         "nodos": [n.model_dump() for n in evaluaciones],
-        "ordenes_despacho": [o.model_dump() for o in ordenes],
+        "prioridades": [p.model_dump() for p in prioridades],
         "resumen_turno": {
             "turno": informe.turno,
             "alerta_meteorologica": informe.alerta_meteorologica,
@@ -140,7 +139,6 @@ def api_ask(req: AskRequest) -> Dict[str, Any]:
     params = ParametrosEscenario(
         franja_horaria=req.franja_horaria,
         precipitacion_mm_h=req.precipitacion_mm_h,
-        dotacion_patrullas=req.dotacion_patrullas,
     )
     respuesta = analista.responder_consulta_operador(req.pregunta, params)
     return {

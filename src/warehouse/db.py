@@ -108,11 +108,17 @@ def init_schema(db: DBWrapper) -> None:
             lat REAL,
             lon REAL,
             confianza REAL,
-            resumen TEXT
+            resumen TEXT,
+            origen TEXT
         );
     """)
     try:
         db.execute("ALTER TABLE silver_incident_history ADD COLUMN fecha_evento TIMESTAMP;")
+    except Exception:
+        pass
+
+    try:
+        db.execute("ALTER TABLE silver_incident_history ADD COLUMN origen TEXT;")
     except Exception:
         pass
 
@@ -178,8 +184,8 @@ def load_silver_incidents_from_jsonl(db: DBWrapper) -> int:
             veh_str = ", ".join(item.get("vehiculos", []))
             db.execute("""
                 INSERT OR REPLACE INTO silver_incident_history
-                (id, fuente, titulo, url, fecha_publicacion, fecha_evento, tipo_incidente, severidad, vehiculos, calle_1, calle_2, ubicacion_texto, lat, lon, confianza, resumen)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+                (id, fuente, titulo, url, fecha_publicacion, fecha_evento, tipo_incidente, severidad, vehiculos, calle_1, calle_2, ubicacion_texto, lat, lon, confianza, resumen, origen)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
             """, (
                 item.get("id"),
                 item.get("fuente"),
@@ -196,7 +202,8 @@ def load_silver_incidents_from_jsonl(db: DBWrapper) -> int:
                 item.get("lat"),
                 item.get("lon"),
                 item.get("confianza", 0.9),
-                item.get("resumen")
+                item.get("resumen"),
+                item.get("origen") or "real"
             ))
             count += 1
     return count
