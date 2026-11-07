@@ -18,6 +18,8 @@ Que la interfaz muestre prioridades justificadas y use el vocabulario de la fich
 3. Mostrar una marca visible **SIMULADO** en todo dato con origen simulado.
 4. Quitar el control de "dotación de patrullas" del escenario.
 5. Mostrar el riesgo estructural y la variación por escenario como dos valores distintos.
+6. Adaptar la interfaz a lo que deja T11: pestaña estratégica con los campos nuevos, sin causas ni obras fijas, y sin el corredor de desvío del mapa ni los textos asociados.
+7. Quitar del código de la interfaz las cifras y afirmaciones escritas a mano que queden. Un nodo sin evidencia tiene que decirlo.
 
 ## Criterios de aceptación
 - [ ] No aparece "despacho", "móvil" ni "patrulla" en la interfaz.

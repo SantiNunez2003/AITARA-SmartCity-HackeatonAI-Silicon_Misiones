@@ -22,6 +22,7 @@ Que todo lo que dice el Analista salga de los datos y resultados calculados, con
    - sin órdenes ni cantidades de recursos.
 4. **Control de salida:** antes de devolver la respuesta de Gemini, verificar que cada número que menciona exista en el contexto. Si no, usar el respaldo.
 5. Verificar que el nombre del modelo de Gemini existe; si la llamada falla, registrar el error en el log de forma visible.
+6. Quitar de `tests/` las verificaciones de textos fijos, como el desvío por "San Lorenzo", y quitar de `analista.py` el vocabulario prohibido por `PRINCIPIOS.md`.
 
 ## Criterios de aceptación
 - [ ] No queda ninguna cifra escrita a mano en `analista.py`.

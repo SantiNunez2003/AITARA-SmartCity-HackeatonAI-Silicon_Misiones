@@ -26,8 +26,10 @@ Que el riesgo estructural y el ranking de zonas críticas se calculen a partir d
    - asignar cada incidente (real y simulado) a su nodo más cercano;
    - intensidad por nodo ponderada por gravedad y confianza;
    - suavizado para que un nodo con un solo incidente grave no encabece el ranking;
-   - eliminar los puntajes históricos cargados a mano.
-3. **Ranking de zonas críticas** derivado de ese cálculo.
+   - eliminar los puntajes históricos cargados a mano, junto con los demás valores de `gold_node_risk_features` que no tengan fuente;
+   - revisar `drainage_risk_level`: si no hay dato que lo respalde, se quita del cálculo;
+   - la variación por escenario tiene que ser el cociente contra un día habitual del mismo nodo, como define la propuesta: hoy compara contra el riesgo estructural, que tiene otra escala.
+3. **Ranking de zonas críticas** derivado de ese cálculo, sin cambiar la forma de las respuestas de la API: el ranking de T11 se actualiza solo.
 4. **Test de recuperación del método:** con el generador configurado con un efecto conocido de lluvia, el modelo estima un efecto cercano.
 
 ## Criterios de aceptación

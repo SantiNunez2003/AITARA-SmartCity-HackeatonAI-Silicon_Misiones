@@ -30,9 +30,10 @@ engine = ExplainableRiskEngine(db)
 
 # Escenario Lluvia 40mm, hora escolar, 2 patrullas
 nodes1, ord1 = engine.evaluate_all_nodes(
-    ParametrosEscenario(franja_horaria="07:00", precipitacion_mm_h=40.0, dotacion_patrullas=2)
+    ParametrosEscenario(franja_horaria="07:00", precipitacion_mm_h=40.0)
 )
-assert len(ord1) == 2, f"Fallo triaje de 2 patrullas: {len(ord1)}"
+assert len(ord1) == len(nodes1)
+assert all(abs(sum(a.aporte for a in p.aportes) - p.riesgo_escenario) <= 0.0051 for p in ord1)
 print(f"[2/4] Risk Engine: OK (Lluvia 40mm -> Top: {nodes1[0].nombre} con {int(nodes1[0].riesgo_final*100)}% riesgo, {len(ord1)} órdenes emitidas)")
 
 # 3. Investigador Agent
@@ -46,7 +47,7 @@ print(f"[3/4] Agente Investigador: OK (Ambigüedad resuelta: '{res_inv['ubicacio
 from src.engine.analista import AgenteAnalista
 ana = AgenteAnalista(db)
 inf = ana.generar_informe_turno(
-    ParametrosEscenario(franja_horaria="07:00", precipitacion_mm_h=15.0, dotacion_patrullas=4)
+    ParametrosEscenario(franja_horaria="07:00", precipitacion_mm_h=15.0)
 )
 resp_desvio = ana.responder_consulta_operador("¿Por dónde desvío los colectivos?", ParametrosEscenario())
 assert "San Lorenzo" in resp_desvio

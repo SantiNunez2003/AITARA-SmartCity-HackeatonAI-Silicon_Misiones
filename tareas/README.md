@@ -21,14 +21,15 @@ Quien implementa nunca revisa su propio trabajo: si implementa Codex, revisa Cla
 | T02 | Dependencias y configuración | Codex | — | T03 |
 | T03 | Deploy | Claude | — | T02, T04 |
 | T04 | Despacho → Prioridad | Codex | — | T03 |
-| T05 | Analista sin cifras inventadas | Codex | T04 | — |
-| T06 | Interfaz: vocabulario y prioridades | Codex | T04 | T05 |
-| T07 | Zonas críticas calculadas y generador sintético | Codex | T04 | T08 |
+| T11 | API y README sin cifras ni promesas a mano | Codex | T04 | — |
+| T05 | Analista sin cifras inventadas | Codex | T04, T11 | T06, T07 |
+| T06 | Interfaz: vocabulario y prioridades | Codex | T04, T11 | T05, T07 |
+| T07 | Zonas críticas calculadas y generador sintético | Codex | T04, T11 | T05, T06, T08 |
 | T08 | Lector real con caché | Codex | T02 | T07 |
 | T09 | Dividir `App.jsx` | Codex | T06 | Ninguna |
 | T10 | Link del deploy en la ficha y PDF | Joaquín | T03 | — |
 
-**Mínimo para la presentación:** T02 a T06 y T10.
+**Mínimo para la presentación:** T02 a T07, T11 y T10. La interfaz no se publica entre T04 y T06, porque cambia la forma de la API.
 
 ## Plantilla de especificación
 
