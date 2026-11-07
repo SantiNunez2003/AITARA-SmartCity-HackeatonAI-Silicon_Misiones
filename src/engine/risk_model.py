@@ -142,9 +142,9 @@ class ExplainableRiskEngine:
         variacion_pct = round(((riesgo_final / max(0.20, riesgo_estructural)) - 1.0) * 100, 1)
 
         aportes = [
-            AporteFactor(nombre="temporal", aporte=dim_temporal * 0.35, descripcion=f"Franja {params.franja_horaria}; actividad escolar: {is_school}; dimensión {dim_temporal:.2f}"),
-            AporteFactor(nombre="clima", aporte=dim_clima * 0.30, descripcion=f"Precipitación ingresada: {rain_mm} mm/h; drenaje: {drainage}; dimensión {dim_clima:.2f}"),
-            AporteFactor(nombre="topologia", aporte=dim_topologia * 0.20, descripcion=f"Carriles: {lanes}; parada de colectivo: {has_bus}; dimensión {dim_topologia:.2f}"),
+            AporteFactor(nombre="temporal", aporte=dim_temporal * 0.35, descripcion=f"Franja {params.franja_horaria}; actividad escolar: {'sí' if is_school else 'no'}; dimensión {dim_temporal:.2f}"),
+            AporteFactor(nombre="clima", aporte=dim_clima * 0.30, descripcion=f"Precipitación ingresada: {rain_mm:.2f} mm/h; drenaje: {drainage}; dimensión {dim_clima:.2f}"),
+            AporteFactor(nombre="topologia", aporte=dim_topologia * 0.20, descripcion=f"Carriles: {lanes}; parada de colectivo: {'sí' if has_bus else 'no'}; dimensión {dim_topologia:.2f}"),
             AporteFactor(nombre="siniestralidad", aporte=dim_siniestral * 0.15, descripcion=f"Puntaje histórico: {dim_siniestral:.2f}"),
         ]
         factores = [a.descripcion for a in aportes]

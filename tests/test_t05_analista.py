@@ -35,13 +35,12 @@ def test_respaldo_y_evidencia(monkeypatch):
     for pregunta in ("¿Cuál es el riesgo?", "¿Cuántos incidentes hay?", "¿Qué ruta alternativa hay?"):
         respuesta = agente.responder_consulta_operador(pregunta, params)
         assert _numeros_validos(respuesta, contexto)
-        assert "Incidentes de evidencia: 1" in respuesta
-        assert "https://ejemplo.test/incidente" in respuesta
-    assert "rutas alternativas no está" in agente.responder_consulta_operador("¿Qué ruta alternativa hay?", params)
+        assert "incidentes: 1" in respuesta
+    assert "rutas alternativas no están" in agente.responder_consulta_operador("¿Qué ruta alternativa hay?", params)
     p = prioridad()
     p.evidencia = []
     agente.risk_engine.evaluate_all_nodes = lambda params: ([p.nodo], [p])
-    assert "no tiene evidencia" in agente.responder_consulta_operador("¿Qué ocurre?", params)
+    assert "no tiene evidencia" in agente.responder_consulta_operador("¿Qué ocurre en Cruce A?", params)
 
 
 def test_control_gemini_y_normalizacion(monkeypatch):
@@ -63,4 +62,56 @@ def test_api_sin_clave(monkeypatch):
         monkeypatch.setattr(api, "analista", analista())
         respuesta = cliente.post("/api/ask", json={"pregunta": "¿Riesgo?"})
         assert respuesta.status_code == 200
-        assert "Incidentes de evidencia: 1" in respuesta.json()["respuesta"]
+        assert "incidentes: 1" in respuesta.json()["respuesta"]
+
+
+def test_modelo_predeterminado_y_configurable(monkeypatch):
+    agente = analista()
+    llamadas = []
+    def crear(**kwargs):
+        llamadas.append(kwargs["model"])
+        return SimpleNamespace(output_text="Riesgo 0.87")
+    agente._get_genai_client = lambda: SimpleNamespace(interactions=SimpleNamespace(create=crear))
+    monkeypatch.delenv("GEMINI_MODEL", raising=False)
+    agente.responder_consulta_operador("Riesgo", ParametrosEscenario())
+    monkeypatch.setenv("GEMINI_MODEL", "modelo-alternativo")
+    agente.responder_consulta_operador("Riesgo", ParametrosEscenario())
+    assert llamadas == ["gemini-3.5-flash-lite", "modelo-alternativo"]
+
+
+def test_formato_y_control_de_redondeo(monkeypatch):
+    from src.engine.analista import _respaldo
+    p = prioridad()
+    p.aportes[0].aporte = 0.33249999999999996
+    p.nivel = "no_critico"
+    contexto = _contexto(ParametrosEscenario(), [p])
+    respuesta = _respaldo("Cruce A", ParametrosEscenario(), [p])
+    assert "0.33" in respuesta and "no crítico" in respuesta and "actividad escolar: sí" in respuesta
+    assert "True" not in respuesta and "False" not in respuesta
+    assert _numeros_validos("aporte 0,33 o 33 %", contexto)
+    assert not _numeros_validos("aporte 34 %", contexto)
+
+
+def test_respaldo_seleccion_y_prioridades(monkeypatch):
+    import re
+    agente = analista()
+    prioridades = []
+    for nombre in ("Avenida López", "Avenida Mitre", "Avenida Uruguay", "Avenida Corrientes"):
+        p = prioridad().model_copy(deep=True)
+        p.nodo.nombre = nombre
+        prioridades.append(p)
+    agente.risk_engine.evaluate_all_nodes = lambda params: ([p.nodo for p in prioridades], prioridades)
+    monkeypatch.setattr(agente, "_get_genai_client", lambda: None)
+    params = ParametrosEscenario()
+    detalle = agente.responder_consulta_operador("¿Qué pasa en LOPEZ?", params)
+    assert "Avenida López" in detalle and "Avenida Mitre" not in detalle
+    assert "Aporte clima" in detalle and "https://ejemplo.test/incidente" in detalle
+    resumen = agente.responder_consulta_operador("¿Cuáles son las prioridades?", params)
+    assert all(p.nodo.nombre in resumen for p in prioridades[:3])
+    assert "Avenida Corrientes" not in resumen and "Nodos evaluados: 4" in resumen
+    assert "no están en el contexto" not in resumen
+    assert "no están en el contexto" in agente.responder_consulta_operador("¿Rutas alternativas?", params)
+    informe = agente.generar_informe_turno(params)
+    assert "Avenida Corrientes" not in informe.recomendacion_estrategica
+    for texto in (detalle, resumen):
+        assert not re.search(r"(?<![\w/])\d+[.,]\d{3,}(?!\d)", texto)

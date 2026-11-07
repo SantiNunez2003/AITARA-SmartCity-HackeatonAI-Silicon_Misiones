@@ -3,6 +3,7 @@
 import logging
 import os
 import re
+import unicodedata
 from decimal import Decimal, InvalidOperation
 from datetime import datetime
 from pathlib import Path
@@ -15,6 +16,7 @@ from src.warehouse.db import get_db_connection
 
 load_dotenv(Path(__file__).resolve().parent.parent.parent / ".env")
 logger = logging.getLogger(__name__)
+MODELO_GEMINI_PREDETERMINADO = "gemini-3.5-flash-lite"
 
 # Se reconocen decimales, porcentajes y signos sin interpretar identificadores.
 _NUMERO = re.compile(r"(?<![\w])[-+]?\d+(?:[.,]\d+)?\s*%?(?![\w])")
@@ -41,23 +43,25 @@ def _numeros_validos(respuesta, contexto):
     respuesta = _LISTA.sub("", respuesta)
     respuesta = _HORA.sub(lambda m: "" if m.group() in horas else m.group(), respuesta)
     permitidos = set(_numeros(contexto))
+    permitidos.update(n.quantize(Decimal("0.01")) for n in tuple(permitidos))
     return all(numero in permitidos for numero in _numeros(respuesta))
 
 
 def _contexto(params, prioridades):
     lineas = [
-        f"Escenario: franja {params.franja_horaria}; precipitación {params.precipitacion_mm_h} mm/h; "
-        f"actividad escolar: {params.actividad_escolar}.",
+        f"Escenario: franja {params.franja_horaria}; precipitación {params.precipitacion_mm_h:.2f} mm/h; "
+        f"actividad escolar: {_si_no(params.actividad_escolar)}.",
     ]
+    lineas.append(f"Nodos evaluados: {len(prioridades)}.")
     for prioridad in prioridades:
         lineas.append(
-            f"Nodo: {prioridad.nodo.nombre}; nivel: {prioridad.nivel}; "
-            f"riesgo estructural: {prioridad.riesgo_estructural}; "
-            f"riesgo de escenario: {prioridad.riesgo_escenario}; "
-            f"variación de escenario: {prioridad.variacion_escenario} %."
+            f"Nodo: {prioridad.nodo.nombre}; nivel: {_nivel(prioridad)}; "
+            f"riesgo estructural: {prioridad.riesgo_estructural:.2f}; "
+            f"riesgo de escenario: {prioridad.riesgo_escenario:.2f}; "
+            f"variación de escenario: {prioridad.variacion_escenario:.2f} %."
         )
         for aporte in prioridad.aportes:
-            lineas.append(f"Aporte {aporte.nombre}: {aporte.aporte} ({aporte.descripcion}).")
+            lineas.append(f"Aporte {aporte.nombre}: {aporte.aporte:.2f} ({aporte.descripcion}).")
         lineas.append(f"Incidentes de evidencia: {len(prioridad.evidencia)}.")
         if not prioridad.evidencia:
             lineas.append("Este nodo no tiene evidencia de incidentes.")
@@ -70,15 +74,52 @@ def _contexto(params, prioridades):
     return "\n".join(lineas)
 
 
+def _si_no(valor):
+    return "sí" if valor else "no"
+
+
+def _nivel(prioridad):
+    return "crítico" if prioridad.nivel == "critico" else "no crítico"
+
+
+def _normalizar(texto):
+    return "".join(c for c in unicodedata.normalize("NFKD", texto.casefold())
+                   if not unicodedata.combining(c))
+
+
+def _coincide_nodo(pregunta, nombre):
+    pregunta = _normalizar(pregunta)
+    nombre = _normalizar(nombre)
+    if nombre in pregunta:
+        return True
+    palabras = re.findall(r"\w+", nombre)
+    comunes = {"avenida", "calle", "cruce", "entre", "interseccion", "nodo", "ruta"}
+    return any(len(palabra) >= 4 and palabra not in comunes
+               and re.search(r"(?<!\w)" + re.escape(palabra) + r"(?!\w)", pregunta)
+               for palabra in palabras)
+
+
+def _resumen_prioridades(prioridades):
+    lineas = []
+    for prioridad in prioridades[:3]:
+        mayor = max(prioridad.aportes, key=lambda a: a.aporte, default=None)
+        factor = f"{mayor.nombre} ({mayor.aporte:.2f})" if mayor else "sin aportes disponibles"
+        lineas.append(f"{prioridad.nodo.nombre}: {_nivel(prioridad)}; riesgo "
+                      f"{prioridad.riesgo_escenario:.2f}; mayor aporte: {factor}; "
+                      f"incidentes: {len(prioridad.evidencia)}.")
+    return "\n".join(lineas) if lineas else "No hay prioridades disponibles."
+
+
 def _respaldo(pregunta, params, prioridades):
-    pregunta_normalizada = pregunta.casefold()
-    seleccion = [p for p in prioridades if p.nodo.nombre.casefold() in pregunta_normalizada]
-    contexto = _contexto(params, seleccion or prioridades)
-    # La plantilla declara la ausencia de información que el contexto no contiene.
-    aviso = ""
-    if re.search(r"\b(rutas?|desv[ií]os?|alternativ[ao]s?|recorridos?)\b", pregunta_normalizada):
-        aviso = "El dato sobre rutas alternativas no está en el contexto.\n"
-    return aviso + "Los datos solicitados que no figuran en el contexto no están disponibles.\n" + contexto
+    normalizada = _normalizar(pregunta)
+    if re.search(r"\b(rutas?|desvios?|alternativ[ao]s?|recorridos?)\b", normalizada):
+        return ("Las rutas alternativas no están en el contexto; sí hay prioridades de riesgo "
+                "y evidencia de incidentes.\n" + _resumen_prioridades(prioridades)
+                + f"\nNodos evaluados: {len(prioridades)}.")
+    seleccion = next((p for p in prioridades if _coincide_nodo(pregunta, p.nodo.nombre)), None)
+    if seleccion:
+        return _contexto(params, [seleccion])
+    return _resumen_prioridades(prioridades) + f"\nNodos evaluados: {len(prioridades)}."
 
 
 class AgenteAnalista:
@@ -104,10 +145,10 @@ class AgenteAnalista:
         return InformeOperativoAnalista(
             fecha_emision=datetime.now(),
             turno=f"Turno ({params.franja_horaria} hs)",
-            alerta_meteorologica=f"Precipitación del escenario: {params.precipitacion_mm_h} mm/h",
+            alerta_meteorologica=f"Precipitación del escenario: {params.precipitacion_mm_h:.2f} mm/h",
             nodos_criticos=[p.nodo for p in prioridades if p.nivel == "critico"],
             prioridades=prioridades,
-            recomendacion_estrategica=_contexto(params, prioridades),
+            recomendacion_estrategica=_resumen_prioridades(prioridades),
         )
 
     def responder_consulta_operador(self, pregunta: str, params: ParametrosEscenario) -> str:
@@ -115,11 +156,8 @@ class AgenteAnalista:
         contexto = _contexto(params, prioridades)
         respaldo = _respaldo(pregunta, params, prioridades)
         cliente = self._get_genai_client()
-        modelo = os.getenv("GEMINI_MODEL")
+        modelo = os.getenv("GEMINI_MODEL") or MODELO_GEMINI_PREDETERMINADO
         if cliente is None:
-            return respaldo
-        if not modelo:
-            logger.warning("GEMINI_MODEL no está configurado; se usará el respaldo")
             return respaldo
         prompt = (
             "Sos un analista que explica prioridades para apoyar decisiones humanas. "
