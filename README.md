@@ -102,3 +102,13 @@ AITARA/
 - **Ana Florencia Zayas** — Product Owner & Referente del Equipo (`zayasflorenciaana@gmail.com`)
 
 **Mentores Asignados:** Enzo Mereles, Ulises.
+
+
+## Despliegue en Render
+
+1. En Render, crear un **Web Service** desde **Public Git Repository** con `https://github.com/SantiNunez2003/AITARA-SmartCity-HackeatonAI-Silicon_Misiones` y elegir la rama `master`.
+2. Seleccionar runtime **Docker** y plan **Free**.
+3. Opcionalmente, cargar `GEMINI_API_KEY` como variable secreta del servicio. Sin ella, la aplicación funciona en modo respaldo.
+4. Configurar el health check en `/api/status` y realizar el deploy manual.
+
+El servicio gratuito se duerme después de 15 minutos de inactividad; la primera solicitud posterior puede tardar mientras vuelve a iniciar. La URL pública se agregará después del primer deploy.
