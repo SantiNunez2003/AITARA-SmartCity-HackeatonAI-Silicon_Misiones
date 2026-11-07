@@ -45,7 +45,7 @@ class EvaluacionNodo(BaseModel):
     lat: float
     lon: float
     riesgo_estructural: float  # Base histórica (0.0 a 1.0)
-    variacion_escenario: float  # Cociente vs habitual (ej. 1.52 = +52%)
+    variacion_escenario: float  # Variación porcentual respecto del riesgo habitual.
     riesgo_final: float  # Ponderación combinada
     es_critico: bool
     factores: List[str]

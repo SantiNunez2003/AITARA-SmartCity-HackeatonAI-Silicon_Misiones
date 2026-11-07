@@ -1,6 +1,6 @@
 # AITARA — Soporte a decisiones para la movilidad urbana
 
-AITARA integra información en una memoria común de la movilidad de Posadas. Analiza seguridad vial y fluidez para recomendar prioridades con evidencia; la decisión es humana. Los datos simulados se identifican como tales y permiten demostrar el sistema y validar el m?todo.
+AITARA integra información en una memoria común de la movilidad de Posadas. Analiza seguridad vial y fluidez para recomendar prioridades con evidencia; la decisión es humana. Los datos simulados se identifican como tales y permiten demostrar el sistema y validar el método.
 
 ## Caso piloto
 

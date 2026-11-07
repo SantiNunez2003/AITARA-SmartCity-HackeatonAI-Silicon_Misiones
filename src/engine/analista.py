@@ -18,10 +18,10 @@ load_dotenv(Path(__file__).resolve().parent.parent.parent / ".env")
 logger = logging.getLogger(__name__)
 MODELO_GEMINI_PREDETERMINADO = "gemini-3.5-flash-lite"
 
-# Se reconocen decimales, porcentajes y signos sin interpretar identificadores.
-_NUMERO = re.compile(r"(?<![\w])[-+]?\d+(?:[.,]\d+)?\s*%?(?![\w])")
+# Se reconocen también números junto a letras y guiones bajos.
+_NUMERO = re.compile(r"[-+]?\d+(?:[.,]\d+)?\s*%?")
 _HORA = re.compile(r"\b\d{1,2}:\d{2}\b")
-_LISTA = re.compile(r"(?m)^\s*\d+[.)]\s+")
+_LISTA = re.compile(r"^\s*(\d+)[.)][ \t]+")
 
 
 def _numeros(texto):
@@ -40,7 +40,17 @@ def _numeros(texto):
 def _numeros_validos(respuesta, contexto):
     # Las horas solo se omiten si aparecen literalmente en el contexto.
     horas = set(_HORA.findall(contexto))
-    respuesta = _LISTA.sub("", respuesta)
+    lineas = []
+    esperado = 1
+    for linea in respuesta.splitlines():
+        marcador = _LISTA.match(linea)
+        if marcador and int(marcador.group(1)) == esperado:
+            linea = linea[marcador.end():]
+            esperado += 1
+        else:
+            esperado = 1
+        lineas.append(linea)
+    respuesta = "\n".join(lineas)
     respuesta = _HORA.sub(lambda m: "" if m.group() in horas else m.group(), respuesta)
     permitidos = set(_numeros(contexto))
     permitidos.update(n.quantize(Decimal("0.01")) for n in tuple(permitidos))
