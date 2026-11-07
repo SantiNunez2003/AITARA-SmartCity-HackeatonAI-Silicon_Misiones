@@ -1,0 +1,12 @@
+.git
+.env
+.env.*
+**/node_modules
+frontend/dist
+.venv
+**/__pycache__
+.pytest_cache
+docs
+tareas
+data/*.duckdb*
+data/*.sqlite*
