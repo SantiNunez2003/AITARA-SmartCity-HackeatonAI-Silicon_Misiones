@@ -105,8 +105,8 @@ def api_evaluate(params: ParametrosEscenario) -> Dict[str, Any]:
         print(f"Error generando informe de turno: {e}")
         informe = SimpleNamespace(
             turno=f"Guardia Operativa ({params.franja_horaria} hs)",
-            alerta_meteorologica="Condición normal",
-            recomendacion_estrategica="Monitoreo y patrullaje preventivo",
+            alerta_meteorologica="No disponible",
+            recomendacion_estrategica="Informe no disponible. Consultar los resultados por nodo.",
         )
 
     # Corredor ortogonal real verificado sobre OSM (Av. Corrientes y Catamarca -> San Lorenzo -> Mitre)

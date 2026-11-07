@@ -57,4 +57,6 @@ def test_evaluate_con_informe_fallido(monkeypatch):
         monkeypatch.setattr(api.analista, "generar_informe_turno", fallar)
         respuesta = client.post("/api/evaluate", json=ESCENARIO)
         assert respuesta.status_code == 200
-        assert respuesta.json()["resumen_turno"]
+        resumen = respuesta.json()["resumen_turno"]
+        assert resumen["alerta_meteorologica"] == "No disponible"
+        assert "Condición normal" not in respuesta.text
