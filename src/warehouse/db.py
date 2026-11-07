@@ -110,7 +110,9 @@ def init_schema(db: DBWrapper) -> None:
             lon REAL,
             confianza REAL,
             resumen TEXT,
-            origen TEXT
+            origen TEXT,
+            llovia BOOLEAN,
+            precipitacion_mm_h DOUBLE
         );
     """)
     try:
@@ -123,7 +125,13 @@ def init_schema(db: DBWrapper) -> None:
     except Exception:
         pass
 
-    # La tabla anterior conten?a atributos sin fuente; se reemplaza al iniciar.
+    for columna, tipo in (("llovia", "BOOLEAN"), ("precipitacion_mm_h", "DOUBLE")):
+        try:
+            db.execute(f"ALTER TABLE silver_incident_history ADD COLUMN {columna} {tipo}")
+        except Exception:
+            pass
+
+    # La tabla anterior contenía atributos sin fuente; se reemplaza al iniciar.
     db.execute("DROP TABLE IF EXISTS gold_node_risk_features")
     db.execute("""CREATE TABLE gold_node_risk_features (
         node_id TEXT PRIMARY KEY, intensidad REAL, cantidad_incidentes INTEGER
@@ -133,7 +141,7 @@ def init_schema(db: DBWrapper) -> None:
 
 
 def seed_reference_data(db: DBWrapper) -> None:
-    """Seed verified Posadas nodes and historical incident baselines (exact OSM coordinates)."""
+    """Carga los nodos de referencia de Posadas con sus atributos territoriales."""
     intersections = [
         ("N1_CORRIENTES_TUCUMAN", "Av. Corrientes y Tucumán", -27.372758, -55.901911, "ESCOLAR", 2, 1, 1, 1, "Colegio San Basilio Magno", "ALTO"),
         ("N2_ROTONDA_URUGUAY", "Rotonda Av. Uruguay y Quaranta", -27.403800, -55.902800, "ACCESO_TRONCAL", 4, 1, 1, 0, None, "MEDIO"),
@@ -167,18 +175,18 @@ def load_silver_incidents_from_jsonl(db: DBWrapper) -> int:
                     item.get("fecha_publicacion"), item.get("fecha_evento") or item.get("fecha_publicacion"),
                     item.get("tipo_incidente"), item.get("severidad"), ", ".join(item.get("vehiculos", [])),
                     item.get("calle_1"), item.get("calle_2"), item.get("ubicacion_texto"), item.get("lat"),
-                    item.get("lon"), item.get("confianza"), item.get("resumen"), item.get("origen", "real")))
+                    item.get("lon"), item.get("confianza"), item.get("resumen"), item.get("origen", "real"), item.get("llovia"), item.get("precipitacion_mm_h")))
     query = """INSERT OR REPLACE INTO silver_incident_history
         (id, fuente, titulo, url, fecha_publicacion, fecha_evento, tipo_incidente, severidad,
-         vehiculos, calle_1, calle_2, ubicacion_texto, lat, lon, confianza, resumen, origen)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""
+         vehiculos, calle_1, calle_2, ubicacion_texto, lat, lon, confianza, resumen, origen, llovia, precipitacion_mm_h)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""
     with db._lock:
         db.con.execute("BEGIN TRANSACTION")
         try:
             if db.use_duckdb and rows:
-                columnas = ["id", "fuente", "titulo", "url", "fecha_publicacion", "fecha_evento", "tipo_incidente", "severidad", "vehiculos", "calle_1", "calle_2", "ubicacion_texto", "lat", "lon", "confianza", "resumen", "origen"]
+                columnas = ["id", "fuente", "titulo", "url", "fecha_publicacion", "fecha_evento", "tipo_incidente", "severidad", "vehiculos", "calle_1", "calle_2", "ubicacion_texto", "lat", "lon", "confianza", "resumen", "origen", "llovia", "precipitacion_mm_h"]
                 db.con.register("lote_incidentes", pd.DataFrame(rows, columns=columnas))
-                db.con.execute("INSERT OR REPLACE INTO silver_incident_history SELECT * FROM lote_incidentes")
+                db.con.execute(f"INSERT OR REPLACE INTO silver_incident_history ({', '.join(columnas)}) SELECT {', '.join(columnas)} FROM lote_incidentes")
                 db.con.unregister("lote_incidentes")
             else:
                 db.con.executemany(query, rows)

@@ -212,7 +212,7 @@ export default function App() {
           fillOpacity: isCrit ? 0.22 : 0.14
         })
 
-        const signVar = `${nodo.variacion_escenario >= 0 ? '+' : ''}${String(nodo.variacion_escenario).replace('.', ',')} %`
+        const signVar = `${nodo.variacion_escenario >= 0 ? '+' : ''}${Number(nodo.variacion_escenario).toFixed(1).replace('.', ',')} %`
         halo.bindTooltip(
           `<div><strong>${nodo.nombre}</strong><br/>Riesgo del escenario: <b>${nodo.riesgo_final}</b><br/>Riesgo estructural: ${nodo.riesgo_estructural}<br/>Variación: ${signVar}</div>`,
           { direction: 'top' }
@@ -1346,7 +1346,7 @@ export default function App() {
                           <strong>{prioridad.nodo.nombre}</strong> · {prioridad.nivel === 'critico' ? 'Crítico' : 'No crítico'}
                           <div>Riesgo del escenario: {prioridad.riesgo_escenario}</div>
                           <div>Riesgo estructural: {prioridad.riesgo_estructural}</div>
-                          <div>Variación por escenario: {prioridad.variacion_escenario >= 0 ? '+' : ''}{String(prioridad.variacion_escenario).replace('.', ',')} %</div>
+                          <div>Variación por escenario: {prioridad.variacion_escenario >= 0 ? '+' : ''}{Number(prioridad.variacion_escenario).toFixed(1).replace('.', ',')} %</div>
                           <div style={{ marginTop: '6px', fontWeight: 700 }}>Aportes por factor</div>
                           {(prioridad.aportes || []).map(aporte => (
                             <div key={aporte.nombre} style={{ marginTop: '5px', fontSize: '11px' }}>
@@ -1454,7 +1454,7 @@ export default function App() {
                       marginBottom: '4px'
                     }}
                   >
-                    {k.value}
+                    {k.label === 'Incidentes registrados' ? `${k.reales} reales · ${k.simulados} SIMULADOS` : k.value}
                   </div>
                   <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{k.sub}</div>
                 </div>
@@ -1473,6 +1473,7 @@ export default function App() {
               <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border-color)', fontWeight: 700, fontSize: '13.5px' }}>
                 Ranking de prioridades
               </div>
+              <p style={{ padding: '0 18px', color: 'var(--text-secondary)' }}>El ranking se calcula principalmente con datos SIMULADOS y demuestra el método; no afirma resultados sobre la ciudad.</p>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12.5px', textAlign: 'left' }}>
                 <thead>
                   <tr style={{ backgroundColor: 'var(--bg-subtle)', color: 'var(--text-muted)', fontSize: '11px', textTransform: 'uppercase' }}>
@@ -1492,7 +1493,7 @@ export default function App() {
                       </td>
                       <td style={{ padding: '14px 16px', color: 'var(--text-secondary)' }}>{row.nivel === 'critico' ? 'Crítico' : 'No crítico'}</td>
                       <td style={{ padding: '14px 16px', color: 'var(--alert-crimson)', fontWeight: 600 }}>{row.riesgo_estructural}</td>
-                      <td style={{ padding: '14px 16px', color: 'var(--accent-blue)', fontWeight: 600 }}>{row.factor_mayor_aporte ? `${row.factor_mayor_aporte.nombre}: ${Number(row.factor_mayor_aporte.aporte).toFixed(2)}` : 'Sin factor disponible'} · {row.cantidad_incidentes_evidencia} incidentes</td>
+                      <td style={{ padding: '14px 16px', color: 'var(--accent-blue)', fontWeight: 600 }}>{row.factor_mayor_aporte ? `${row.factor_mayor_aporte.nombre}: ${Number(row.factor_mayor_aporte.aporte).toFixed(2)}` : 'Sin factor disponible'} · {row.evidencia_real} reales · {row.evidencia_simulada} SIMULADO</td>
                     </tr>
                   ))}
                 </tbody>

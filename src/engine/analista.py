@@ -72,7 +72,7 @@ def _contexto(params, prioridades):
         )
         for aporte in prioridad.aportes:
             lineas.append(f"Aporte {aporte.nombre}: {aporte.aporte:.2f} ({aporte.descripcion}).")
-        lineas.append(f"Incidentes de evidencia: {prioridad.total_evidencia}.")
+        lineas.append(f"Incidentes: {prioridad.evidencia_real} reales, {prioridad.evidencia_simulada} simulados.")
         if prioridad.evidencia_simulada and not prioridad.evidencia_real:
             lineas.append("La evidencia de este nodo es solo SIMULADA.")
         if not prioridad.evidencia:
@@ -118,7 +118,8 @@ def _resumen_prioridades(prioridades):
         factor = f"{mayor.nombre} ({mayor.aporte:.2f})" if mayor else "sin aportes disponibles"
         lineas.append(f"{prioridad.nodo.nombre}: {_nivel(prioridad)}; riesgo "
                       f"{prioridad.riesgo_escenario:.2f}; mayor aporte: {factor}; "
-                      f"incidentes: {prioridad.total_evidencia}.")
+                      f"incidentes: {prioridad.evidencia_real} reales, {prioridad.evidencia_simulada} simulados"
+                      + ("; evidencia solo SIMULADA" if prioridad.evidencia_simulada and not prioridad.evidencia_real else "") + ".")
     return "\n".join(lineas) if lineas else "No hay prioridades disponibles."
 
 

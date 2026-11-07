@@ -13,7 +13,7 @@ Calculates:
 """
 
 from typing import List, Any, Tuple
-from math import radians, sin, cos, asin, sqrt, isfinite
+from math import radians, sin, cos, asin, sqrt, isfinite, log1p
 
 from src.contracts import EvaluacionNodo, ParametrosEscenario, Prioridad, AporteFactor, Evidencia
 from src.warehouse.db import get_db_connection, DBWrapper
@@ -30,16 +30,26 @@ def distancia_metros(lat1, lon1, lat2, lon2):
     return 2 * RADIO_TIERRA_METROS * asin(min(1, sqrt(a)))
 
 
-# Parámetros iniciales definidos por criterio experto, no calibrados.
+# Parámetros iniciales por criterio experto, no calibrados; no incorporan el efecto de lluvia estimado.
 PESOS = {"temporal": 0.35, "clima": 0.30, "topologia": 0.20, "siniestralidad": 0.15}
 LLUVIA_SATURACION_MM_H = 25.0
 LLUVIA_HABITUAL_MM_H = 0.0
 PESO_ORIGEN = {"real": 1.0, "simulado": 1.0}
-ANIOS_EXPOSICION = 3.0
-SUAVIZADO_ANIOS = 1.0
-# La intensidad suavizada se divide por esta referencia y se limita a [0, 1].
-INTENSIDAD_REFERENCIA_ANUAL = 180.0
+SUAVIZADO_INCIDENTES = 5.0
+# Referencia declarada para gravedad media por logaritmo de cantidad; limitada a [0, 1].
+INTENSIDAD_REFERENCIA = 12.0
 MAX_EVIDENCIA = 5
+
+
+def estimar_efecto_lluvia(db, exposicion):
+    """Cociente de tasas simuladas por hora-nodo, usando exposición declarada."""
+    if exposicion['lluvia'] <= 0 or exposicion['seco'] <= 0:
+        raise ValueError('La exposición debe ser positiva en ambas condiciones')
+    filas = db.con.execute("SELECT llovia, COUNT(*) FROM silver_incident_history WHERE origen = 'simulado' AND llovia IS NOT NULL GROUP BY llovia").fetchall()
+    cantidades = {bool(llovia): cantidad for llovia, cantidad in filas}
+    if not cantidades.get(False):
+        raise ValueError('No hay incidentes simulados en seco')
+    return (cantidades.get(True, 0) / exposicion['lluvia']) / (cantidades[False] / exposicion['seco'])
 
 
 class ExplainableRiskEngine:
@@ -73,15 +83,17 @@ class ExplainableRiskEngine:
                         total += gravedad * confianza * PESO_ORIGEN[origen]
                 except (TypeError, ValueError):
                     continue
-            intensidades[nodo] = total / ANIOS_EXPOSICION
-        media = sum(intensidades.values()) / len(intensidades) if intensidades else 0
+            intensidades[nodo] = total
+        cantidad_global = sum(len(lista) for lista in grupos.values())
+        media = sum(intensidades.values()) / cantidad_global if cantidad_global else 0
         self.db.execute("DELETE FROM gold_node_risk_features")
         self.db.execute("DELETE FROM gold_incident_nodes")
         self.evidencias = {}
         asignaciones = []
         for nodo, lista in grupos.items():
-            suavizada = (intensidades[nodo] * ANIOS_EXPOSICION + media * SUAVIZADO_ANIOS) / (ANIOS_EXPOSICION + SUAVIZADO_ANIOS)
-            self.db.execute("INSERT INTO gold_node_risk_features VALUES (?, ?, ?)", (nodo, min(1.0, suavizada / INTENSIDAD_REFERENCIA_ANUAL), len(lista)))
+            n = len(lista)
+            suavizada = (intensidades[nodo] + SUAVIZADO_INCIDENTES * media) / (n + SUAVIZADO_INCIDENTES)
+            self.db.execute("INSERT INTO gold_node_risk_features VALUES (?, ?, ?)", (nodo, min(1.0, suavizada * log1p(n) / INTENSIDAD_REFERENCIA), n))
             asignaciones.extend((inc["id"], nodo) for inc in lista)
             lista.sort(key=lambda i: (i.get("origen") != "simulado", float(i["severidad"]) if pd.notna(i.get("severidad")) else -1, str(i.get("fecha_evento") or i.get("fecha_publicacion"))), reverse=True)
             self.evidencias[nodo] = lista
@@ -116,7 +128,7 @@ class ExplainableRiskEngine:
             riesgo = sum(a.aporte for a in aportes)
             habitual = riesgo - clima * PESOS["clima"] + LLUVIA_HABITUAL_MM_H / LLUVIA_SATURACION_MM_H * PESOS["clima"]
             variacion = (riesgo / habitual - 1) * 100 if habitual else 0.0
-            evaluacion = EvaluacionNodo(nodo_id=row["node_id"], nombre=row["name"], lat=row["lat"], lon=row["lon"], riesgo_estructural=intensidad, variacion_escenario=variacion, riesgo_final=riesgo, es_critico=riesgo >= UMBRAL_CRITICO, factores=list(descripciones.values()))
+            evaluacion = EvaluacionNodo(nodo_id=row["node_id"], nombre=row["name"], lat=row["lat"], lon=row["lon"], riesgo_estructural=round(intensidad, 2), variacion_escenario=round(variacion, 1), riesgo_final=round(riesgo, 2), es_critico=riesgo >= UMBRAL_CRITICO, factores=list(descripciones.values()))
             lista = self.evidencias[row["node_id"]]
             evidencia = []
             for inc in lista[:MAX_EVIDENCIA]:
@@ -127,6 +139,6 @@ class ExplainableRiskEngine:
                 if url is None or str(url) in ("nan", "None"): url = None
                 evidencia.append(Evidencia(id=str(inc["id"]), fecha=fecha, tipo=str(inc["tipo_incidente"]), fuente=str(inc["fuente"]), url=url, origen="simulado" if inc.get("origen") == "simulado" else "real"))
             real = sum(i.get("origen") != "simulado" for i in lista)
-            prioridades.append(Prioridad(nodo=evaluacion, nivel="critico" if evaluacion.es_critico else "no_critico", riesgo_estructural=intensidad, variacion_escenario=variacion, riesgo_escenario=riesgo, aportes=aportes, evidencia=evidencia, total_evidencia=len(lista), evidencia_real=real, evidencia_simulada=len(lista)-real))
+            prioridades.append(Prioridad(nodo=evaluacion, nivel="critico" if evaluacion.es_critico else "no_critico", riesgo_estructural=round(intensidad, 2), variacion_escenario=round(variacion, 1), riesgo_escenario=round(riesgo, 2), aportes=aportes, evidencia=evidencia, total_evidencia=len(lista), evidencia_real=real, evidencia_simulada=len(lista)-real))
         prioridades.sort(key=lambda p: p.riesgo_escenario, reverse=True)
         return [p.nodo for p in prioridades], prioridades

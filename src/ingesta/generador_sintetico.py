@@ -13,9 +13,9 @@ PRECIPITACION_LLUVIA_MM_H = 8.0
 MULTIPLICADOR_LLUVIA = 1.8
 MULTIPLICADOR_PICO = 1.5
 MULTIPLICADOR_ESCOLAR = 1.3
-MULTIPLICADOR_CORREDOR = {"ACCESO_TRONCAL": 1.6, "TRAVESIA_URBANA": 1.5}
 MULTIPLICADOR_CARRIL = 0.12
 MULTIPLICADOR_SEMAFORO = 0.9
+MULTIPLICADOR_PARADA = 1.1
 DESVIO_GRADOS = 0.00025
 SALIDA = Path(__file__).resolve().parents[2] / "data" / "simulado" / "incidentes.jsonl"
 
@@ -37,9 +37,10 @@ def generar(multiplicador_lluvia=MULTIPLICADOR_LLUVIA, dias=DIAS, semilla=SEMILL
         exposicion["lluvia" if lluvia else "seco"] += len(nodos)
         pico = fecha.hour in (7, 8, 12, 13, 17, 18)
         for nodo in nodos:
-            tasa = TASA_HORA * MULTIPLICADOR_CORREDOR.get(nodo["corridor_type"], 1.0)
+            tasa = TASA_HORA
             tasa *= 1 + MULTIPLICADOR_CARRIL * nodo["lanes"]
             tasa *= MULTIPLICADOR_SEMAFORO if nodo["has_traffic_light"] else 1
+            tasa *= MULTIPLICADOR_PARADA if nodo["has_bus_stop"] else 1
             tasa *= MULTIPLICADOR_PICO if pico else 1
             tasa *= MULTIPLICADOR_ESCOLAR if pico and nodo["is_school_zone"] and fecha.weekday() < 5 else 1
             tasa *= multiplicador_lluvia if lluvia else 1
@@ -63,18 +64,14 @@ def generar(multiplicador_lluvia=MULTIPLICADOR_LLUVIA, dias=DIAS, semilla=SEMILL
     return eventos, exposicion
 
 
-def estimar_efecto_lluvia(eventos, exposicion):
-    mojados = sum(e["llovia"] for e in eventos)
-    return (mojados / exposicion["lluvia"]) / ((len(eventos) - mojados) / exposicion["seco"])
-
-
 def main():
     eventos, exposicion = generar()
     SALIDA.parent.mkdir(parents=True, exist_ok=True)
     with SALIDA.open("w", encoding="utf-8", newline="\n") as archivo:
         for evento in eventos:
             archivo.write(json.dumps(evento, ensure_ascii=False) + "\n")
-    print(f"{len(eventos)} eventos; efecto de lluvia recuperado: {estimar_efecto_lluvia(eventos, exposicion):.3f}")
+    (SALIDA.parent / "exposicion.json").write_text(json.dumps(exposicion, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    print(f"{len(eventos)} eventos; exposición declarada: {exposicion}")
 
 
 if __name__ == "__main__":
