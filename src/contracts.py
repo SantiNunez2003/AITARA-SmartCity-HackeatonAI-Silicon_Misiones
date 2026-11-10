@@ -21,6 +21,8 @@ class IncidenteSilver(BaseModel):
     vehiculos: List[str] = Field(default_factory=list)
     calle_1: Optional[str] = None
     calle_2: Optional[str] = None
+    referencia_espacial: Optional[str] = None
+    tipo_ubicacion: Literal["interseccion", "corredor_hito", "punto_singular"] = "interseccion"
     ubicacion_texto: str
     lat: float
     lon: float
