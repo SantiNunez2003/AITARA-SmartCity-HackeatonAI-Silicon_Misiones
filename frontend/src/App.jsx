@@ -790,13 +790,14 @@ export default function App() {
           <aside
             style={{
               width: '495px',
-              height: '100%',
-              maxHeight: '100%',
+              height: 'calc(100vh - 56px)',
+              maxHeight: 'calc(100vh - 56px)',
+              minHeight: 0,
               backgroundColor: 'var(--bg-surface)',
               borderLeft: '1px solid var(--border-color)',
               overflowY: 'auto',
               overflowX: 'hidden',
-              padding: '16px 18px 60px 18px',
+              padding: '16px 18px 80px 18px',
               display: 'flex',
               flexDirection: 'column',
               gap: '14px',
