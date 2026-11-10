@@ -20,11 +20,21 @@ from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
-# Pre-filtro léxico estricto sobre movilidad/siniestralidad
+# Pre-filtro léxico estricto sobre movilidad/siniestralidad urbana
 PATRON_VIAL = re.compile(
     r"(choque|colisi[oó]n|vuelco|atropell[oó]|despiste|siniestro|motociclist[ao]|"
     r"\bmoto\b|colectivo|tr[aá]nsito|sem[aá]foro|corte vial|anegamiento|inundaci[oó]n|"
     r"asfalto|calzada|traves[ií]a urbana|ruta 12|ruta 105|ruta 213|avenida)",
+    re.IGNORECASE
+)
+
+# Filtro de exclusión estricto: temas ajenos a la movilidad vial urbana municipal
+PATRON_EXCLUSION_NO_VIAL = re.compile(
+    r"(ala delta|avi[oó]n|avioneta|aeronave|vuelo|planeador|parapente|hangar|"
+    r"lancha|embarcaci[oó]n|barco|canoa|kayak|r[ií]o paran[aá]|ahogad[ao]|"
+    r"aut[oó]dromo|tcr south america|turismo carretera|karting|kart[oó]dromo|competici[oó]n deportiva|carrera de autos|"
+    r"orando por|cadena de oraci[oó]n|velatorio|sepelio|dadores de sangre|homenaje emotivo|"
+    r"paraje ojo de agua|zona rural|tiroteo|baleado|narcotr[aá]fico|allanamiento)",
     re.IGNORECASE
 )
 
@@ -49,8 +59,10 @@ def _id_url(url: str) -> str:
 
 
 def es_noticia_vial(titulo: str, texto: str = "") -> bool:
-    """Aplica pre-filtro para comprobar si el contenido trata sobre incidentes viales."""
+    """Aplica pre-filtro para comprobar si el contenido trata sobre incidentes viales urbanos."""
     contenido = f"{titulo} {texto}"
+    if PATRON_EXCLUSION_NO_VIAL.search(contenido):
+        return False
     return bool(PATRON_VIAL.search(contenido))
 
 
@@ -162,8 +174,8 @@ def recolectar_noticias_recientes(limite: int = 10) -> List[Dict[str, Any]]:
     candidatas: Dict[str, Dict[str, Any]] = {}
 
     tareas = [
-        lambda: obtener_noticias_wordpress("https://misionesonline.net", "misiones_online", "accidente Posadas", limite=5),
-        lambda: obtener_noticias_wordpress("https://canal12misiones.com", "canal_12", "accidente", limite=4),
+        lambda: obtener_noticias_wordpress("https://misionesonline.net", "misiones_online", "choque Posadas", limite=5),
+        lambda: obtener_noticias_wordpress("https://canal12misiones.com", "canal_12", "choque Posadas", limite=4),
         lambda: obtener_noticias_rss("https://www.elterritorio.com.ar/rss", "el_territorio", limite=5),
     ]
 

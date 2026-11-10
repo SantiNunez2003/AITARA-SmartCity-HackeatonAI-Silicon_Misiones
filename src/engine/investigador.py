@@ -142,11 +142,16 @@ class AgenteInvestigador:
 
         # 3. Derivación a revisión humana si no hay certeza
         lat_def, lon_def = (-27.3670, -55.8960)
+        ubi_fallback = f"{calle_1 or ''} y {calle_2 or ''}".strip()
+        if not ubi_fallback and referencia_espacial:
+            ubi_fallback = referencia_espacial
+        if not ubi_fallback:
+            ubi_fallback = "Posadas (Ubicación ambigua a verificar)"
         return {
             "estado": "DERIVADO_A_REVISION_HUMANA",
             "lat": lat_def,
             "lon": lon_def,
-            "ubicacion_resuelta": texto_completo or f"{calle_1 or ''} y {calle_2 or ''}".strip(),
+            "ubicacion_resuelta": ubi_fallback[:80],
             "tipo_ubicacion": "indeterminado",
             "confianza": 0.40,
             "metodo": "Agente Investigador: Ubicación ambigua fuera de catálogo",

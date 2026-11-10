@@ -13,6 +13,35 @@ def test_prefiltro_vial_detecta_incidentes():
     # Noticias políticas / deportivas sin impacto vial deben ser descartadas
     assert es_noticia_vial("Se inauguró un nuevo centro cultural en Posadas con presencia de autoridades") is False
     assert es_noticia_vial("Guaraní Antonio Franco ganó el clásico de fútbol posadeño") is False
+    # Filtro de exclusión estricto (no viales / no urbanos municipales)
+    assert es_noticia_vial("Secuestraron el ala delta tras el accidente fatal en Posadas") is False
+    assert es_noticia_vial("Accidente durante el TCR South América en el autódromo Rosamonte de Posadas") is False
+    assert es_noticia_vial("Seguimos orando por Mateo: cadena de oración tras el choque") is False
+
+
+def test_lector_rechaza_exclusiones_y_exige_ubicacion():
+    lector = AgenteLector()
+
+    # 1. Caso no vial: ala delta en zona rural
+    art_aereo = {
+        "titulo": "Secuestraron el ala delta tras el accidente fatal en Posadas",
+        "texto": "Cayó en paraje Ojo de Agua tras impactar contra cables del tendido eléctrico."
+    }
+    assert lector.estructurar_noticia(art_aereo) is None
+
+    # 2. Caso autódromo / competición deportiva
+    art_autodromo = {
+        "titulo": "Tras el accidente durante el TCR South América en el autódromo Rosamonte",
+        "texto": "Reforzarán barreras en la curva del autódromo tras el choque durante la competencia."
+    }
+    assert lector.estructurar_noticia(art_autodromo) is None
+
+    # 3. Caso sin ubicación identificable
+    art_sin_ubicacion = {
+        "titulo": "Fuerte choque en horas de la madrugada dejó un herido en Posadas",
+        "texto": "Dos automóviles colisionaron y uno de los conductores fue trasladado al hospital."
+    }
+    assert lector.estructurar_noticia(art_sin_ubicacion) is None
 
 
 def test_lector_extrae_sin_inventar_calle2():

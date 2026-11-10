@@ -186,6 +186,7 @@ def load_silver_incidents_from_jsonl(db: DBWrapper) -> int:
             if db.use_duckdb and rows:
                 columnas = ["id", "fuente", "titulo", "url", "fecha_publicacion", "fecha_evento", "tipo_incidente", "severidad", "vehiculos", "calle_1", "calle_2", "ubicacion_texto", "lat", "lon", "confianza", "resumen", "origen", "llovia", "precipitacion_mm_h"]
                 db.con.register("lote_incidentes", pd.DataFrame(rows, columns=columnas))
+                db.con.execute("DELETE FROM silver_incident_history WHERE id NOT IN (SELECT id FROM lote_incidentes)")
                 db.con.execute(f"INSERT OR REPLACE INTO silver_incident_history ({', '.join(columnas)}) SELECT {', '.join(columnas)} FROM lote_incidentes")
                 db.con.unregister("lote_incidentes")
             else:

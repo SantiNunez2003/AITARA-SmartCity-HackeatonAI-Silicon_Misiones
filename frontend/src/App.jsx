@@ -51,6 +51,28 @@ function MarcaSimulado({ origen }) {
   return origen === 'simulado' ? <span style={{ background: '#92400e', color: '#fff', fontSize: '10px', fontWeight: 800, padding: '2px 5px', borderRadius: '4px', marginLeft: '5px' }}>SIMULADO</span> : null
 }
 
+function formatUbicacionVial(item, delimiter = ' × ') {
+  if (!item) return 'Sin ubicación'
+  if (item.calle_1 && item.calle_2) {
+    const c1 = item.calle_1.replace('Av. ', '').replace('Calle ', '').trim()
+    const c2 = item.calle_2.replace('Av. ', '').replace('Calle ', '').trim()
+    return `${c1}${delimiter}${c2}`
+  }
+  if (item.referencia_espacial) {
+    if (item.calle_1) {
+      return `${item.calle_1.replace('Av. ', '').replace('Calle ', '')} (${item.referencia_espacial})`
+    }
+    return item.referencia_espacial
+  }
+  if (item.calle_1) {
+    return item.calle_1.replace('Av. ', '').replace('Calle ', '')
+  }
+  if (item.ubicacion_texto && item.ubicacion_texto.length <= 60) {
+    return item.ubicacion_texto
+  }
+  return 'Ubicación urbana'
+}
+
 export default function App() {
   const [theme, setTheme] = useState('light')
   const [activeTab, setActiveTab] = useState('tactico') // 'tactico' | 'estrategico' | 'repositorio'
@@ -635,7 +657,16 @@ export default function App() {
                           border: '1px solid var(--border-strong)'
                         }}
                       >
-                        {(inc.calle_1 || inc.ubicacion_texto || 'Sin ubicación').replace('Av. ', '').replace('Calle ', '')}<MarcaSimulado origen={inc.origen} />
+                        {(() => {
+                          const raw = formatUbicacionVial(inc, ' × ')
+                          const label = raw.length > 22 ? `${raw.slice(0, 22)}…` : raw
+                          return (
+                            <>
+                              {label}
+                              <MarcaSimulado origen={inc.origen} />
+                            </>
+                          )
+                        })()}
                       </button>
                     )
                   })}
@@ -1138,12 +1169,16 @@ export default function App() {
                               <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '8px', fontSize: '11px' }}>
                                 <div>
                                   <span style={{ fontSize: '9.5px', color: 'var(--text-muted)', display: 'block' }}>Lugar del Hecho</span>
-                                  <strong style={{ color: 'var(--text-primary)' }}>{selectedIncident.ubicacion_texto}</strong>
+                                  <strong style={{ color: 'var(--text-primary)' }}>
+                                    {selectedIncident.ubicacion_texto && selectedIncident.ubicacion_texto.length <= 80
+                                      ? selectedIncident.ubicacion_texto
+                                      : formatUbicacionVial(selectedIncident, ' y ')}
+                                  </strong>
                                 </div>
                                 <div>
                                   <span style={{ fontSize: '9.5px', color: 'var(--text-muted)', display: 'block' }}>Calles Identificadas</span>
                                   <strong style={{ color: 'var(--text-primary)' }}>
-                                    {selectedIncident.calle_1} y {selectedIncident.calle_2}
+                                    {formatUbicacionVial(selectedIncident, ' y ')}
                                   </strong>
                                 </div>
                                 <div>
@@ -2033,7 +2068,7 @@ export default function App() {
                             }}
                           >
                             <span>
-                              {doc.calle_1?.replace('Av. ', '')} × {doc.calle_2?.replace('Av. ', '')}
+                              {formatUbicacionVial(doc, ' × ')}
                             </span>
                             <span style={{ color: '#16a34a', fontWeight: 700, fontSize: '10px' }}>{doc.estado_verificacion || 'Sin estado'}</span>
                           </div>
@@ -2070,7 +2105,7 @@ export default function App() {
                             </td>
                             <td style={{ padding: '10px 12px', fontWeight: 600, color: 'var(--text-primary)' }}>{doc.titulo}</td>
                             <td style={{ padding: '10px 12px', color: 'var(--text-secondary)' }}>
-                              {doc.calle_1} y {doc.calle_2}
+                              {formatUbicacionVial(doc, ' y ')}
                             </td>
                             <td className="mono" style={{ padding: '10px 12px', fontSize: '11px' }}>
                               {(doc.fecha_evento || '').replace('T', ' ').slice(0, 16)} hs
@@ -2135,12 +2170,16 @@ export default function App() {
                 >
                   <div>
                     <span style={{ color: 'var(--text-muted)', fontSize: '10px', display: 'block' }}>INTERSECCIÓN GEORREFERENCIADA</span>
-                    <strong>{driveSelectedDoc.ubicacion_texto}</strong>
+                    <strong>
+                      {driveSelectedDoc.ubicacion_texto && driveSelectedDoc.ubicacion_texto.length <= 80
+                        ? driveSelectedDoc.ubicacion_texto
+                        : formatUbicacionVial(driveSelectedDoc, ' y ')}
+                    </strong>
                   </div>
                   <div>
                     <span style={{ color: 'var(--text-muted)', fontSize: '10px', display: 'block' }}>ARTERIAS AFECTADAS</span>
                     <strong>
-                      {driveSelectedDoc.calle_1} y {driveSelectedDoc.calle_2}
+                      {formatUbicacionVial(driveSelectedDoc, ' y ')}
                     </strong>
                   </div>
                   <div>

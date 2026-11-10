@@ -17,6 +17,7 @@ from dotenv import load_dotenv
 
 from src.contracts import IncidenteSilver
 from src.engine.investigador import AgenteInvestigador
+from src.ingesta.recolector import PATRON_EXCLUSION_NO_VIAL
 from src.warehouse.db import DBWrapper, SILVER_JSONL_PATH, load_silver_incidents_from_jsonl
 
 load_dotenv(Path(__file__).resolve().parent.parent.parent / ".env")
@@ -42,9 +43,13 @@ class AgenteLector:
                 logger.warning("No se pudo instanciar cliente GenAI: %s. Se usará modo determinístico.", e)
         return self._genai_client
 
-    def _extraer_con_heuristica(self, titulo: str, texto: str) -> Dict[str, Any]:
-        """Extracción determinística offline por reglas regex."""
+    def _extraer_con_heuristica(self, titulo: str, texto: str) -> Optional[Dict[str, Any]]:
+        """Extracción determinística offline por reglas regex con filtro de exclusión."""
         t = f"{titulo} {texto}".lower()
+
+        # Descartar si coincide con patrón de exclusión no vial
+        if PATRON_EXCLUSION_NO_VIAL.search(t):
+            return None
 
         # Tipo de incidente
         tipo = "choque"
@@ -101,11 +106,9 @@ class AgenteLector:
         elif "lavalle" in t:
             calle_1 = "Av. Lavalle"
 
-        # Detección de hitos
+        # Detección de hitos urbanos válidos
         if "naranjos" in t or "country" in t:
             referencia = "Country Los Naranjos"
-        elif "autodromo" in t or "autódromo" in t:
-            referencia = "Autódromo Rosamonte"
         elif "unam" in t or "campus" in t:
             referencia = "Campus UNaM"
         elif "puente" in t:
@@ -127,7 +130,13 @@ class AgenteLector:
         elif "andresito" in t:
             calle_2 = "Av. Andresito"
 
+        # REGLA OBLIGATORIA: Si no hay arteria ni hito identificado, se rechaza
+        if not calle_1 and not referencia:
+            return None
+
         return {
+            "es_siniestro_vial_urbano": True,
+            "tiene_ubicacion_identificable": True,
             "tipo_incidente": tipo,
             "severidad": severidad,
             "vehiculos": vehiculos,
@@ -138,27 +147,41 @@ class AgenteLector:
         }
 
     def _extraer_con_gemini(self, titulo: str, texto: str) -> Optional[Dict[str, Any]]:
-        """Extracción asistida por Gemini con esquema JSON estricto."""
+        """Extracción asistida por Gemini con filtro estricto de movilidad urbana y ubicación."""
         client = self._get_genai_client()
         if client is None:
             return None
 
-        prompt = f"""Sos un analista de tránsito y movilidad urbana de Posadas, Misiones.
-Analizá la siguiente noticia vial y extraé los datos en formato JSON estricto:
+        prompt = f"""Sos un analista de ingeniería vial y movilidad urbana de Posadas, Misiones.
+Tu rol es evaluar si la siguiente noticia periodística reporta un siniestro vial o incidente en la vía pública con impacto en la movilidad urbana de Posadas.
+
+CRITERIOS ESTRICTOS DE FILTRADO:
+1. Siniestro Vial Urbano: DEBE ser un hecho de tránsito ocurrido en la red vial pública (calles, avenidas, travesías urbanas, rutas provinciales/nacionales dentro del ejido urbano de Posadas).
+   - RECHAZAR terminantemente (es_siniestro_vial_urbano = false):
+     * Accidentes aéreos (alas delta, planeadores, aeronaves, avionetas).
+     * Accidentes náuticos o en el río Paraná.
+     * Accidentes en circuitos de competición cerrados (autódromos como Rosamonte, kartódromos) durante carreras o entrenamientos deportivos.
+     * Homenajes, vigilias, cadenas de oración o notas emotivas sin que haya ocurrido un corte o siniestro vial nuevo.
+     * Hechos ocurridos fuera del municipio de Posadas (ej. Garupá, Candelaria, Oberá, etc.).
+2. Ubicación Obligatoria en Posadas: DEBE contener al menos una arteria vial, cruce o hito urbano reconocible de Posadas. Si el hecho no especifica ninguna calle, avenida o hito territorial en Posadas, marcar tiene_ubicacion_identificable = false.
+
 Título: {titulo}
 Texto: {texto[:2500]}
 
-Respondé ÚNICAMENTE un JSON con este esquema (sin markdown ni código extra):
+Respondé ÚNICAMENTE un JSON con este esquema (sin bloques ni texto adicional):
 {{
+  "es_siniestro_vial_urbano": true|false,
+  "tiene_ubicacion_identificable": true|false,
   "tipo_incidente": "choque"|"vuelco"|"atropello"|"corte_vial"|"anegamiento"|"semaforo_apagado",
   "severidad": 0|1|2|3,
   "vehiculos": ["auto", "moto", etc.],
   "calle_1": "nombre de avenida o calle principal o null",
   "calle_2": "nombre de calle transversal si cruza o null",
-  "referencia_espacial": "hito o punto de interés (ej: Country Los Naranjos, Autódromo, etc.) o null",
-  "resumen": "síntesis de 1 a 2 oraciones del hecho vial"
+  "referencia_espacial": "hito o punto de interés urbano en Posadas o null",
+  "resumen": "síntesis ejecutiva de 1 a 2 oraciones del hecho vial"
 }}
-IMPORTANTE: Si no hay una segunda calle que corte la vía transversalmente, calle_2 DEBE ser null. Jamás inventes esquinas."""
+
+IMPORTANTE: Si 'es_siniestro_vial_urbano' es false o 'tiene_ubicacion_identificable' es false, calle_1 y calle_2 deben ser null."""
 
         try:
             resp = client.models.generate_content(
@@ -172,31 +195,59 @@ IMPORTANTE: Si no hay una segunda calle que corte la vía transversalmente, call
             logger.warning("Fallo en extracción con Gemini: %s. Se recurre a heurística determinística.", e)
             return None
 
-    def estructurar_noticia(self, articulo: Dict[str, Any]) -> IncidenteSilver:
-        """Convierte una noticia cruda en un IncidenteSilver georreferenciado."""
+    def estructurar_noticia(self, articulo: Dict[str, Any]) -> Optional[IncidenteSilver]:
+        """Convierte una noticia cruda en un IncidenteSilver georreferenciado o None si no califica."""
         titulo = articulo.get("titulo", "")
         texto = articulo.get("texto", "")
+        contenido_completo = f"{titulo} {texto}"
 
-        # 1. Extracción de entidades (Gemini si está disponible, o heurística)
+        # 0. Pre-filtro de exclusión estricto (ala delta, deportes, autódromo, oraciones, etc.)
+        if PATRON_EXCLUSION_NO_VIAL.search(contenido_completo):
+            logger.info("Noticia descartada por coincidir con exclusión no vial: '%s'", titulo[:60])
+            return None
+
+        # 1. Extracción de entidades (Gemini si está disponible, o heurística determinística)
         datos = self._extraer_con_gemini(titulo, texto)
-        if not datos:
+        if datos:
+            if not datos.get("es_siniestro_vial_urbano", True) or not datos.get("tiene_ubicacion_identificable", True):
+                logger.info("Gemini determinó que la noticia no es un incidente vial urbano con ubicación: '%s'", titulo[:60])
+                return None
+        else:
             datos = self._extraer_con_heuristica(titulo, texto)
+
+        if not datos:
+            logger.info("Noticia descartada por no contener datos viales estructurables: '%s'", titulo[:60])
+            return None
+
+        calle_1 = datos.get("calle_1")
+        calle_2 = datos.get("calle_2")
+        referencia = datos.get("referencia_espacial")
+
+        # REGLA OBLIGATORIA: Todo incidente debe tener una arteria vial o hito identificado
+        if not calle_1 and not referencia:
+            logger.info("Noticia descartada por carecer de ubicación vial identificable: '%s'", titulo[:60])
+            return None
 
         # 2. Resolución territorial y georreferenciación mediante AgenteInvestigador
         res_geo = self.investigador.resolver_georreferenciacion(
-            calle_1=datos.get("calle_1"),
-            calle_2=datos.get("calle_2"),
-            referencia_espacial=datos.get("referencia_espacial"),
-            texto_completo=f"{titulo} {texto}"
+            calle_1=calle_1,
+            calle_2=calle_2,
+            referencia_espacial=referencia,
+            texto_completo=contenido_completo
         )
 
-        ubicacion_texto = res_geo.get("ubicacion_resuelta") or f"{datos.get('calle_1') or ''} {datos.get('calle_2') or ''}".strip()
-        if not ubicacion_texto:
-            ubicacion_texto = "Posadas (Ubicación en proceso de verificación)"
-
         tipo_ubi = res_geo.get("tipo_ubicacion", "interseccion")
-        if tipo_ubi not in ("interseccion", "corredor_hito", "punto_singular", "indeterminado"):
+        if tipo_ubi not in ("interseccion", "corredor_hito", "punto_singular"):
+            # Si no resolvió ubicación concreta y no hay arteria conocida, se rechaza
+            if not calle_1:
+                logger.info("Noticia descartada por ubicación indeterminada: '%s'", titulo[:60])
+                return None
             tipo_ubi = "indeterminado"
+
+        raw_ubi = res_geo.get("ubicacion_resuelta") or f"{calle_1 or ''} {calle_2 or ''}".strip()
+        if not raw_ubi or len(raw_ubi) > 80:
+            raw_ubi = f"{calle_1 or ''} y {calle_2 or ''}".strip() or referencia or "Posadas"
+        ubicacion_texto = raw_ubi[:80]
 
         # 3. Construcción del contrato IncidenteSilver
         return IncidenteSilver(
@@ -209,9 +260,9 @@ IMPORTANTE: Si no hay una segunda calle que corte la vía transversalmente, call
             tipo_incidente=datos.get("tipo_incidente", "choque"),
             severidad=datos.get("severidad", 1),
             vehiculos=datos.get("vehiculos", ["auto"]),
-            calle_1=datos.get("calle_1"),
-            calle_2=datos.get("calle_2"),
-            referencia_espacial=datos.get("referencia_espacial"),
+            calle_1=calle_1,
+            calle_2=calle_2,
+            referencia_espacial=referencia,
             tipo_ubicacion=tipo_ubi,
             ubicacion_texto=ubicacion_texto,
             lat=res_geo["lat"],
@@ -257,6 +308,10 @@ def procesar_e_ingestar_noticia(articulo: Dict[str, Any], db: DBWrapper, lector:
         incidente = lector.estructurar_noticia(articulo)
     except Exception as e:
         logger.error("Error al estructurar noticia '%s': %s", url, e)
+        return None
+
+    if incidente is None:
+        logger.info("Noticia descartada por filtros de movilidad/ubicación: %s", url)
         return None
 
     # Persistir en JSONL
