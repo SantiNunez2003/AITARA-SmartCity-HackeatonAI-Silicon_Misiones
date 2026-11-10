@@ -11,3 +11,11 @@ venv/
 frontend/node_modules/
 frontend/dist/
 docs/
+
+# Flujo de trabajo con agentes y tareas: se mantiene local, fuera del repo
+.claude/
+.codegraph/
+AGENTS.md
+CLAUDE.md
+PRINCIPIOS.md
+tareas/
