@@ -179,12 +179,18 @@ class IngestUrlRequest(BaseModel):
 @app.post("/api/ingest/scan")
 def api_ingest_scan(limite: int = 8) -> Dict[str, Any]:
     """Escanea portales de noticias locales de Posadas y agrega incidentes viales nuevos."""
-    articulos = recolectar_noticias_recientes(limite=limite)
+    try:
+        articulos = recolectar_noticias_recientes(limite=limite)
+    except Exception as e:
+        articulos = []
     nuevos = []
     for art in articulos:
-        inc = procesar_e_ingestar_noticia(art, db, lector=lector)
-        if inc:
-            nuevos.append(inc.model_dump(mode="json"))
+        try:
+            inc = procesar_e_ingestar_noticia(art, db, lector=lector)
+            if inc:
+                nuevos.append(inc.model_dump(mode="json"))
+        except Exception as e:
+            continue
     return {
         "articulos_analizados": len(articulos),
         "nuevos_ingestados": len(nuevos),

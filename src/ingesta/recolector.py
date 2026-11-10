@@ -7,6 +7,7 @@ Estrategias:
 4. Pre-filtro léxico para descartar noticias sin impacto vial sin gastar tokens.
 """
 
+import concurrent.futures
 import hashlib
 import json
 import logging
@@ -53,14 +54,14 @@ def es_noticia_vial(titulo: str, texto: str = "") -> bool:
     return bool(PATRON_VIAL.search(contenido))
 
 
-def obtener_noticias_wordpress(base_url: str, nombre_fuente: str, termino: str = "accidente Posadas", limite: int = 6) -> List[Dict[str, Any]]:
+def obtener_noticias_wordpress(base_url: str, nombre_fuente: str, termino: str = "accidente Posadas", limite: int = 5) -> List[Dict[str, Any]]:
     """Consulta el endpoint REST público de WordPress."""
     query = urllib.parse.urlencode({"search": termino, "per_page": limite, "_fields": "id,date,link,title,excerpt,content"})
     url = f"{base_url.rstrip('/')}/wp-json/wp/v2/posts?{query}"
     req = urllib.request.Request(url, headers=HEADERS)
     articulos = []
     try:
-        with urllib.request.urlopen(req, timeout=10) as resp:
+        with urllib.request.urlopen(req, timeout=4) as resp:
             if resp.status == 200:
                 data = json.loads(resp.read().decode("utf-8", errors="ignore"))
                 for post in data:
@@ -82,12 +83,12 @@ def obtener_noticias_wordpress(base_url: str, nombre_fuente: str, termino: str =
     return articulos
 
 
-def obtener_noticias_rss(url_feed: str, nombre_fuente: str, limite: int = 8) -> List[Dict[str, Any]]:
+def obtener_noticias_rss(url_feed: str, nombre_fuente: str, limite: int = 6) -> List[Dict[str, Any]]:
     """Descarga y parsea feeds RSS utilizando la librería estándar de Python."""
     req = urllib.request.Request(url_feed, headers=HEADERS)
     articulos = []
     try:
-        with urllib.request.urlopen(req, timeout=10) as resp:
+        with urllib.request.urlopen(req, timeout=4) as resp:
             if resp.status == 200:
                 arbol = ET.fromstring(resp.read())
                 items = arbol.findall(".//item")
@@ -120,7 +121,7 @@ def extraer_articulo_por_url(url: str) -> Optional[Dict[str, Any]]:
     """Descarga directamente una nota por URL y extrae título y cuerpo."""
     req = urllib.request.Request(url, headers=HEADERS)
     try:
-        with urllib.request.urlopen(req, timeout=10) as resp:
+        with urllib.request.urlopen(req, timeout=5) as resp:
             if resp.status == 200:
                 html = resp.read().decode("utf-8", errors="ignore")
                 # Extracción simple de título
@@ -157,19 +158,23 @@ def extraer_articulo_por_url(url: str) -> Optional[Dict[str, Any]]:
 
 
 def recolectar_noticias_recientes(limite: int = 10) -> List[Dict[str, Any]]:
-    """Consulta múltiples fuentes locales de Posadas y devuelve noticias viales candidatas."""
+    """Consulta concurrentemente múltiples fuentes locales de Posadas y devuelve noticias viales candidatas."""
     candidatas: Dict[str, Dict[str, Any]] = {}
 
-    # 1. Misiones Online (WordPress API y RSS)
-    for art in obtener_noticias_wordpress("https://misionesonline.net", "misiones_online", "accidente Posadas", limite=5):
-        candidatas[art["url"]] = art
+    tareas = [
+        lambda: obtener_noticias_wordpress("https://misionesonline.net", "misiones_online", "accidente Posadas", limite=5),
+        lambda: obtener_noticias_wordpress("https://canal12misiones.com", "canal_12", "accidente", limite=4),
+        lambda: obtener_noticias_rss("https://www.elterritorio.com.ar/rss", "el_territorio", limite=5),
+    ]
 
-    # 2. Canal 12 Misiones (WordPress API y RSS)
-    for art in obtener_noticias_wordpress("https://canal12misiones.com", "canal_12", "accidente", limite=4):
-        candidatas[art["url"]] = art
-
-    # 3. El Territorio (RSS)
-    for art in obtener_noticias_rss("https://www.elterritorio.com.ar/rss", "el_territorio", limite=5):
-        candidatas[art["url"]] = art
+    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+        futuros = [executor.submit(fn) for fn in tareas]
+        for f in concurrent.futures.as_completed(futuros, timeout=8):
+            try:
+                for art in f.result():
+                    if art.get("url"):
+                        candidatas[art["url"]] = art
+            except Exception as e:
+                logger.warning("Fallo en tarea concurrente de recolección: %s", e)
 
     return list(candidatas.values())[:limite]

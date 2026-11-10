@@ -194,6 +194,10 @@ IMPORTANTE: Si no hay una segunda calle que corte la vía transversalmente, call
         if not ubicacion_texto:
             ubicacion_texto = "Posadas (Ubicación en proceso de verificación)"
 
+        tipo_ubi = res_geo.get("tipo_ubicacion", "interseccion")
+        if tipo_ubi not in ("interseccion", "corredor_hito", "punto_singular", "indeterminado"):
+            tipo_ubi = "indeterminado"
+
         # 3. Construcción del contrato IncidenteSilver
         return IncidenteSilver(
             id=articulo.get("id") or f"inc-web-{abs(hash(articulo.get('url', '')))}",
@@ -208,7 +212,7 @@ IMPORTANTE: Si no hay una segunda calle que corte la vía transversalmente, call
             calle_1=datos.get("calle_1"),
             calle_2=datos.get("calle_2"),
             referencia_espacial=datos.get("referencia_espacial"),
-            tipo_ubicacion=res_geo.get("tipo_ubicacion", "interseccion"),
+            tipo_ubicacion=tipo_ubi,
             ubicacion_texto=ubicacion_texto,
             lat=res_geo["lat"],
             lon=res_geo["lon"],
@@ -249,7 +253,11 @@ def procesar_e_ingestar_noticia(articulo: Dict[str, Any], db: DBWrapper, lector:
         return None
 
     lector = lector or AgenteLector()
-    incidente = lector.estructurar_noticia(articulo)
+    try:
+        incidente = lector.estructurar_noticia(articulo)
+    except Exception as e:
+        logger.error("Error al estructurar noticia '%s': %s", url, e)
+        return None
 
     # Persistir en JSONL
     linea_dict = incidente.model_dump(mode="json")

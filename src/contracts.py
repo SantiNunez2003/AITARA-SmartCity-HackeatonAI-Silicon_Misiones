@@ -22,7 +22,7 @@ class IncidenteSilver(BaseModel):
     calle_1: Optional[str] = None
     calle_2: Optional[str] = None
     referencia_espacial: Optional[str] = None
-    tipo_ubicacion: Literal["interseccion", "corredor_hito", "punto_singular"] = "interseccion"
+    tipo_ubicacion: Literal["interseccion", "corredor_hito", "punto_singular", "indeterminado"] = "interseccion"
     ubicacion_texto: str
     lat: float
     lon: float
