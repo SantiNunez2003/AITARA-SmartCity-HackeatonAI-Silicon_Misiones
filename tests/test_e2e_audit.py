@@ -40,7 +40,7 @@ print(f"[2/4] Risk Engine: OK (Lluvia 40mm -> Top: {nodes1[0].nombre} con {int(n
 from src.engine.investigador import AgenteInvestigador
 inv = AgenteInvestigador()
 res_inv = inv.investigar_ubicacion("Choque frente a casino club cerca de rotonda uruguay")
-assert res_inv["estado"] == "RESUELTO_AUTOMATICO"
+assert res_inv["estado"] == "resuelto"
 print(f"[3/4] Agente Investigador: OK (Ambigüedad resuelta: '{res_inv['ubicacion_resuelta']}')")
 
 # 4. Analista Agent

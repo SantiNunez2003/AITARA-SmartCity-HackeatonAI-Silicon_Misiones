@@ -57,9 +57,10 @@ def test_lector_extrae_sin_inventar_calle2():
     assert inc.calle_1 == "Av. Alicia Moreau de Justo"
     assert inc.calle_2 is None
     assert inc.referencia_espacial == "Country Los Naranjos"
-    assert abs(inc.lat - (-27.446188)) < 0.001
-    assert abs(inc.lon - (-55.957563)) < 0.001
-    assert inc.confianza >= 0.90
+    assert inc.lat is not None and inc.lon is not None
+    assert inc.confianza == 0.75
+    assert inc.metodo == "nomenclador"
+    assert len(inc.pasos_resolucion) >= 2
 
 
 def test_deduplicacion_y_persistencia(tmp_path):

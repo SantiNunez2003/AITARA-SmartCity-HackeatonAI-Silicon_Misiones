@@ -4,7 +4,7 @@ Garantiza desacoplamiento limpio entre Ingesta (Ana), Almacén/Modelos (Joaquín
 y la interfaz y el Analista.
 """
 from datetime import datetime
-from typing import List, Optional, Literal
+from typing import Any, Dict, List, Optional, Literal
 from pydantic import BaseModel, Field
 
 
@@ -31,10 +31,14 @@ class IncidenteSilver(BaseModel):
     referencia_espacial: Optional[str] = None
     tipo_ubicacion: Literal["interseccion", "corredor_hito", "punto_singular", "indeterminado"] = "interseccion"
     ubicacion_texto: str
-    lat: float
-    lon: float
-    confianza: float = Field(ge=0.0, le=1.0)
+    lat: Optional[float] = None
+    lon: Optional[float] = None
+    ubicacion_valida: bool = True
+    confianza: float = Field(default=0.0, ge=0.0, le=1.0)
     estado_verificacion: str = "curado"  # 'curado', 'investigado', 'pendiente'
+    requiere_revision_humana: bool = False
+    metodo: str = "nomenclador"
+    pasos_resolucion: List[Dict[str, Any]] = Field(default_factory=list)
     resumen: str
     origen: Literal["real", "simulado"] = "real"
     fuentes_relacionadas: List[FuenteRelacionada] = Field(default_factory=list)

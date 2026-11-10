@@ -325,16 +325,24 @@ IMPORTANTE: Si 'es_siniestro_vial_urbano' es false o 'tiene_ubicacion_identifica
 
         tipo_ubi = res_geo.get("tipo_ubicacion", "interseccion")
         if tipo_ubi not in ("interseccion", "corredor_hito", "punto_singular"):
-            # Si no resolvió ubicación concreta y no hay arteria conocida, se rechaza
-            if not calle_1:
-                logger.info("Noticia descartada por ubicación indeterminada: '%s'", titulo[:60])
-                return None
             tipo_ubi = "indeterminado"
 
         raw_ubi = res_geo.get("ubicacion_resuelta") or f"{calle_1 or ''} {calle_2 or ''}".strip()
         if not raw_ubi or len(raw_ubi) > 80:
             raw_ubi = f"{calle_1 or ''} y {calle_2 or ''}".strip() or referencia or "Posadas"
         ubicacion_texto = raw_ubi[:80]
+
+        requiere_revision = bool(res_geo.get("requiere_revision_humana", False))
+        lat_res = res_geo.get("lat")
+        lon_res = res_geo.get("lon")
+        ubicacion_valida = bool(lat_res is not None and lon_res is not None and not requiere_revision)
+
+        if requiere_revision or not ubicacion_valida:
+            estado_verif = "pendiente"
+        elif res_geo.get("confianza", 0.0) < 0.8:
+            estado_verif = "investigado"
+        else:
+            estado_verif = "curado"
 
         # 3. Construcción del contrato IncidenteSilver
         return IncidenteSilver(
@@ -355,10 +363,14 @@ IMPORTANTE: Si 'es_siniestro_vial_urbano' es false o 'tiene_ubicacion_identifica
             referencia_espacial=referencia,
             tipo_ubicacion=tipo_ubi,
             ubicacion_texto=ubicacion_texto,
-            lat=res_geo["lat"],
-            lon=res_geo["lon"],
-            confianza=res_geo.get("confianza", 0.90),
-            estado_verificacion="investigado" if res_geo.get("confianza", 0.9) < 0.8 else "curado",
+            lat=lat_res,
+            lon=lon_res,
+            ubicacion_valida=ubicacion_valida,
+            confianza=res_geo.get("confianza", 0.0),
+            estado_verificacion=estado_verif,
+            requiere_revision_humana=requiere_revision,
+            metodo=res_geo.get("metodo", "nomenclador"),
+            pasos_resolucion=res_geo.get("pasos_resolucion", []),
             resumen=datos.get("resumen") or titulo,
             origen="real"
         )
