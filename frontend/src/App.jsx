@@ -1433,7 +1433,19 @@ export default function App() {
                     </button>
                   </div>
                   {showPriorities && (
-                    <div style={{ borderTop: '1px solid var(--border-color)', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div
+                      style={{
+                        borderTop: '1px solid var(--border-color)',
+                        padding: '10px 12px',
+                        paddingRight: '8px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '8px',
+                        maxHeight: '440px',
+                        overflowY: 'auto',
+                        overflowX: 'hidden'
+                      }}
+                    >
                       {!evalData?.prioridades?.length && <p>Sin prioridades disponibles para este escenario.</p>}
                       {(evalData?.prioridades || []).map(prioridad => (
                         <div key={prioridad.nodo.nodo_id} style={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-color)', borderRadius: '6px', padding: '10px 12px' }}>
