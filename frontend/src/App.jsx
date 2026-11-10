@@ -109,6 +109,11 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('')
   const [driveSelectedDoc, setDriveSelectedDoc] = useState(null)
 
+  // Ingesta de Noticias bajo demanda y escaneo
+  const [ingestUrl, setIngestUrl] = useState('')
+  const [ingestLoading, setIngestLoading] = useState(false)
+  const [ingestMessage, setIngestMessage] = useState(null)
+
   // Referencias de Leaflet
   const mapContainerRef = useRef(null)
   const mapInstanceRef = useRef(null)
@@ -323,6 +328,60 @@ export default function App() {
     navigator.clipboard.writeText(prioridades.map(p => `${p.nodo.nombre} · ${p.nivel} · ${p.riesgo_escenario}`).join('\n'))
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  const handleScanMedia = async () => {
+    setIngestLoading(true)
+    setIngestMessage(null)
+    try {
+      const res = await fetch('/api/ingest/scan?limite=8', { method: 'POST' })
+      const data = await res.json()
+      setIngestMessage({
+        type: 'success',
+        text: `Escaneo completado: ${data.nuevos_ingestados} incidentes viales nuevos (de ${data.articulos_analizados} notas analizadas). Total en sistema: ${data.total_actual}.`
+      })
+      const [incRes, stRes] = await Promise.all([
+        fetch('/api/incidents'),
+        fetch('/api/status')
+      ])
+      if (incRes.ok) setIncidents(await incRes.json())
+      if (stRes.ok) setStatus(await stRes.json())
+    } catch (err) {
+      setIngestMessage({ type: 'error', text: 'Error al escanear portales de noticias.' })
+    } finally {
+      setIngestLoading(false)
+    }
+  }
+
+  const handleIngestUrl = async (e) => {
+    e.preventDefault()
+    if (!ingestUrl.trim()) return
+    setIngestLoading(true)
+    setIngestMessage(null)
+    try {
+      const res = await fetch('/api/ingest/url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: ingestUrl.trim() })
+      })
+      const data = await res.json()
+      if (data.status === 'ok') {
+        setIngestMessage({ type: 'success', text: `${data.mensaje} [${data.incidente?.titulo || ''}]` })
+        setIngestUrl('')
+        const [incRes, stRes] = await Promise.all([
+          fetch('/api/incidents'),
+          fetch('/api/status')
+        ])
+        if (incRes.ok) setIncidents(await incRes.json())
+        if (stRes.ok) setStatus(await stRes.json())
+      } else {
+        setIngestMessage({ type: 'info', text: data.mensaje })
+      }
+    } catch (err) {
+      setIngestMessage({ type: 'error', text: 'Error al procesar la URL.' })
+    } finally {
+      setIngestLoading(false)
+    }
   }
 
   const topCritico = evalData?.nodos?.find(nodo => nodo.es_critico) || null
@@ -1628,6 +1687,109 @@ export default function App() {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* PANEL DE CONTROL DE INGESTA ACTIVA (DEMO DAY & MONITORING) */}
+          <div
+            style={{
+              backgroundColor: 'var(--bg-surface)',
+              border: '1px solid var(--border-color)',
+              borderRadius: '10px',
+              padding: '14px 18px',
+              boxShadow: 'var(--shadow-sm)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '10px',
+              flexShrink: 0
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+              <div>
+                <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: 'var(--accent-blue)', letterSpacing: '0.05em' }}>
+                  Ingesta de Noticias Viales bajo Demanda
+                </span>
+                <p style={{ margin: '2px 0 0 0', fontSize: '11.5px', color: 'var(--text-secondary)' }}>
+                  Escaneo automatizado de portales locales de Posadas e ingesta directa por URL con georreferenciación de hitos y deduplicación.
+                </p>
+              </div>
+
+              <button
+                onClick={handleScanMedia}
+                disabled={ingestLoading}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  backgroundColor: 'var(--accent-blue)',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '7px 14px',
+                  fontSize: '11.5px',
+                  fontWeight: 700,
+                  cursor: ingestLoading ? 'not-allowed' : 'pointer',
+                  opacity: ingestLoading ? 0.7 : 1,
+                  boxShadow: 'var(--shadow-sm)'
+                }}
+              >
+                <Activity size={13} />
+                <span>{ingestLoading ? 'Escaneando medios...' : 'Escanear Medios Locales Ahora'}</span>
+              </button>
+            </div>
+
+            {/* Formulario de Ingesta por URL */}
+            <form onSubmit={handleIngestUrl} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <input
+                type="url"
+                value={ingestUrl}
+                onChange={e => setIngestUrl(e.target.value)}
+                placeholder="Pegar URL de noticia vial (ej. https://misionesonline.net/... o https://www.primeraedicion.com.ar/...)"
+                disabled={ingestLoading}
+                style={{
+                  flex: 1,
+                  padding: '7px 10px',
+                  fontSize: '12px',
+                  borderRadius: '6px',
+                  border: '1px solid var(--border-strong)',
+                  backgroundColor: 'var(--bg-canvas)',
+                  color: 'var(--text-primary)'
+                }}
+              />
+              <button
+                type="submit"
+                disabled={ingestLoading || !ingestUrl.trim()}
+                style={{
+                  backgroundColor: 'var(--bg-canvas)',
+                  border: '1px solid var(--border-strong)',
+                  color: 'var(--text-primary)',
+                  borderRadius: '6px',
+                  padding: '7px 14px',
+                  fontSize: '11.5px',
+                  fontWeight: 700,
+                  cursor: (ingestLoading || !ingestUrl.trim()) ? 'not-allowed' : 'pointer',
+                  opacity: (ingestLoading || !ingestUrl.trim()) ? 0.5 : 1
+                }}
+              >
+                Ingestar por URL
+              </button>
+            </form>
+
+            {/* Mensaje de Resultado de Ingesta */}
+            {ingestMessage && (
+              <div
+                style={{
+                  fontSize: '11.5px',
+                  fontWeight: 600,
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  backgroundColor: ingestMessage.type === 'error' ? 'rgba(239, 68, 68, 0.1)' : ingestMessage.type === 'info' ? 'rgba(234, 179, 8, 0.1)' : 'rgba(34, 197, 94, 0.1)',
+                  color: ingestMessage.type === 'error' ? '#ef4444' : ingestMessage.type === 'info' ? '#ca8a04' : '#16a34a',
+                  border: `1px solid ${ingestMessage.type === 'error' ? 'rgba(239, 68, 68, 0.2)' : ingestMessage.type === 'info' ? 'rgba(234, 179, 8, 0.2)' : 'rgba(34, 197, 94, 0.2)'}`
+                }}
+              >
+                {ingestMessage.text}
+              </div>
+            )}
           </div>
 
           {/* BLOQUE INFERIOR: EXPLORADOR DE INFORMACIÓN ESTILO GOOGLE DRIVE (3 PANELES) */}
