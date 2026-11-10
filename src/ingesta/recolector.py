@@ -135,6 +135,19 @@ def obtener_noticias_rss(url_feed: str, nombre_fuente: str, limite: int = 6) -> 
     return articulos
 
 
+def _fecha_publicacion_html(html: str) -> Optional[str]:
+    """Lee la fecha de publicación de las metaetiquetas estándar de la nota."""
+    for patron in (
+        r"<meta[^>]+(?:property|name|itemprop)=[\"'](?:article:published_time|datePublished|pubdate)[\"'][^>]*content=[\"']([^\"']+)",
+        r"<meta[^>]+content=[\"']([^\"']+)[\"'][^>]*(?:property|name|itemprop)=[\"'](?:article:published_time|datePublished|pubdate)[\"']",
+        r"\"datePublished\"\s*:\s*\"([^\"]+)\"",
+    ):
+        coincidencia = re.search(patron, html, re.IGNORECASE)
+        if coincidencia:
+            return coincidencia.group(1).strip()
+    return None
+
+
 def extraer_articulo_por_url(url: str) -> Optional[Dict[str, Any]]:
     """Descarga directamente una nota por URL y extrae título y cuerpo."""
     req = urllib.request.Request(url, headers=HEADERS)
@@ -168,7 +181,7 @@ def extraer_articulo_por_url(url: str) -> Optional[Dict[str, Any]]:
                     "url": url,
                     "titulo": titulo,
                     "texto": cuerpo or titulo,
-                    "fecha_publicacion": datetime.now(timezone.utc).isoformat()
+                    "fecha_publicacion": _fecha_publicacion_html(html) or datetime.now(timezone.utc).isoformat()
                 }
     except Exception as e:
         logger.error("Error al extraer artículo de la URL %s: %s", url, e)

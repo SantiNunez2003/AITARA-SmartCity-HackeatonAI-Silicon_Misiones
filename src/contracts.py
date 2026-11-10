@@ -8,6 +8,13 @@ from typing import List, Optional, Literal
 from pydantic import BaseModel, Field
 
 
+class FuenteRelacionada(BaseModel):
+    """Otro medio que reportó el mismo hecho."""
+    fuente: str
+    url: str
+    titulo: Optional[str] = None
+
+
 class IncidenteSilver(BaseModel):
     """Contrato del incidente estructurado tras la extracción del Lector/Investigador."""
     id: str
@@ -30,6 +37,7 @@ class IncidenteSilver(BaseModel):
     estado_verificacion: str = "curado"  # 'curado', 'investigado', 'pendiente'
     resumen: str
     origen: Literal["real", "simulado"] = "real"
+    fuentes_relacionadas: List[FuenteRelacionada] = Field(default_factory=list)
 
 
 class ParametrosEscenario(BaseModel):

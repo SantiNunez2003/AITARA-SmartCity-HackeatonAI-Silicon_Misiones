@@ -367,7 +367,9 @@ export default function App() {
       const data = await res.json()
       setIngestMessage({
         type: 'success',
-        text: `Escaneo completado: ${data.nuevos_ingestados} incidentes viales nuevos (de ${data.articulos_analizados} notas analizadas). Total en sistema: ${data.total_actual}.`
+        text: `Escaneo completado: ${data.nuevos_ingestados} incidentes viales nuevos (de ${data.articulos_analizados} notas analizadas)` +
+          (data.duplicados_entre_medios ? `; ${data.duplicados_entre_medios} ya reportados por otro medio, agregados como fuente relacionada` : '') +
+          `. Total en sistema: ${data.total_actual}.`
       })
       const [incRes, stRes] = await Promise.all([
         fetch('/api/incidents'),

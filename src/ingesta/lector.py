@@ -15,8 +15,9 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from dotenv import load_dotenv
 
-from src.contracts import IncidenteSilver
+from src.contracts import FuenteRelacionada, IncidenteSilver
 from src.engine.investigador import AgenteInvestigador
+from src.ingesta.deduplicador import ZONA_POSADAS, buscar_duplicado, parsear_fecha
 from src.ingesta.recolector import PATRON_EXCLUSION_NO_VIAL
 from src.warehouse.db import DBWrapper, SILVER_JSONL_PATH, load_silver_incidents_from_jsonl
 
@@ -341,8 +342,11 @@ IMPORTANTE: Si 'es_siniestro_vial_urbano' es false o 'tiene_ubicacion_identifica
             fuente=articulo.get("fuente", "web_local"),
             titulo=titulo,
             url=articulo.get("url"),
-            fecha_publicacion=datetime.now(timezone.utc),
-            fecha_evento=datetime.now(timezone.utc),
+            # Fecha de la nota; si el medio no la informa, la de captura.
+            fecha_publicacion=parsear_fecha(articulo.get("fecha_publicacion"))
+            or datetime.now(ZONA_POSADAS).replace(tzinfo=None),
+            # La hora del hecho no se extrae del texto: queda nula.
+            fecha_evento=None,
             tipo_incidente=datos.get("tipo_incidente", "choque"),
             severidad=datos.get("severidad", 1),
             vehiculos=datos.get("vehiculos", ["auto"]),
@@ -360,52 +364,89 @@ IMPORTANTE: Si 'es_siniestro_vial_urbano' es false o 'tiene_ubicacion_identifica
         )
 
 
-def _obtener_urls_existentes() -> set:
-    """Lee las URLs ya persistidas para deduplicación idempotente."""
-    urls = set()
-    if not SILVER_JSONL_PATH.exists():
-        return urls
-    with SILVER_JSONL_PATH.open("r", encoding="utf-8") as f:
+def _leer_guardados(ruta: Path) -> List[Tuple[str, Dict[str, Any]]]:
+    """Lee las líneas guardadas, conservando el texto original de cada una."""
+    if not ruta.exists():
+        return []
+    guardados = []
+    with ruta.open("r", encoding="utf-8") as f:
         for linea in f:
             if not linea.strip():
                 continue
             try:
-                item = json.loads(linea)
-                if item.get("url"):
-                    urls.add(item["url"].strip().lower())
-            except Exception:
-                continue
+                guardados.append((linea.rstrip("\n"), json.loads(linea)))
+            except json.JSONDecodeError:
+                guardados.append((linea.rstrip("\n"), {}))
+    return guardados
+
+
+def _urls_guardadas(guardados: List[Tuple[str, Dict[str, Any]]]) -> set:
+    """URLs ya procesadas: la principal de cada incidente y las de sus fuentes relacionadas."""
+    urls = set()
+    for _, item in guardados:
+        for url in [item.get("url")] + [f.get("url") for f in item.get("fuentes_relacionadas") or []]:
+            if url:
+                urls.add(url.strip().lower())
     return urls
 
 
-def procesar_e_ingestar_noticia(articulo: Dict[str, Any], db: DBWrapper, lector: Optional[AgenteLector] = None) -> Optional[IncidenteSilver]:
-    """Procesa una nota, la deduplica por URL, la escribe a disco y actualiza DuckDB."""
+def _agregar_fuente_relacionada(ruta: Path, guardados, existente: Dict[str, Any], incidente: IncidenteSilver) -> Dict[str, Any]:
+    """Registra la nota como otra fuente del incidente existente y reescribe solo esa línea."""
+    actualizado = dict(existente)
+    relacionadas = list(actualizado.get("fuentes_relacionadas") or [])
+    relacionadas.append(FuenteRelacionada(fuente=incidente.fuente, url=incidente.url, titulo=incidente.titulo).model_dump())
+    actualizado["fuentes_relacionadas"] = relacionadas
+    lineas = [json.dumps(actualizado, ensure_ascii=False) if item.get("id") == existente.get("id") else texto
+              for texto, item in guardados]
+    temporal = ruta.with_suffix(ruta.suffix + ".tmp")
+    temporal.write_text("\n".join(lineas) + "\n", encoding="utf-8")
+    temporal.replace(ruta)
+    return actualizado
+
+
+def procesar_noticia(articulo: Dict[str, Any], db: DBWrapper, lector: Optional[AgenteLector] = None,
+                     ruta: Path = SILVER_JSONL_PATH) -> Tuple[str, Optional[Dict[str, Any]]]:
+    """Procesa una nota y devuelve (estado, incidente).
+
+    Estados: 'nuevo', 'duplicado_url' (la nota ya se procesó), 'duplicado_medio'
+    (otro medio ya reportó el mismo hecho; se agrega como fuente relacionada),
+    'descartado' (no es un incidente vial urbano con ubicación) o 'sin_url'.
+    """
     url = (articulo.get("url") or "").strip().lower()
     if not url:
-        return None
+        return "sin_url", None
 
-    existentes = _obtener_urls_existentes()
-    if url in existentes:
+    guardados = _leer_guardados(ruta)
+    if url in _urls_guardadas(guardados):
         logger.info("La noticia ya existe en la base (%s), se omite duplicado.", url)
-        return None
+        return "duplicado_url", None
 
     lector = lector or AgenteLector()
     try:
         incidente = lector.estructurar_noticia(articulo)
     except Exception as e:
         logger.error("Error al estructurar noticia '%s': %s", url, e)
-        return None
+        return "descartado", None
 
     if incidente is None:
         logger.info("Noticia descartada por filtros de movilidad/ubicación: %s", url)
-        return None
+        return "descartado", None
 
-    # Persistir en JSONL
-    linea_dict = incidente.model_dump(mode="json")
-    with SILVER_JSONL_PATH.open("a", encoding="utf-8") as f:
-        f.write(json.dumps(linea_dict, ensure_ascii=False) + "\n")
+    existente = buscar_duplicado(incidente.model_dump(mode="json"), [item for _, item in guardados if item])
+    if existente:
+        actualizado = _agregar_fuente_relacionada(ruta, guardados, existente, incidente)
+        logger.info("Mismo hecho que %s; se agrega %s como fuente relacionada.", existente.get("id"), incidente.fuente)
+        return "duplicado_medio", actualizado
 
-    # Actualizar DuckDB inmediatamente
+    with ruta.open("a", encoding="utf-8") as f:
+        f.write(json.dumps(incidente.model_dump(mode="json"), ensure_ascii=False) + "\n")
+
     load_silver_incidents_from_jsonl(db)
     logger.info("Nuevo incidente vial persistido e indexado: %s", incidente.titulo)
-    return incidente
+    return "nuevo", incidente.model_dump(mode="json")
+
+
+def procesar_e_ingestar_noticia(articulo: Dict[str, Any], db: DBWrapper, lector: Optional[AgenteLector] = None) -> Optional[IncidenteSilver]:
+    """Compatibilidad: devuelve el incidente solo si es nuevo."""
+    estado, incidente = procesar_noticia(articulo, db, lector)
+    return IncidenteSilver(**incidente) if estado == "nuevo" else None
