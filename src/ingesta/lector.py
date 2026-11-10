@@ -23,7 +23,10 @@ from src.warehouse.db import DBWrapper, SILVER_JSONL_PATH, load_silver_incidents
 load_dotenv(Path(__file__).resolve().parent.parent.parent / ".env")
 logger = logging.getLogger(__name__)
 
-MODELO_GEMINI = os.getenv("GEMINI_MODEL") or "gemini-3.5-flash-lite"
+MODELOS_GEMINI = [
+    os.getenv("GEMINI_MODEL") or "gemini-3.5-flash-lite",
+    "gemini-3.1-flash-lite"
+]
 
 
 def _normalizar_prefijo_calle(calle: Optional[str]) -> Optional[str]:
@@ -259,21 +262,24 @@ Respondé ÚNICAMENTE un JSON con este esquema (sin bloques ni texto adicional):
 
 IMPORTANTE: Si 'es_siniestro_vial_urbano' es false o 'tiene_ubicacion_identificable' es false, calle_1 y calle_2 deben ser null."""
 
-        try:
-            if hasattr(client, "interactions") and hasattr(client.interactions, "create"):
-                res = client.interactions.create(model=MODELO_GEMINI, input=prompt, store=False)
-                raw = getattr(res, "output_text", "") or ""
-            else:
-                resp = client.models.generate_content(
-                    model=MODELO_GEMINI,
-                    contents=prompt
-                )
-                raw = (resp.text or "").strip()
-            raw = re.sub(r"^```(?:json)?|```$", "", raw, flags=re.MULTILINE).strip()
-            return json.loads(raw)
-        except Exception as e:
-            logger.warning("Fallo en extracción con Gemini: %s. Se recurre a heurística determinística.", e)
-            return None
+        for modelo in MODELOS_GEMINI:
+            try:
+                if hasattr(client, "interactions") and hasattr(client.interactions, "create"):
+                    res = client.interactions.create(model=modelo, input=prompt, store=False)
+                    raw = getattr(res, "output_text", "") or ""
+                else:
+                    resp = client.models.generate_content(
+                        model=modelo,
+                        contents=prompt
+                    )
+                    raw = (resp.text or "").strip()
+                raw = re.sub(r"^```(?:json)?|```$", "", raw, flags=re.MULTILINE).strip()
+                if raw:
+                    return json.loads(raw)
+            except Exception as e:
+                logger.warning("Fallo en extracción con modelo %s: %s. Probando fallback.", modelo, e)
+                continue
+        return None
 
     def estructurar_noticia(self, articulo: Dict[str, Any]) -> Optional[IncidenteSilver]:
         """Convierte una noticia cruda en un IncidenteSilver georreferenciado o None si no califica."""

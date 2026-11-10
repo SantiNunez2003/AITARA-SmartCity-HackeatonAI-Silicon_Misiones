@@ -2018,16 +2018,23 @@ export default function App() {
                         >
                           <div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                              <span
-                                style={{
-                                  fontSize: '9.5px',
-                                  fontWeight: 800,
-                                  textTransform: 'uppercase',
-                                  color: 'var(--accent-blue)'
-                                }}
-                              >
-                                {SOURCE_LABELS[doc.fuente] || doc.fuente}<MarcaSimulado origen={doc.origen} />
-                              </span>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <span
+                                  style={{
+                                    fontSize: '9.5px',
+                                    fontWeight: 800,
+                                    textTransform: 'uppercase',
+                                    color: 'var(--accent-blue)'
+                                  }}
+                                >
+                                  {SOURCE_LABELS[doc.fuente] || doc.fuente}<MarcaSimulado origen={doc.origen} />
+                                </span>
+                                {doc.id?.startsWith('inc-web-') && (
+                                  <span style={{ background: '#059669', color: '#fff', fontSize: '8.5px', fontWeight: 800, padding: '1px 5px', borderRadius: '4px' }}>
+                                    WEB VIVO
+                                  </span>
+                                )}
+                              </div>
                               <span
                                 style={{
                                   fontSize: '9.5px',
@@ -2049,10 +2056,41 @@ export default function App() {
                                 fontWeight: 700,
                                 color: 'var(--text-primary)',
                                 lineHeight: 1.35,
-                                marginBottom: '6px'
+                                marginBottom: '8px'
                               }}
                             >
                               {doc.titulo}
+                            </div>
+
+                            {/* Metadatos Temporales: Fecha de Incidente vs Extracción */}
+                            <div
+                              style={{
+                                display: 'grid',
+                                gridTemplateColumns: '1fr 1fr',
+                                gap: '6px',
+                                backgroundColor: 'var(--bg-subtle)',
+                                padding: '6px 8px',
+                                borderRadius: '4px',
+                                fontSize: '10px',
+                                marginBottom: '8px'
+                              }}
+                            >
+                              <div>
+                                <span style={{ fontSize: '8.5px', color: 'var(--text-muted)', display: 'block', textTransform: 'uppercase', fontWeight: 700 }}>
+                                  Fecha Incidente
+                                </span>
+                                <strong style={{ color: 'var(--text-primary)', fontSize: '10.5px' }}>
+                                  {(doc.fecha_evento || '').replace('T', ' ').slice(0, 16)} hs
+                                </strong>
+                              </div>
+                              <div>
+                                <span style={{ fontSize: '8.5px', color: 'var(--text-muted)', display: 'block', textTransform: 'uppercase', fontWeight: 700 }}>
+                                  Fecha Ingesta
+                                </span>
+                                <strong style={{ color: 'var(--text-secondary)', fontSize: '10.5px' }}>
+                                  {(doc.fecha_publicacion || '').replace('T', ' ').slice(0, 16)} hs
+                                </strong>
+                              </div>
                             </div>
                           </div>
 
@@ -2067,10 +2105,21 @@ export default function App() {
                               alignItems: 'center'
                             }}
                           >
-                            <span>
+                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '175px', fontWeight: 600 }}>
                               {formatUbicacionVial(doc, ' × ')}
                             </span>
-                            <span style={{ color: '#16a34a', fontWeight: 700, fontSize: '10px' }}>{doc.estado_verificacion || 'Sin estado'}</span>
+                            <span
+                              style={{
+                                fontSize: '9.5px',
+                                fontWeight: 700,
+                                padding: '1px 6px',
+                                borderRadius: '4px',
+                                backgroundColor: doc.tipo_ubicacion === 'indeterminado' ? '#fef3c7' : '#ecfdf5',
+                                color: doc.tipo_ubicacion === 'indeterminado' ? '#b45309' : '#047857'
+                              }}
+                            >
+                              {doc.tipo_ubicacion === 'indeterminado' ? 'Georref. Dudosa' : `Georref: ${Math.round((doc.confianza || 0.9) * 100)}%`}
+                            </span>
                           </div>
                         </div>
                       )
@@ -2082,9 +2131,10 @@ export default function App() {
                       <tr style={{ backgroundColor: 'var(--bg-subtle)', color: 'var(--text-muted)', fontSize: '10.5px', textTransform: 'uppercase' }}>
                         <th style={{ padding: '9px 12px' }}>Medio / Fuente</th>
                         <th style={{ padding: '9px 12px' }}>Suceso Relevado</th>
-                        <th style={{ padding: '9px 12px' }}>Esquina / Intersección</th>
-                        <th style={{ padding: '9px 12px' }}>Fecha y Hora</th>
-                        <th style={{ padding: '9px 12px' }}>Estado</th>
+                        <th style={{ padding: '9px 12px' }}>Ubicación Georreferenciada</th>
+                        <th style={{ padding: '9px 12px' }}>Fecha Siniestro</th>
+                        <th style={{ padding: '9px 12px' }}>Fecha Ingesta</th>
+                        <th style={{ padding: '9px 12px' }}>Georref. / Confianza</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -2101,7 +2151,15 @@ export default function App() {
                             }}
                           >
                             <td style={{ padding: '10px 12px', fontWeight: 700, color: 'var(--accent-blue)' }}>
-                              {SOURCE_LABELS[doc.fuente] || doc.fuente}<MarcaSimulado origen={doc.origen} />
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                {SOURCE_LABELS[doc.fuente] || doc.fuente}
+                                <MarcaSimulado origen={doc.origen} />
+                                {doc.id?.startsWith('inc-web-') && (
+                                  <span style={{ background: '#059669', color: '#fff', fontSize: '8px', fontWeight: 800, padding: '1px 4px', borderRadius: '3px' }}>
+                                    WEB
+                                  </span>
+                                )}
+                              </div>
                             </td>
                             <td style={{ padding: '10px 12px', fontWeight: 600, color: 'var(--text-primary)' }}>{doc.titulo}</td>
                             <td style={{ padding: '10px 12px', color: 'var(--text-secondary)' }}>
@@ -2110,7 +2168,12 @@ export default function App() {
                             <td className="mono" style={{ padding: '10px 12px', fontSize: '11px' }}>
                               {(doc.fecha_evento || '').replace('T', ' ').slice(0, 16)} hs
                             </td>
-                            <td style={{ padding: '10px 12px', color: '#16a34a', fontWeight: 700 }}>{doc.estado_verificacion || 'Sin estado'}</td>
+                            <td className="mono" style={{ padding: '10px 12px', fontSize: '11px', color: 'var(--text-muted)' }}>
+                              {(doc.fecha_publicacion || '').replace('T', ' ').slice(0, 16)} hs
+                            </td>
+                            <td style={{ padding: '10px 12px', color: doc.confianza >= 0.8 ? '#16a34a' : '#d97706', fontWeight: 700, fontSize: '10.5px' }}>
+                              {doc.tipo_ubicacion === 'indeterminado' ? 'Dudoso (40%)' : `OK (${Math.round((doc.confianza || 0.9) * 100)}%)`}
+                            </td>
                           </tr>
                         )
                       })}
@@ -2168,8 +2231,22 @@ export default function App() {
                     gap: '8px'
                   }}
                 >
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                    <div>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '10px', display: 'block' }}>FECHA DEL HECHO</span>
+                      <strong style={{ color: 'var(--text-primary)' }}>
+                        {(driveSelectedDoc.fecha_evento || '').replace('T', ' ').slice(0, 16)} hs
+                      </strong>
+                    </div>
+                    <div>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '10px', display: 'block' }}>FECHA DE INGESTA</span>
+                      <strong style={{ color: 'var(--text-secondary)' }}>
+                        {(driveSelectedDoc.fecha_publicacion || '').replace('T', ' ').slice(0, 16)} hs
+                      </strong>
+                    </div>
+                  </div>
                   <div>
-                    <span style={{ color: 'var(--text-muted)', fontSize: '10px', display: 'block' }}>INTERSECCIÓN GEORREFERENCIADA</span>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '10px', display: 'block' }}>INTERSECCIÓN / HITO GEORREFERENCIADO</span>
                     <strong>
                       {driveSelectedDoc.ubicacion_texto && driveSelectedDoc.ubicacion_texto.length <= 80
                         ? driveSelectedDoc.ubicacion_texto
@@ -2182,9 +2259,17 @@ export default function App() {
                       {formatUbicacionVial(driveSelectedDoc, ' y ')}
                     </strong>
                   </div>
-                  <div>
-                    <span style={{ color: 'var(--text-muted)', fontSize: '10px', display: 'block' }}>CLASIFICACIÓN Y GRAVEDAD</span>
-                    <strong>{SEVERITY_LABELS[driveSelectedDoc.severidad]}</strong>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                    <div>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '10px', display: 'block' }}>GRAVEDAD</span>
+                      <strong>{SEVERITY_LABELS[driveSelectedDoc.severidad]}</strong>
+                    </div>
+                    <div>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '10px', display: 'block' }}>CALIDAD GEORREF.</span>
+                      <strong style={{ color: driveSelectedDoc.confianza >= 0.8 ? '#16a34a' : '#d97706' }}>
+                        {driveSelectedDoc.tipo_ubicacion === 'indeterminado' ? 'Dudosa (40%)' : `${Math.round((driveSelectedDoc.confianza || 0.9) * 100)}% (${driveSelectedDoc.tipo_ubicacion})`}
+                      </strong>
+                    </div>
                   </div>
                   <div>
                     <span style={{ color: 'var(--text-muted)', fontSize: '10px', display: 'block' }}>VEHÍCULOS IDENTIFICADOS</span>

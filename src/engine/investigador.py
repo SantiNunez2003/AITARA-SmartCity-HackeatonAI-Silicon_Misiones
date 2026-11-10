@@ -32,7 +32,8 @@ class AgenteInvestigador:
             "parque de la salud": (-27.3785, -55.8890, "Av. López Torres y Cabred (Hospital Madariaga)"),
             "hospital madariaga": (-27.3785, -55.8890, "Av. López Torres y Cabred"),
             "placita del puente": (-27.3705, -55.8840, "Acceso Sur y Av. Mitre"),
-            "rotonda acceso oeste": (-27.3680, -55.9450, "Av. Ulises López y Chacabuco"),
+            "rotonda acceso oeste": (-27.382539, -55.963200, "Rotonda Av. Ulises López y Chacabuco (Acceso Oeste)"),
+            "rotonda ulises lopez": (-27.382539, -55.963200, "Rotonda Av. Ulises López y Chacabuco (Acceso Oeste)"),
             "transferencia quaranta": (-27.4080, -55.9180, "Av. Quaranta y Av. Santa Catalina"),
             "country los naranjos": (-27.446188, -55.957563, "Av. Alicia Moreau de Justo frente al Country Los Naranjos"),
             "los naranjos": (-27.446188, -55.957563, "Av. Alicia Moreau de Justo frente al Country Los Naranjos"),
@@ -65,6 +66,7 @@ class AgenteInvestigador:
             ("mitre", "lopez torres"): (-27.375151, -55.891101, "Av. Mitre y Av. López Torres"),
             ("santa fe", "buenos aires"): (-27.364339, -55.892216, "Calle Santa Fe entre Buenos Aires y Rivadavia"),
             ("alicia moreau de justo", "quaranta"): (-27.402395, -55.921365, "Av. Alicia Moreau de Justo y Quaranta"),
+            ("ulises lopez", "chacabuco"): (-27.382539, -55.963200, "Rotonda Av. Ulises López y Av. Chacabuco (Acceso Oeste)"),
         }
 
     def _normalizar_calle(self, calle: Optional[str]) -> str:
