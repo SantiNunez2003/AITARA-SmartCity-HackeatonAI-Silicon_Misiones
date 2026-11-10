@@ -22,7 +22,7 @@ from src.engine.risk_model import ExplainableRiskEngine
 from src.engine.analista import AgenteAnalista
 from src.engine.investigador import AgenteInvestigador
 from src.ingesta.recolector import recolectar_noticias_recientes, extraer_articulo_por_url
-from src.ingesta.lector import AgenteLector, procesar_e_ingestar_noticia
+from src.ingesta.lector import AgenteLector, procesar_noticia
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -183,18 +183,22 @@ def api_ingest_scan(limite: int = 8) -> Dict[str, Any]:
         articulos = recolectar_noticias_recientes(limite=limite)
     except Exception as e:
         articulos = []
-    nuevos = []
+    nuevos, mismo_hecho = [], []
     for art in articulos:
         try:
-            inc = procesar_e_ingestar_noticia(art, db, lector=lector)
-            if inc:
-                nuevos.append(inc.model_dump(mode="json"))
-        except Exception as e:
+            estado, inc = procesar_noticia(art, db, lector=lector)
+        except Exception:
             continue
+        if estado == "nuevo":
+            nuevos.append(inc)
+        elif estado == "duplicado_medio":
+            mismo_hecho.append({"incidente_id": inc["id"], "fuente": art.get("fuente"), "url": art.get("url")})
     return {
         "articulos_analizados": len(articulos),
         "nuevos_ingestados": len(nuevos),
+        "duplicados_entre_medios": len(mismo_hecho),
         "incidentes": nuevos,
+        "fuentes_relacionadas_agregadas": mismo_hecho,
         "total_actual": get_pipeline_status(db)["total_incidentes"]
     }
 
@@ -208,13 +212,19 @@ def api_ingest_url(req: IngestUrlRequest) -> Dict[str, Any]:
     art = extraer_articulo_por_url(url)
     if not art:
         return {"status": "error", "mensaje": f"No se pudo descargar o extraer la noticia de {url}."}
-    inc = procesar_e_ingestar_noticia(art, db, lector=lector)
-    if not inc:
+    estado, inc = procesar_noticia(art, db, lector=lector)
+    if estado == "duplicado_medio":
+        return {
+            "status": "duplicado",
+            "mensaje": f"Otro medio ya había reportado este hecho ({inc['id']}). La nota se agregó como fuente relacionada.",
+            "incidente": inc,
+        }
+    if estado != "nuevo":
         return {"status": "omitido", "mensaje": "La noticia ya se encuentra en la base de datos o fue descartada."}
     return {
         "status": "ok",
         "mensaje": "Incidente georreferenciado e indexado exitosamente.",
-        "incidente": inc.model_dump(mode="json"),
+        "incidente": inc,
         "total_actual": get_pipeline_status(db)["total_incidentes"]
     }
 
