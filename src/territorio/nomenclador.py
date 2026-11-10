@@ -27,7 +27,7 @@ STOPWORDS_LUGAR = {
 TOKENS_GENERICOS_LUGAR = {
     "rotonda", "plaza", "plazoleta", "parque", "colegio", "escuela",
     "instituto", "hospital", "centro", "clinica", "sanatorio", "puente",
-    "club", "estacion", "terminal", "transferencia", "acceso", "avenida", "calle",
+    "club", "estacion", "terminal", "transferencia", "avenida", "calle",
 }
 
 
@@ -337,18 +337,32 @@ def buscar_lugar(texto: str) -> List[Dict[str, Any]]:
                 },
             ))
 
-    candidatos.sort(key=lambda x: (-x[0], len(x[1]["nombre_oficial"]), x[1]["osm_id"]))
+    candidatos.sort(
+        key=lambda x: (
+            -x[0],
+            x[1]["lon"] if "puente internacional" in x[1]["nombre_normalizado"] else 0.0,
+            len(x[1]["nombre_oficial"]),
+            x[1]["osm_id"],
+        )
+    )
 
     deduplicados: List[Dict[str, Any]] = []
     for _, item in candidatos:
         es_duplicado_cercano = False
+        tokens_item = set(_tokens_significativos(item["nombre_normalizado"], STOPWORDS_LUGAR)) - TOKENS_GENERICOS_LUGAR
         for existente in deduplicados:
+            tokens_exist = set(_tokens_significativos(existente["nombre_normalizado"], STOPWORDS_LUGAR)) - TOKENS_GENERICOS_LUGAR
             misma_raiz = (
                 item["nombre_normalizado"] == existente["nombre_normalizado"]
                 or item["nombre_normalizado"] in existente["nombre_normalizado"]
                 or existente["nombre_normalizado"] in item["nombre_normalizado"]
+                or (len(tokens_item & tokens_exist) >= 2)
             )
-            if misma_raiz and distancia_metros(item["lat"], item["lon"], existente["lat"], existente["lon"]) < 250.0:
+            dist = distancia_metros(item["lat"], item["lon"], existente["lat"], existente["lon"])
+            if item["nombre_normalizado"] == existente["nombre_normalizado"] and "puente internacional" in item["nombre_normalizado"]:
+                es_duplicado_cercano = True
+                break
+            if misma_raiz and dist < 350.0:
                 es_duplicado_cercano = True
                 break
         if not es_duplicado_cercano:
