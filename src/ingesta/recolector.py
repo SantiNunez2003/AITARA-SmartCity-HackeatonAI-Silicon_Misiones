@@ -102,7 +102,13 @@ def obtener_noticias_rss(url_feed: str, nombre_fuente: str, limite: int = 6) -> 
     try:
         with urllib.request.urlopen(req, timeout=4) as resp:
             if resp.status == 200:
-                arbol = ET.fromstring(resp.read())
+                raw_bytes = resp.read()
+                # Verificar que sea un XML válido antes de parsear
+                if not raw_bytes.strip().startswith(b"<?xml") and not (b"<rss" in raw_bytes or b"<feed" in raw_bytes):
+                    logger.warning("El endpoint RSS en %s no devolvió contenido XML reconocible. Se omite.", url_feed)
+                    return articulos
+
+                arbol = ET.fromstring(raw_bytes)
                 items = arbol.findall(".//item")
                 for item in items[:limite]:
                     titulo_elem = item.find("title")
@@ -176,7 +182,7 @@ def recolectar_noticias_recientes(limite: int = 10) -> List[Dict[str, Any]]:
     tareas = [
         lambda: obtener_noticias_wordpress("https://misionesonline.net", "misiones_online", "choque Posadas", limite=5),
         lambda: obtener_noticias_wordpress("https://canal12misiones.com", "canal_12", "choque Posadas", limite=4),
-        lambda: obtener_noticias_rss("https://www.elterritorio.com.ar/rss", "el_territorio", limite=5),
+        lambda: obtener_noticias_rss("https://www.elterritorio.com.ar/rss/policiales", "el_territorio", limite=5),
     ]
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:

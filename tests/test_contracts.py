@@ -35,6 +35,9 @@ def test_contracts_and_warehouse():
 
 def test_risk_model_and_analista():
     db = get_db_connection()
+    init_schema(db)
+    seed_reference_data(db)
+    load_silver_incidents_from_jsonl(db)
     params = ParametrosEscenario(franja_horaria="07:00", precipitacion_mm_h=15.0)
     
     engine = ExplainableRiskEngine(db)

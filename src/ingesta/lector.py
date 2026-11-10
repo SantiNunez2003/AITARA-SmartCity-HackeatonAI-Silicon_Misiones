@@ -23,7 +23,83 @@ from src.warehouse.db import DBWrapper, SILVER_JSONL_PATH, load_silver_incidents
 load_dotenv(Path(__file__).resolve().parent.parent.parent / ".env")
 logger = logging.getLogger(__name__)
 
-MODELO_GEMINI = "gemini-2.5-flash"
+MODELO_GEMINI = os.getenv("GEMINI_MODEL") or "gemini-3.5-flash-lite"
+
+
+def _normalizar_prefijo_calle(calle: Optional[str]) -> Optional[str]:
+    """Estandariza prefijos y nombres canónicos de arterias clave de Posadas."""
+    if not calle:
+        return None
+    c = calle.strip()
+    # Mapeo a formas canónicas de corredores clave
+    if re.search(r"alicia moreau de justo", c, re.IGNORECASE):
+        return "Av. Alicia Moreau de Justo"
+    if re.search(r"\bquaranta\b", c, re.IGNORECASE):
+        return "Av. Quaranta"
+    if re.search(r"\buruguay\b", c, re.IGNORECASE):
+        return "Av. Uruguay"
+    if re.search(r"\bsan mart[ií]n\b", c, re.IGNORECASE):
+        return "Av. San Martín"
+    if re.search(r"\bcorrientes\b", c, re.IGNORECASE):
+        return "Av. Corrientes"
+    if re.search(r"\bmitre\b", c, re.IGNORECASE):
+        return "Av. Mitre"
+    if re.search(r"\blavalle\b", c, re.IGNORECASE):
+        return "Av. Lavalle"
+    if re.search(r"\btrincheras\b", c, re.IGNORECASE):
+        return "Av. Trincheras de San José"
+    if re.search(r"\bl[oó]pez torres\b", c, re.IGNORECASE):
+        return "Av. López Torres"
+    if re.search(r"\bcabred\b", c, re.IGNORECASE):
+        return "Av. Cabred"
+    if re.search(r"\bsanta cruz\b", c, re.IGNORECASE):
+        return "Av. Santa Cruz"
+    if re.search(r"\bandresito\b", c, re.IGNORECASE):
+        return "Av. Andresito"
+    if re.search(r"\btucum[aá]n\b", c, re.IGNORECASE):
+        return "Calle Tucumán"
+    if re.search(r"\bsan lorenzo\b", c, re.IGNORECASE):
+        return "Calle San Lorenzo"
+    if re.search(r"\bsanta fe\b", c, re.IGNORECASE):
+        return "Calle Santa Fe"
+    if re.search(r"\bbuenos aires\b", c, re.IGNORECASE):
+        return "Calle Buenos Aires"
+    if re.search(r"\bulises l[oó]pez\b", c, re.IGNORECASE):
+        return "Av. Ulises López"
+    if re.search(r"\bchacabuco\b", c, re.IGNORECASE):
+        return "Av. Chacabuco"
+
+    if re.match(r"^avenida\b", c, re.IGNORECASE):
+        c = re.sub(r"^avenida\s+", "Av. ", c, flags=re.IGNORECASE)
+    elif re.match(r"^av\.?\s*", c, re.IGNORECASE):
+        c = re.sub(r"^av\.?\s*", "Av. ", c, flags=re.IGNORECASE)
+    elif re.match(r"^calle\b", c, re.IGNORECASE):
+        c = re.sub(r"^calle\s+", "Calle ", c, flags=re.IGNORECASE)
+    return c
+
+
+def _normalizar_referencia_espacial(ref: Optional[str]) -> Optional[str]:
+    """Estandariza hitos urbanos reconocibles."""
+    if not ref:
+        return None
+    r = ref.strip()
+    if re.search(r"naranjos", r, re.IGNORECASE):
+        return "Country Los Naranjos"
+    if re.search(r"campus|unam", r, re.IGNORECASE):
+        return "Campus UNaM"
+    if re.search(r"puente", r, re.IGNORECASE):
+        return "Puente Internacional"
+    if re.search(r"san basilio", r, re.IGNORECASE):
+        return "Colegio San Basilio"
+    if re.search(r"hospital|madariaga|salud", r, re.IGNORECASE):
+        return "Hospital Madariaga"
+    if re.search(r"aeropuerto", r, re.IGNORECASE):
+        return "Aeropuerto Posadas"
+    if re.search(r"brete", r, re.IGNORECASE):
+        return "Bahía El Brete"
+    if re.search(r"villa cabello", r, re.IGNORECASE):
+        return "Villa Cabello"
+    return r
 
 
 class AgenteLector:
@@ -184,11 +260,15 @@ Respondé ÚNICAMENTE un JSON con este esquema (sin bloques ni texto adicional):
 IMPORTANTE: Si 'es_siniestro_vial_urbano' es false o 'tiene_ubicacion_identificable' es false, calle_1 y calle_2 deben ser null."""
 
         try:
-            resp = client.models.generate_content(
-                model=MODELO_GEMINI,
-                contents=prompt
-            )
-            raw = (resp.text or "").strip()
+            if hasattr(client, "interactions") and hasattr(client.interactions, "create"):
+                res = client.interactions.create(model=MODELO_GEMINI, input=prompt, store=False)
+                raw = getattr(res, "output_text", "") or ""
+            else:
+                resp = client.models.generate_content(
+                    model=MODELO_GEMINI,
+                    contents=prompt
+                )
+                raw = (resp.text or "").strip()
             raw = re.sub(r"^```(?:json)?|```$", "", raw, flags=re.MULTILINE).strip()
             return json.loads(raw)
         except Exception as e:
@@ -219,9 +299,9 @@ IMPORTANTE: Si 'es_siniestro_vial_urbano' es false o 'tiene_ubicacion_identifica
             logger.info("Noticia descartada por no contener datos viales estructurables: '%s'", titulo[:60])
             return None
 
-        calle_1 = datos.get("calle_1")
-        calle_2 = datos.get("calle_2")
-        referencia = datos.get("referencia_espacial")
+        calle_1 = _normalizar_prefijo_calle(datos.get("calle_1"))
+        calle_2 = _normalizar_prefijo_calle(datos.get("calle_2"))
+        referencia = _normalizar_referencia_espacial(datos.get("referencia_espacial"))
 
         # REGLA OBLIGATORIA: Todo incidente debe tener una arteria vial o hito identificado
         if not calle_1 and not referencia:
