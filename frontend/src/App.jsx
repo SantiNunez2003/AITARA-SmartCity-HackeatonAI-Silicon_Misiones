@@ -121,6 +121,7 @@ export default function App() {
 
   // Consulta al Asistente
   const [question, setQuestion] = useState('')
+  const [lastAskedQuestion, setLastAskedQuestion] = useState('')
   const [analystReply, setAnalystReply] = useState(null)
   const [asking, setAsking] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -241,7 +242,10 @@ export default function App() {
 
         const signVar = `${nodo.variacion_escenario >= 0 ? '+' : ''}${Number(nodo.variacion_escenario).toFixed(1).replace('.', ',')} %`
         halo.bindTooltip(
-          `<div><strong>${nodo.nombre}</strong><br/>Riesgo del escenario: <b>${nodo.riesgo_final}</b><br/>Riesgo estructural: ${nodo.riesgo_estructural}<br/>Variación: ${signVar}</div>`,
+          `<div><strong>${nodo.nombre}</strong><br/>` +
+          `Riesgo del escenario: <b>${nodo.riesgo_final}</b> <span style="font-size:9.5px; opacity:0.8;">(clima/franja)</span><br/>` +
+          `Riesgo estructural: <b>${nodo.riesgo_estructural}</b> <span style="font-size:9.5px; opacity:0.8;">(base histórica)</span><br/>` +
+          `Variación por estrés: <b>${signVar}</b></div>`,
           { direction: 'top' }
         )
 
@@ -321,14 +325,17 @@ export default function App() {
 
   const handleAskAnalyst = async e => {
     e.preventDefault()
-    if (!question.trim()) return
+    const q = question.trim()
+    if (!q) return
+    setLastAskedQuestion(q)
+    setQuestion('')
     setAsking(true)
     try {
       const res = await fetch('/api/ask', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          pregunta: question,
+          pregunta: q,
           franja_horaria: franja,
           precipitacion_mm_h: Number(lluvia)
         })
@@ -952,13 +959,35 @@ export default function App() {
                     lineHeight: 1.5
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
-                    <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--accent-blue)' }}>
-                      Resumen del Analista
-                    </span>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', marginBottom: '8px', borderBottom: '1px solid var(--accent-blue-border)', paddingBottom: '6px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--accent-blue)' }}>
+                        Resumen del Analista
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setAnalystReply(null)}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '11px', padding: '0 4px' }}
+                        title="Cerrar respuesta"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                    {lastAskedQuestion && (
+                      <span style={{ fontSize: '11.5px', color: 'var(--text-secondary)', fontStyle: 'italic', fontWeight: 500 }}>
+                        “{lastAskedQuestion}”
+                      </span>
+                    )}
                   </div>
                   <div
-                    style={{ whiteSpace: 'pre-line', lineHeight: '1.6' }}
+                    style={{
+                      maxHeight: '170px',
+                      overflowY: 'auto',
+                      overflowX: 'hidden',
+                      paddingRight: '6px',
+                      whiteSpace: 'pre-line',
+                      lineHeight: '1.6'
+                    }}
                     dangerouslySetInnerHTML={{
                       __html: analystReply
                         .replace(/&/g, '&amp;')
@@ -1446,13 +1475,44 @@ export default function App() {
                         overflowX: 'hidden'
                       }}
                     >
+                      <div style={{ fontSize: '10.5px', color: 'var(--text-secondary)', padding: '6px 9px', backgroundColor: 'var(--bg-surface)', borderRadius: '6px', border: '1px solid var(--border-color)', lineHeight: 1.35 }}>
+                        <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>Guía de métricas:</span>{' '}
+                        <strong>Riesgo estructural</strong> es la base histórica del punto según incidentes. <strong>Riesgo del escenario</strong> proyecta el impacto dinámico al sumar lluvia y hora pico.
+                      </div>
                       {!evalData?.prioridades?.length && <p>Sin prioridades disponibles para este escenario.</p>}
                       {(evalData?.prioridades || []).map(prioridad => (
                         <div key={prioridad.nodo.nodo_id} style={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-color)', borderRadius: '6px', padding: '10px 12px' }}>
-                          <strong>{prioridad.nodo.nombre}</strong> · {prioridad.nivel === 'critico' ? 'Crítico' : 'No crítico'}
-                          <div>Riesgo del escenario: {prioridad.riesgo_escenario}</div>
-                          <div>Riesgo estructural: {prioridad.riesgo_estructural}</div>
-                          <div>Variación por escenario: {prioridad.variacion_escenario >= 0 ? '+' : ''}{Number(prioridad.variacion_escenario).toFixed(1).replace('.', ',')} %</div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                            <strong style={{ fontSize: '12px', color: 'var(--text-primary)' }}>{prioridad.nodo.nombre}</strong>
+                            <span
+                              style={{
+                                fontSize: '9.5px',
+                                fontWeight: 700,
+                                textTransform: 'uppercase',
+                                padding: '2px 6px',
+                                borderRadius: '4px',
+                                backgroundColor: prioridad.nivel === 'critico' ? 'var(--alert-crimson-soft)' : 'var(--accent-blue-soft)',
+                                color: prioridad.nivel === 'critico' ? 'var(--alert-crimson)' : 'var(--accent-blue)',
+                                border: `1px solid ${prioridad.nivel === 'critico' ? 'var(--alert-crimson-border)' : 'var(--accent-blue-border)'}`
+                              }}
+                            >
+                              {prioridad.nivel === 'critico' ? 'Crítico' : 'No crítico'}
+                            </span>
+                          </div>
+
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '3px', fontSize: '11px', backgroundColor: 'var(--bg-canvas)', padding: '6px 8px', borderRadius: '5px', border: '1px solid var(--border-color)' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span><strong>Riesgo del escenario:</strong> <span style={{ color: prioridad.nivel === 'critico' ? 'var(--alert-crimson)' : 'var(--accent-blue)', fontWeight: 700 }}>{prioridad.riesgo_escenario}</span></span>
+                              <span style={{ fontSize: '9.5px', color: 'var(--text-muted)' }}>(con clima y franja)</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span><strong>Riesgo estructural:</strong> <span style={{ fontWeight: 600 }}>{prioridad.riesgo_estructural}</span></span>
+                              <span style={{ fontSize: '9.5px', color: 'var(--text-muted)' }}>(línea base histórica)</span>
+                            </div>
+                            <div style={{ fontSize: '10.5px', color: 'var(--text-muted)', paddingTop: '2px', borderTop: '1px dashed var(--border-color)' }}>
+                              Variación por estrés: <strong style={{ color: prioridad.variacion_escenario >= 0 ? 'var(--alert-crimson)' : 'var(--accent-blue)' }}>{prioridad.variacion_escenario >= 0 ? '+' : ''}{Number(prioridad.variacion_escenario).toFixed(1).replace('.', ',')} %</strong>
+                            </div>
+                          </div>
                           <div style={{ marginTop: '6px', fontWeight: 700 }}>Aportes por factor</div>
                           {(prioridad.aportes || []).map(aporte => (
                             <div key={aporte.nombre} style={{ marginTop: '5px', fontSize: '11px' }}>
