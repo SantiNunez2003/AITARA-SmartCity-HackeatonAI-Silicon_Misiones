@@ -52,3 +52,25 @@ def test_deduplicacion_y_persistencia(tmp_path):
     # Debe ser ignorado por deduplicación
     res = procesar_e_ingestar_noticia(art_duplicado, db, lector=lector)
     assert res is None
+
+
+def test_api_ingest_endpoints(monkeypatch):
+    from fastapi.testclient import TestClient
+    import api
+
+    with TestClient(api.app) as client:
+        # 1. Test endpoint ingest por URL
+        resp_url = client.post("/api/ingest/url", json={"url": "https://www.primeraedicion.com.ar/nota/101154937/choque-camioneta-estacionada-colision-en-fila-posadas/"})
+        assert resp_url.status_code == 200
+        data_url = resp_url.json()
+        # Dado que ya existe en el seed dataset, debe reportar status 'omitido' por deduplicación
+        assert data_url["status"] == "omitido"
+
+        # 2. Test endpoint scan con mock
+        monkeypatch.setattr(api, "recolectar_noticias_recientes", lambda limite: [])
+        resp_scan = client.post("/api/ingest/scan?limite=2")
+        assert resp_scan.status_code == 200
+        data_scan = resp_scan.json()
+        assert "articulos_analizados" in data_scan
+        assert "nuevos_ingestados" in data_scan
+

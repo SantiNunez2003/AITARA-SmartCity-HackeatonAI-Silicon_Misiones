@@ -21,10 +21,12 @@ from src.warehouse.db import (
 from src.engine.risk_model import ExplainableRiskEngine
 from src.engine.analista import AgenteAnalista
 from src.engine.investigador import AgenteInvestigador
+from src.ingesta.recolector import recolectar_noticias_recientes, extraer_articulo_por_url
+from src.ingesta.lector import AgenteLector, procesar_e_ingestar_noticia
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global db, risk_engine, analista, investigador
+    global db, risk_engine, analista, investigador, lector
     db = get_db_connection()
     init_schema(db)
     seed_reference_data(db)
@@ -32,6 +34,7 @@ async def lifespan(app: FastAPI):
     risk_engine = ExplainableRiskEngine(db)
     analista = AgenteAnalista(db, risk_engine)
     investigador = AgenteInvestigador()
+    lector = AgenteLector(investigador)
     yield
 
 
@@ -166,6 +169,47 @@ def api_strategic() -> Dict[str, Any]:
             {"label": "Zonas críticas", "value": sum(r["nivel"] == "critico" for r in ranking)},
         ],
         "ranking_infraestructura": ranking,
+    }
+
+
+class IngestUrlRequest(BaseModel):
+    url: str
+
+
+@app.post("/api/ingest/scan")
+def api_ingest_scan(limite: int = 8) -> Dict[str, Any]:
+    """Escanea portales de noticias locales de Posadas y agrega incidentes viales nuevos."""
+    articulos = recolectar_noticias_recientes(limite=limite)
+    nuevos = []
+    for art in articulos:
+        inc = procesar_e_ingestar_noticia(art, db, lector=lector)
+        if inc:
+            nuevos.append(inc.model_dump(mode="json"))
+    return {
+        "articulos_analizados": len(articulos),
+        "nuevos_ingestados": len(nuevos),
+        "incidentes": nuevos,
+        "total_actual": get_pipeline_status(db)["total_incidentes"]
+    }
+
+
+@app.post("/api/ingest/url")
+def api_ingest_url(req: IngestUrlRequest) -> Dict[str, Any]:
+    """Descarga y extrae una noticia vial bajo demanda a partir de una URL."""
+    url = req.url.strip()
+    if not url:
+        return {"status": "error", "mensaje": "URL vacía."}
+    art = extraer_articulo_por_url(url)
+    if not art:
+        return {"status": "error", "mensaje": f"No se pudo descargar o extraer la noticia de {url}."}
+    inc = procesar_e_ingestar_noticia(art, db, lector=lector)
+    if not inc:
+        return {"status": "omitido", "mensaje": "La noticia ya se encuentra en la base de datos o fue descartada."}
+    return {
+        "status": "ok",
+        "mensaje": "Incidente georreferenciado e indexado exitosamente.",
+        "incidente": inc.model_dump(mode="json"),
+        "total_actual": get_pipeline_status(db)["total_incidentes"]
     }
 
 
