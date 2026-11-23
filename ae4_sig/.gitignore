@@ -1,0 +1,8 @@
+.env
+datos_externos/
+__pycache__/
+*.pyc
+*.tmp
+!docs/
+!docs/**
+

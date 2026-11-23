@@ -1,0 +1,727 @@
+Pager usage is off.
+Null display is "(NULL)".
+============================================================================
+INCISO a1: LOCALIDADES CON DEPARTAMENTO, PROVINCIA Y PAIS (MUESTRA 50 ALFABETICA)
+============================================================================
+ codigo_bahra |          localidad          |         tipo_asentamiento         |      departamento      |  provincia   |      region       |   pais    
+--------------+-----------------------------+-----------------------------------+------------------------+--------------+-------------------+-----------
+ 06854100     | 25 de Mayo                  | Localidad simple                  | 25 de Mayo             | Buenos Aires | Centro / Pampeana | Argentina
+ 06854010     | Agustín Mosconi             | Localidad simple                  | 25 de Mayo             | Buenos Aires | Centro / Pampeana | Argentina
+ 06854020     | Del Valle                   | Localidad simple                  | 25 de Mayo             | Buenos Aires | Centro / Pampeana | Argentina
+ 06854030     | Ernestina                   | Localidad simple                  | 25 de Mayo             | Buenos Aires | Centro / Pampeana | Argentina
+ 06854040     | Gobernador Ugarte           | Localidad simple                  | 25 de Mayo             | Buenos Aires | Centro / Pampeana | Argentina
+ 06854050     | Lucas Monteverde            | Localidad simple                  | 25 de Mayo             | Buenos Aires | Centro / Pampeana | Argentina
+ 06854060     | Norberto de la Riestra      | Localidad simple                  | 25 de Mayo             | Buenos Aires | Centro / Pampeana | Argentina
+ 06854070     | Pedernales                  | Localidad simple                  | 25 de Mayo             | Buenos Aires | Centro / Pampeana | Argentina
+ 06854080     | San Enrique                 | Localidad simple                  | 25 de Mayo             | Buenos Aires | Centro / Pampeana | Argentina
+ 06854090     | Valdés                      | Localidad simple                  | 25 de Mayo             | Buenos Aires | Centro / Pampeana | Argentina
+ 06588030     | 12 de Octubre               | Localidad simple                  | 9 de Julio             | Buenos Aires | Centro / Pampeana | Argentina
+ 06588100     | 9 de Julio                  | Localidad simple                  | 9 de Julio             | Buenos Aires | Centro / Pampeana | Argentina
+ 06588010     | Alfredo Demarchi            | Localidad simple                  | 9 de Julio             | Buenos Aires | Centro / Pampeana | Argentina
+ 06588020     | Carlos María Naón           | Localidad simple                  | 9 de Julio             | Buenos Aires | Centro / Pampeana | Argentina
+ 06588040     | Dudignac                    | Localidad simple                  | 9 de Julio             | Buenos Aires | Centro / Pampeana | Argentina
+ 06588050     | La Aurora                   | Localidad simple                  | 9 de Julio             | Buenos Aires | Centro / Pampeana | Argentina
+ 06588060     | Manuel B. Gonnet            | Localidad simple                  | 9 de Julio             | Buenos Aires | Centro / Pampeana | Argentina
+ 06588070     | Marcelino Ugarte            | Localidad simple                  | 9 de Julio             | Buenos Aires | Centro / Pampeana | Argentina
+ 06588080     | Morea                       | Localidad simple                  | 9 de Julio             | Buenos Aires | Centro / Pampeana | Argentina
+ 06588090     | Norumbega                   | Localidad simple                  | 9 de Julio             | Buenos Aires | Centro / Pampeana | Argentina
+ 06588110     | Patricios                   | Localidad simple                  | 9 de Julio             | Buenos Aires | Centro / Pampeana | Argentina
+ 06588120     | Villa Fournier              | Localidad simple                  | 9 de Julio             | Buenos Aires | Centro / Pampeana | Argentina
+ 06007010     | Carhué                      | Localidad simple                  | Adolfo Alsina          | Buenos Aires | Centro / Pampeana | Argentina
+ 06007020     | Colonia San Miguel Arcángel | Localidad simple                  | Adolfo Alsina          | Buenos Aires | Centro / Pampeana | Argentina
+ 06007030     | Delfín Huergo               | Localidad simple                  | Adolfo Alsina          | Buenos Aires | Centro / Pampeana | Argentina
+ 06007040     | Espartillar                 | Componente de localidad compuesta | Adolfo Alsina          | Buenos Aires | Centro / Pampeana | Argentina
+ 06007050     | Esteban Agustín Gascón      | Localidad simple                  | Adolfo Alsina          | Buenos Aires | Centro / Pampeana | Argentina
+ 06007060     | La Pala                     | Localidad simple                  | Adolfo Alsina          | Buenos Aires | Centro / Pampeana | Argentina
+ 06007070     | Maza                        | Localidad simple                  | Adolfo Alsina          | Buenos Aires | Centro / Pampeana | Argentina
+ 06007080     | Rivera                      | Localidad simple                  | Adolfo Alsina          | Buenos Aires | Centro / Pampeana | Argentina
+ 06007100     | Villa Margarita             | Localidad simple                  | Adolfo Alsina          | Buenos Aires | Centro / Pampeana | Argentina
+ 06007110     | Yutuyaco                    | Localidad simple                  | Adolfo Alsina          | Buenos Aires | Centro / Pampeana | Argentina
+ 06014010     | Adolfo Gonzales Chaves      | Localidad simple                  | Adolfo Gonzales Chaves | Buenos Aires | Centro / Pampeana | Argentina
+ 06014020     | De La Garma                 | Localidad simple                  | Adolfo Gonzales Chaves | Buenos Aires | Centro / Pampeana | Argentina
+ 06014030     | Juan E. Barra               | Localidad simple                  | Adolfo Gonzales Chaves | Buenos Aires | Centro / Pampeana | Argentina
+ 06014040     | Vásquez                     | Localidad simple                  | Adolfo Gonzales Chaves | Buenos Aires | Centro / Pampeana | Argentina
+ 06021010     | Alberti                     | Localidad simple                  | Alberti                | Buenos Aires | Centro / Pampeana | Argentina
+ 06021020     | Coronel Seguí               | Localidad simple                  | Alberti                | Buenos Aires | Centro / Pampeana | Argentina
+ 06021030     | Mechita                     | Componente de localidad compuesta | Alberti                | Buenos Aires | Centro / Pampeana | Argentina
+ 06021040     | Pla                         | Localidad simple                  | Alberti                | Buenos Aires | Centro / Pampeana | Argentina
+ 06021050     | Villa Grisolía              | Localidad simple                  | Alberti                | Buenos Aires | Centro / Pampeana | Argentina
+ 06021060     | Villa María                 | Localidad simple                  | Alberti                | Buenos Aires | Centro / Pampeana | Argentina
+ 06021070     | Villa Ortiz                 | Localidad simple                  | Alberti                | Buenos Aires | Centro / Pampeana | Argentina
+ 06028010     | Almirante Brown             | Componente de localidad compuesta | Almirante Brown        | Buenos Aires | Centro / Pampeana | Argentina
+ 06077010     | Arrecifes                   | Localidad simple                  | Arrecifes              | Buenos Aires | Centro / Pampeana | Argentina
+ 06077020     | Todd                        | Localidad simple                  | Arrecifes              | Buenos Aires | Centro / Pampeana | Argentina
+ 06077030     | Viña                        | Localidad simple                  | Arrecifes              | Buenos Aires | Centro / Pampeana | Argentina
+ 06035010     | Avellaneda                  | Componente de localidad compuesta | Avellaneda             | Buenos Aires | Centro / Pampeana | Argentina
+ 06042010     | Ayacucho                    | Localidad simple                  | Ayacucho               | Buenos Aires | Centro / Pampeana | Argentina
+ 06042020     | La Constancia               | Localidad simple                  | Ayacucho               | Buenos Aires | Centro / Pampeana | Argentina
+(50 rows)
+
+============================================================================
+INCISO a2: DETALLE COMPLETO DE LOCALIDADES DE MISIONES (ORDEN ALFABETICO)
+============================================================================
+ codigo_bahra |                    localidad                     |         tipo_asentamiento         |         departamento          | provincia |   pais    
+--------------+--------------------------------------------------+-----------------------------------+-------------------------------+-----------+-----------
+ 54014060     | 1º de Mayo                                       | Localidad simple                  | Cainguás                      | Misiones  | Argentina
+ 54119060     | 25 de Mayo                                       | Localidad simple                  | 25 de Mayo                    | Misiones  | Argentina
+ 54042050     | 9 de Julio Kilómetro 20                          | Localidad simple                  | Eldorado                      | Misiones  | Argentina
+ 54042040     | 9 de Julio Kilómetro 28                          | Localidad simple                  | Eldorado                      | Misiones  | Argentina
+ 54119010     | Alba Posse                                       | Localidad simple                  | 25 de Mayo                    | Misiones  | Argentina
+ 54119020     | Alicia Alta                                      | Localidad simple                  | 25 de Mayo                    | Misiones  | Argentina
+ 54119025     | Alicia Baja                                      | Localidad simple                  | 25 de Mayo                    | Misiones  | Argentina
+ 54070010     | Almafuerte                                       | Localidad simple                  | Leandro N. Alem               | Misiones  | Argentina
+ 54007010     | Apóstoles                                        | Localidad simple                  | Apóstoles                     | Misiones  | Argentina
+ 54014010     | Aristóbulo del Valle                             | Localidad simple                  | Cainguás                      | Misiones  | Argentina
+ 54070020     | Arroyo del Medio                                 | Localidad simple                  | Leandro N. Alem               | Misiones  | Argentina
+ 54007020     | Azara                                            | Localidad simple                  | Apóstoles                     | Misiones  | Argentina
+ 54084007     | Bario Ita                                        | Localidad simple                  | Montecarlo                    | Misiones  | Argentina
+ 54035010     | Barra Concepción                                 | Localidad simple                  | Concepción                    | Misiones  | Argentina
+ 54084003     | Barrio Cuatro Bocas                              | Localidad simple                  | Montecarlo                    | Misiones  | Argentina
+ 54021005     | Barrio del Lago                                  | Localidad simple                  | Candelaria                    | Misiones  | Argentina
+ 54091013     | Barrio Escuela 461                               | Localidad simple                  | Oberá                         | Misiones  | Argentina
+ 54091017     | Barrio Escuela 633                               | Componente de localidad compuesta | Oberá                         | Misiones  | Argentina
+ 54084005     | Barrio Guatambu                                  | Localidad simple                  | Montecarlo                    | Misiones  | Argentina
+ 54028005     | Barrio Nuevo Garupa                              | Localidad simple                  | Capital                       | Misiones  | Argentina
+ 54007025     | Barrio Rural                                     | Localidad simple                  | Apóstoles                     | Misiones  | Argentina
+ 54098005     | Barrio Tungoil                                   | Localidad simple                  | San Ignacio                   | Misiones  | Argentina
+ 54049020     | Bernardo de Irigoyen                             | Localidad simple                  | General Manuel Belgrano       | Misiones  | Argentina
+ 54021010     | Bonpland                                         | Localidad simple                  | Candelaria                    | Misiones  | Argentina
+ 54070030     | Caá - Yarí                                       | Localidad simple                  | Leandro N. Alem               | Misiones  | Argentina
+ 54049025     | Caburei                                          | Localidad simple                  | General Manuel Belgrano       | Misiones  | Argentina
+ 54014020     | Campo Grande                                     | Localidad simple                  | Cainguás                      | Misiones  | Argentina
+ 54091020     | Campo Ramón                                      | Localidad simple                  | Oberá                         | Misiones  | Argentina
+ 54091030     | Campo Viera                                      | Localidad simple                  | Oberá                         | Misiones  | Argentina
+ 54021020     | Candelaria                                       | Localidad simple                  | Candelaria                    | Misiones  | Argentina
+ 54077010     | Capioví                                          | Localidad simple                  | Libertador General San Martín | Misiones  | Argentina
+ 54077015     | Capioviciño                                      | Localidad simple                  | Libertador General San Martín | Misiones  | Argentina
+ 54084010     | Caraguatay                                       | Localidad simple                  | Montecarlo                    | Misiones  | Argentina
+ 54070040     | Cerro Azul                                       | Localidad simple                  | Leandro N. Alem               | Misiones  | Argentina
+ 54021030     | Cerro Corá                                       | Localidad simple                  | Candelaria                    | Misiones  | Argentina
+ 54091010     | Colonia Alberdi                                  | Localidad simple                  | Oberá                         | Misiones  | Argentina
+ 54119030     | Colonia Aurora                                   | Localidad simple                  | 25 de Mayo                    | Misiones  | Argentina
+ 54098010     | Colonia Polana                                   | Localidad simple                  | San Ignacio                   | Misiones  | Argentina
+ 54042010     | Colonia Victoria                                 | Localidad simple                  | Eldorado                      | Misiones  | Argentina
+ 54063040     | Colonia Wanda                                    | Localidad simple                  | Iguazú                        | Misiones  | Argentina
+ 54049010     | Comandante Andresito                             | Localidad simple                  | General Manuel Belgrano       | Misiones  | Argentina
+ 54035020     | Concepción de la Sierra                          | Localidad simple                  | Concepción                    | Misiones  | Argentina
+ 54098020     | Corpus                                           | Localidad simple                  | San Ignacio                   | Misiones  | Argentina
+ 54112010     | Cruce Caballero                                  | Localidad simple                  | San Pedro                     | Misiones  | Argentina
+ 54098030     | Domingo Savio                                    | Localidad simple                  | San Ignacio                   | Misiones  | Argentina
+ 54070050     | Dos Arroyos                                      | Localidad simple                  | Leandro N. Alem               | Misiones  | Argentina
+ 54014030     | Dos de Mayo                                      | Localidad simple                  | Cainguás                      | Misiones  | Argentina
+ 54014050     | Dos de Mayo Nucleo III (Bº Bernardino Rivadavia) | Localidad simple                  | Cainguás                      | Misiones  | Argentina
+ 54049030     | Dos Hermanas                                     | Localidad simple                  | General Manuel Belgrano       | Misiones  | Argentina
+ 54077020     | El Alcázar                                       | Localidad simple                  | Libertador General San Martín | Misiones  | Argentina
+ 54042020     | Eldorado                                         | Localidad simple                  | Eldorado                      | Misiones  | Argentina
+ 54091040     | El Salto                                         | Localidad simple                  | Oberá                         | Misiones  | Argentina
+ 54056010     | El Soberbio                                      | Localidad simple                  | Guaraní                       | Misiones  | Argentina
+ 54007030     | Estación Apóstoles                               | Componente de localidad compuesta | Apóstoles                     | Misiones  | Argentina
+ 54105010     | Florentino Ameghino                              | Localidad simple                  | San Javier                    | Misiones  | Argentina
+ 54056020     | Fracrán                                          | Localidad simple                  | Guaraní                       | Misiones  | Argentina
+ 54077030     | Garuhapé                                         | Localidad simple                  | Libertador General San Martín | Misiones  | Argentina
+ 54028010     | Garupá                                           | Componente de localidad compuesta | Capital                       | Misiones  | Argentina
+ 54091050     | General Alvear                                   | Localidad simple                  | Oberá                         | Misiones  | Argentina
+ 54098040     | General Urquiza                                  | Localidad simple                  | San Ignacio                   | Misiones  | Argentina
+ 54070060     | Gobernador López                                 | Localidad simple                  | Leandro N. Alem               | Misiones  | Argentina
+ 54098050     | Gobernador Roca                                  | Localidad simple                  | San Ignacio                   | Misiones  | Argentina
+ 54091060     | Guaraní                                          | Localidad simple                  | Oberá                         | Misiones  | Argentina
+ 54098060     | Helvecia                                         | Localidad simple                  | San Ignacio                   | Misiones  | Argentina
+ 54098070     | Hipólito Yrigoyen                                | Localidad simple                  | San Ignacio                   | Misiones  | Argentina
+ 54049040     | Integración                                      | Localidad simple                  | General Manuel Belgrano       | Misiones  | Argentina
+ 54105020     | Itacaruaré                                       | Localidad simple                  | San Javier                    | Misiones  | Argentina
+ 54098080     | Jardín América                                   | Localidad simple                  | San Ignacio                   | Misiones  | Argentina
+ 54014055     | Kilómetro 17                                     | Localidad simple                  | Cainguás                      | Misiones  | Argentina
+ 54035030     | La Corita                                        | Localidad simple                  | Concepción                    | Misiones  | Argentina
+ 54084020     | Laharrague                                       | Localidad simple                  | Montecarlo                    | Misiones  | Argentina
+ 54070070     | Leandro N. Alem                                  | Localidad simple                  | Leandro N. Alem               | Misiones  | Argentina
+ 54021040     | Loreto                                           | Localidad simple                  | Candelaria                    | Misiones  | Argentina
+ 54091070     | Los Helechos                                     | Localidad simple                  | Oberá                         | Misiones  | Argentina
+ 54042030     | María Magdalena                                  | Localidad simple                  | Eldorado                      | Misiones  | Argentina
+ 54021050     | Mártires                                         | Localidad simple                  | Candelaria                    | Misiones  | Argentina
+ 54077040     | Mbopicuá                                         | Localidad simple                  | Libertador General San Martín | Misiones  | Argentina
+ 54105030     | Mojón Grande                                     | Localidad simple                  | San Javier                    | Misiones  | Argentina
+ 54084030     | Montecarlo                                       | Localidad simple                  | Montecarlo                    | Misiones  | Argentina
+ 54028020     | Nemesio Parma                                    | Localidad simple                  | Capital                       | Misiones  | Argentina
+ 54042035     | Nueva Delicia                                    | Localidad simple                  | Eldorado                      | Misiones  | Argentina
+ 54098090     | Oasis                                            | Localidad simple                  | San Ignacio                   | Misiones  | Argentina
+ 54091080     | Oberá                                            | Componente de localidad compuesta | Oberá                         | Misiones  | Argentina
+ 54070080     | Olegario V. Andrade                              | Localidad simple                  | Leandro N. Alem               | Misiones  | Argentina
+ 54091090     | Panambí                                          | Localidad simple                  | Oberá                         | Misiones  | Argentina
+ 54091105     | Panambi Kilómetro 15                             | Localidad simple                  | Oberá                         | Misiones  | Argentina
+ 54091100     | Panambí Kilómetro 8                              | Localidad simple                  | Oberá                         | Misiones  | Argentina
+ 54112020     | Paraíso                                          | Localidad simple                  | San Pedro                     | Misiones  | Argentina
+ 54049043     | Piñalito Norte                                   | Localidad simple                  | General Manuel Belgrano       | Misiones  | Argentina
+ 54112030     | Piñalito Sur                                     | Localidad simple                  | San Pedro                     | Misiones  | Argentina
+ 54007040     | Pindapoy                                         | Localidad simple                  | Apóstoles                     | Misiones  | Argentina
+ 54084040     | Piray Kilómetro 18                               | Localidad simple                  | Montecarlo                    | Misiones  | Argentina
+ 54028030     | Posadas                                          | Componente de localidad compuesta | Capital                       | Misiones  | Argentina
+ 54028040     | Posadas (Extensión)                              | Componente de localidad compuesta | Capital                       | Misiones  | Argentina
+ 54021060     | Profundidad                                      | Localidad simple                  | Candelaria                    | Misiones  | Argentina
+ 54014070     | Pueblo Illia                                     | Localidad simple                  | Cainguás                      | Misiones  | Argentina
+ 54042055     | Pueblo Nuevo                                     | Localidad simple                  | Eldorado                      | Misiones  | Argentina
+ 54049045     | Puerto Andresito                                 | Localidad simple                  | General Manuel Belgrano       | Misiones  | Argentina
+ 54049047     | Puerto Deseado                                   | Localidad simple                  | General Manuel Belgrano       | Misiones  | Argentina
+ 54063010     | Puerto Esperanza                                 | Localidad simple                  | Iguazú                        | Misiones  | Argentina
+ 54063030     | Puerto Iguazú                                    | Localidad simple                  | Iguazú                        | Misiones  | Argentina
+ 54077050     | Puerto Leoni                                     | Localidad simple                  | Libertador General San Martín | Misiones  | Argentina
+ 54063020     | Puerto Libertad                                  | Localidad simple                  | Iguazú                        | Misiones  | Argentina
+ 54042060     | Puerto Mado                                      | Localidad simple                  | Eldorado                      | Misiones  | Argentina
+ 54042070     | Puerto Pinares                                   | Localidad simple                  | Eldorado                      | Misiones  | Argentina
+ 54084050     | Puerto Piray                                     | Localidad simple                  | Montecarlo                    | Misiones  | Argentina
+ 54077060     | Puerto Rico                                      | Localidad simple                  | Libertador General San Martín | Misiones  | Argentina
+ 54021070     | Puerto Santa Ana                                 | Localidad simple                  | Candelaria                    | Misiones  | Argentina
+ 54007050     | Rincón de Azara                                  | Localidad simple                  | Apóstoles                     | Misiones  | Argentina
+ 54098100     | Roca Chica                                       | Localidad simple                  | San Ignacio                   | Misiones  | Argentina
+ 54077070     | Ruiz de Montoya                                  | Localidad simple                  | Libertador General San Martín | Misiones  | Argentina
+ 54014080     | Salto Encantado                                  | Localidad simple                  | Cainguás                      | Misiones  | Argentina
+ 54077080     | San Alberto                                      | Localidad simple                  | Libertador General San Martín | Misiones  | Argentina
+ 54049050     | San Antonio                                      | Localidad simple                  | General Manuel Belgrano       | Misiones  | Argentina
+ 54119040     | San Francisco de Asís                            | Localidad simple                  | 25 de Mayo                    | Misiones  | Argentina
+ 54077090     | San Gotardo                                      | Localidad simple                  | Libertador General San Martín | Misiones  | Argentina
+ 54098110     | San Ignacio                                      | Localidad simple                  | San Ignacio                   | Misiones  | Argentina
+ 54105040     | San Javier                                       | Localidad simple                  | San Javier                    | Misiones  | Argentina
+ 54007060     | San José                                         | Localidad simple                  | Apóstoles                     | Misiones  | Argentina
+ 54091110     | San Martín                                       | Localidad simple                  | Oberá                         | Misiones  | Argentina
+ 54077100     | San Miguel                                       | Localidad simple                  | Libertador General San Martín | Misiones  | Argentina
+ 54112040     | San Pedro                                        | Localidad simple                  | San Pedro                     | Misiones  | Argentina
+ 54021080     | Santa Ana                                        | Localidad simple                  | Candelaria                    | Misiones  | Argentina
+ 54035040     | Santa María                                      | Localidad simple                  | Concepción                    | Misiones  | Argentina
+ 54119050     | Santa Rita                                       | Localidad simple                  | 25 de Mayo                    | Misiones  | Argentina
+ 54042080     | Santiago de Liniers                              | Localidad simple                  | Eldorado                      | Misiones  | Argentina
+ 54098120     | Santo Pipó                                       | Localidad simple                  | San Ignacio                   | Misiones  | Argentina
+ 54056030     | San Vicente                                      | Localidad simple                  | Guaraní                       | Misiones  | Argentina
+ 54084060     | Tarumá                                           | Localidad simple                  | Montecarlo                    | Misiones  | Argentina
+ 54112050     | Tobuna                                           | Localidad simple                  | San Pedro                     | Misiones  | Argentina
+ 54007070     | Tres Capones                                     | Localidad simple                  | Apóstoles                     | Misiones  | Argentina
+ 54042090     | Valle Hermoso                                    | Localidad simple                  | Eldorado                      | Misiones  | Argentina
+ 54077110     | Villa Akerman                                    | Localidad simple                  | Libertador General San Martín | Misiones  | Argentina
+ 54091120     | Villa Bonita                                     | Localidad simple                  | Oberá                         | Misiones  | Argentina
+ 54063035     | Villa Cooperativa                                | Localidad simple                  | Iguazú                        | Misiones  | Argentina
+ 54070090     | Villa Libertad                                   | Componente de localidad compuesta | Leandro N. Alem               | Misiones  | Argentina
+ 54070091     | Villa Libertad                                   | Componente de localidad compuesta | Leandro N. Alem               | Misiones  | Argentina
+ 54084070     | Villa Parodi                                     | Localidad simple                  | Montecarlo                    | Misiones  | Argentina
+ 54042100     | Villa Roulet                                     | Localidad simple                  | Eldorado                      | Misiones  | Argentina
+ 54077120     | Villa Urrutia                                    | Localidad simple                  | Libertador General San Martín | Misiones  | Argentina
+(140 rows)
+
+============================================================================
+INCISO b: CAPITALES NACIONALES Y PROVINCIALES
+============================================================================
+               ciudad                |    tipo_capital    |       departamento        |                       provincia                       |      region       |   pais    
+-------------------------------------+--------------------+---------------------------+-------------------------------------------------------+-------------------+-----------
+ Ciudad de Buenos Aires              | Capital Nacional   | Comuna 1                  | Ciudad Autónoma de Buenos Aires                       | AMBA              | Argentina
+ La Plata                            | Capital Provincial | La Plata                  | Buenos Aires                                          | Centro / Pampeana | Argentina
+ San Fernando del Valle de Catamarca | Capital Provincial | Capital                   | Catamarca                                             | NOA               | Argentina
+ Resistencia                         | Capital Provincial | San Fernando              | Chaco                                                 | NEA               | Argentina
+ Rawson                              | Capital Provincial | Rawson                    | Chubut                                                | Patagonia         | Argentina
+ Córdoba                             | Capital Provincial | Capital                   | Córdoba                                               | Centro / Pampeana | Argentina
+ Corrientes                          | Capital Provincial | Capital                   | Corrientes                                            | NEA               | Argentina
+ Paraná                              | Capital Provincial | Paraná                    | Entre Ríos                                            | Centro / Pampeana | Argentina
+ Formosa                             | Capital Provincial | Formosa                   | Formosa                                               | NEA               | Argentina
+ San Salvador de Jujuy               | Capital Provincial | Dr. Manuel Belgrano       | Jujuy                                                 | NOA               | Argentina
+ Santa Rosa                          | Capital Provincial | Capital                   | La Pampa                                              | Centro / Pampeana | Argentina
+ La Rioja                            | Capital Provincial | Capital                   | La Rioja                                              | NOA               | Argentina
+ Mendoza                             | Capital Provincial | Capital                   | Mendoza                                               | Cuyo              | Argentina
+ Posadas                             | Capital Provincial | Capital                   | Misiones                                              | NEA               | Argentina
+ Neuquén                             | Capital Provincial | Confluencia               | Neuquén                                               | Patagonia         | Argentina
+ Viedma                              | Capital Provincial | Adolfo Alsina             | Río Negro                                             | Patagonia         | Argentina
+ Salta                               | Capital Provincial | Capital                   | Salta                                                 | NOA               | Argentina
+ San Juan                            | Capital Provincial | Capital                   | San Juan                                              | Cuyo              | Argentina
+ San Luis                            | Capital Provincial | Juan Martín de Pueyrredón | San Luis                                              | Cuyo              | Argentina
+ Río Gallegos                        | Capital Provincial | Güer Aike                 | Santa Cruz                                            | Patagonia         | Argentina
+ Santa Fe                            | Capital Provincial | La Capital                | Santa Fe                                              | Centro / Pampeana | Argentina
+ Santiago del Estero                 | Capital Provincial | Capital                   | Santiago del Estero                                   | NOA               | Argentina
+ Ushuaia                             | Capital Provincial | Ushuaia                   | Tierra del Fuego, Antártida e Islas del Atlántico Sur | Patagonia         | Argentina
+ San Miguel de Tucumán               | Capital Provincial | Capital                   | Tucumán                                               | NOA               | Argentina
+(24 rows)
+
+============================================================================
+INCISO c1: PAISES DE SUDAMERICA — SUPERFICIE (km2) Y POBLACION (DESC)
+============================================================================
+ iso3 |   pais    |   subregion   | superficie_km2 | poblacion | densidad_hab_km2 
+------+-----------+---------------+----------------+-----------+------------------
+ BRA  | Brasil    | South America |     8467129.34 | 211049527 |            24.93
+ ARG  | Argentina | South America |     2782471.64 |  44938712 |            16.15
+ PER  | Perú      | South America |     1291025.66 |  32510453 |            25.18
+ COL  | Colombia  | South America |     1134460.65 |  50339443 |            44.37
+ BOL  | Bolivia   | South America |     1086628.62 |  11513100 |            10.60
+ VEN  | Venezuela | South America |      910445.54 |  28515829 |            31.32
+ CHL  | Chile     | South America |      737679.75 |  18952038 |            25.69
+ PRY  | Paraguay  | South America |      399949.39 |   7044636 |            17.61
+ ECU  | Ecuador   | South America |      254528.72 |  17373662 |            68.26
+ GUY  | Guyana    | South America |      211022.97 |    782766 |             3.71
+ URY  | Uruguay   | South America |      177467.52 |   3461734 |            19.51
+ SUR  | Surinam   | South America |      144934.63 |    581363 |             4.01
+(12 rows)
+
+============================================================================
+INCISO c2: 17 DEPARTAMENTOS DE MISIONES — SUPERFICIE (km2) Y POBLACION (DESC)
+============================================================================
+ codigo_indec |         departamento          | provincia | superficie_km2 | poblacion | densidad_hab_km2 
+--------------+-------------------------------+-----------+----------------+-----------+------------------
+ 54112        | San Pedro                     | Misiones  |        3818.06 |     34801 |             9.11
+ 54056        | Guaraní                       | Misiones  |        3282.64 |     77160 |            23.51
+ 54049        | General Manuel Belgrano       | Misiones  |        3097.17 |     45570 |            14.71
+ 54063        | Iguazú                        | Misiones  |        2743.98 |    100096 |            36.48
+ 54042        | Eldorado                      | Misiones  |        1889.72 |     91728 |            48.54
+ 54084        | Montecarlo                    | Misiones  |        1748.35 |     38669 |            22.12
+ 54098        | San Ignacio                   | Misiones  |        1670.17 |     63394 |            37.96
+ 54119        | 25 de Mayo                    | Misiones  |        1653.53 |     30891 |            18.68
+ 54091        | Oberá                         | Misiones  |        1575.74 |    121701 |            77.23
+ 54014        | Cainguás                      | Misiones  |        1537.49 |     59953 |            38.99
+ 54077        | Libertador General San Martín | Misiones  |        1474.15 |     52428 |            35.56
+ 54070        | Leandro N. Alem               | Misiones  |        1065.14 |     49797 |            46.75
+ 54007        | Apóstoles                     | Misiones  |        1030.92 |     50597 |            49.08
+ 54028        | Capital                       | Misiones  |         964.48 |    392919 |           407.39
+ 54021        | Candelaria                    | Misiones  |         922.93 |     35318 |            38.27
+ 54035        | Concepción                    | Misiones  |         770.27 |     10348 |            13.43
+ 54105        | San Javier                    | Misiones  |         665.19 |     23503 |            35.33
+(17 rows)
+
+============================================================================
+INCISO d1: ADYACENCIA DE PAISES DE SUDAMERICA (ST_Touches vs ST_Intersects)
+============================================================================
+ iso3 |   pais    | cant_vecinos_touches |                                  vecinos_touches                                  | cant_vecinos_intersects |                                vecinos_intersects                                 |             diagnostico_frontera              
+------+-----------+----------------------+-----------------------------------------------------------------------------------+-------------------------+-----------------------------------------------------------------------------------+-----------------------------------------------
+ BRA  | Brasil    |                    9 | Argentina, Bolivia, Colombia, Guyana, Paraguay, Perú, Surinam, Uruguay, Venezuela |                       9 | Argentina, Bolivia, Colombia, Guyana, Paraguay, Perú, Surinam, Uruguay, Venezuela | Topologia limpia (ST_Touches = ST_Intersects)
+ ARG  | Argentina |                    5 | Bolivia, Brasil, Chile, Paraguay, Uruguay                                         |                       5 | Bolivia, Brasil, Chile, Paraguay, Uruguay                                         | Topologia limpia (ST_Touches = ST_Intersects)
+ BOL  | Bolivia   |                    5 | Argentina, Brasil, Chile, Paraguay, Perú                                          |                       5 | Argentina, Brasil, Chile, Paraguay, Perú                                          | Topologia limpia (ST_Touches = ST_Intersects)
+ PER  | Perú      |                    5 | Bolivia, Brasil, Chile, Colombia, Ecuador                                         |                       5 | Bolivia, Brasil, Chile, Colombia, Ecuador                                         | Topologia limpia (ST_Touches = ST_Intersects)
+ COL  | Colombia  |                    4 | Brasil, Ecuador, Perú, Venezuela                                                  |                       4 | Brasil, Ecuador, Perú, Venezuela                                                  | Topologia limpia (ST_Touches = ST_Intersects)
+ CHL  | Chile     |                    3 | Argentina, Bolivia, Perú                                                          |                       3 | Argentina, Bolivia, Perú                                                          | Topologia limpia (ST_Touches = ST_Intersects)
+ GUY  | Guyana    |                    3 | Brasil, Surinam, Venezuela                                                        |                       3 | Brasil, Surinam, Venezuela                                                        | Topologia limpia (ST_Touches = ST_Intersects)
+ PRY  | Paraguay  |                    3 | Argentina, Bolivia, Brasil                                                        |                       3 | Argentina, Bolivia, Brasil                                                        | Topologia limpia (ST_Touches = ST_Intersects)
+ VEN  | Venezuela |                    3 | Brasil, Colombia, Guyana                                                          |                       3 | Brasil, Colombia, Guyana                                                          | Topologia limpia (ST_Touches = ST_Intersects)
+ ECU  | Ecuador   |                    2 | Colombia, Perú                                                                    |                       2 | Colombia, Perú                                                                    | Topologia limpia (ST_Touches = ST_Intersects)
+ SUR  | Surinam   |                    2 | Brasil, Guyana                                                                    |                       2 | Brasil, Guyana                                                                    | Topologia limpia (ST_Touches = ST_Intersects)
+ URY  | Uruguay   |                    2 | Argentina, Brasil                                                                 |                       2 | Argentina, Brasil                                                                 | Topologia limpia (ST_Touches = ST_Intersects)
+(12 rows)
+
+============================================================================
+INCISO d2: ADYACENCIA DE PROVINCIAS ARGENTINAS (ST_Touches)
+============================================================================
+ codigo_indec |                       provincia                       |      region       | cant_vecinos |                                  provincias_vecinas                                  
+--------------+-------------------------------------------------------+-------------------+--------------+--------------------------------------------------------------------------------------
+ 14           | Córdoba                                               | Centro / Pampeana |            7 | Buenos Aires, Catamarca, La Pampa, La Rioja, San Luis, Santa Fe, Santiago del Estero
+ 42           | La Pampa                                              | Centro / Pampeana |            6 | Buenos Aires, Córdoba, Mendoza, Neuquén, Río Negro, San Luis
+ 82           | Santa Fe                                              | Centro / Pampeana |            6 | Buenos Aires, Chaco, Córdoba, Corrientes, Entre Ríos, Santiago del Estero
+ 86           | Santiago del Estero                                   | NOA               |            6 | Catamarca, Chaco, Córdoba, Salta, Santa Fe, Tucumán
+ 06           | Buenos Aires                                          | Centro / Pampeana |            5 | Ciudad Autónoma de Buenos Aires, Córdoba, La Pampa, Río Negro, Santa Fe
+ 10           | Catamarca                                             | NOA               |            5 | Córdoba, La Rioja, Salta, Santiago del Estero, Tucumán
+ 22           | Chaco                                                 | NEA               |            5 | Corrientes, Formosa, Salta, Santa Fe, Santiago del Estero
+ 50           | Mendoza                                               | Cuyo              |            5 | La Pampa, Neuquén, Río Negro, San Juan, San Luis
+ 62           | Río Negro                                             | Patagonia         |            5 | Buenos Aires, Chubut, La Pampa, Mendoza, Neuquén
+ 66           | Salta                                                 | NOA               |            5 | Catamarca, Chaco, Formosa, Santiago del Estero, Tucumán
+ 74           | San Luis                                              | Cuyo              |            5 | Córdoba, La Pampa, La Rioja, Mendoza, San Juan
+ 18           | Corrientes                                            | NEA               |            3 | Chaco, Misiones, Santa Fe
+ 46           | La Rioja                                              | NOA               |            3 | Catamarca, Córdoba, San Luis
+ 58           | Neuquén                                               | Patagonia         |            3 | La Pampa, Mendoza, Río Negro
+ 90           | Tucumán                                               | NOA               |            3 | Catamarca, Salta, Santiago del Estero
+ 26           | Chubut                                                | Patagonia         |            2 | Río Negro, Santa Cruz
+ 34           | Formosa                                               | NEA               |            2 | Chaco, Salta
+ 70           | San Juan                                              | Cuyo              |            2 | Mendoza, San Luis
+ 02           | Ciudad Autónoma de Buenos Aires                       | AMBA              |            1 | Buenos Aires
+ 30           | Entre Ríos                                            | Centro / Pampeana |            1 | Santa Fe
+ 54           | Misiones                                              | NEA               |            1 | Corrientes
+ 78           | Santa Cruz                                            | Patagonia         |            1 | Chubut
+ 38           | Jujuy                                                 | NOA               |            0 | (sin contiguidad terrestre)
+ 94           | Tierra del Fuego, Antártida e Islas del Atlántico Sur | Patagonia         |            0 | (sin contiguidad terrestre)
+(24 rows)
+
+============================================================================
+INCISO e1: DEPARTAMENTOS DE MISIONES INTERSECTADOS POR RIOS PRINCIPALES
+============================================================================
+     rio     | cant_departamentos_misiones |                                  departamentos_intersectados                                  
+-------------+-----------------------------+-----------------------------------------------------------------------------------------------
+ Río Paraná  |                           7 | Candelaria, Capital, Eldorado, Iguazú, Libertador General San Martín, Montecarlo, San Ignacio
+ Río Uruguay |                           7 | 25 de Mayo, Apóstoles, Concepción, Guaraní, Oberá, San Javier, San Pedro
+ Río Iguazú  |                           2 | General Manuel Belgrano, Iguazú
+(3 rows)
+
+============================================================================
+INCISO e2: PAISES INTERSECTADOS POR RIOS PRINCIPALES
+============================================================================
+     rio     | cant_paises |    paises_intersectados    
+-------------+-------------+----------------------------
+ Río Uruguay |           3 | Argentina, Brasil, Uruguay
+ Río Iguazú  |           2 | Argentina, Brasil
+ Río Paraná  |           2 | Argentina, Paraguay
+(3 rows)
+
+============================================================================
+INCISO f1: LONGITUD DE RIOS PRINCIPALES POR DEPARTAMENTO DE MISIONES (km)
+============================================================================
+     rio     |         departamento          | longitud_km | total_en_misiones_km | pct_recorrido_misiones 
+-------------+-------------------------------+-------------+----------------------+------------------------
+ Río Iguazú  | Iguazú                        |      86.511 |              132.217 |                  65.43
+ Río Iguazú  | General Manuel Belgrano       |      45.706 |              132.217 |                  34.57
+ Río Paraná  | San Ignacio                   |      74.524 |              246.439 |                  30.24
+ Río Paraná  | Libertador General San Martín |      61.057 |              246.439 |                  24.78
+ Río Paraná  | Iguazú                        |      54.472 |              246.439 |                  22.10
+ Río Paraná  | Candelaria                    |      25.067 |              246.439 |                  10.17
+ Río Paraná  | Capital                       |      23.078 |              246.439 |                   9.36
+ Río Paraná  | Montecarlo                    |       5.216 |              246.439 |                   2.12
+ Río Paraná  | Eldorado                      |       3.027 |              246.439 |                   1.23
+ Río Uruguay | 25 de Mayo                    |     107.801 |              336.989 |                  31.99
+ Río Uruguay | Guaraní                       |      69.797 |              336.989 |                  20.71
+ Río Uruguay | San Javier                    |      64.205 |              336.989 |                  19.05
+ Río Uruguay | Concepción                    |      52.620 |              336.989 |                  15.61
+ Río Uruguay | Oberá                         |      26.919 |              336.989 |                   7.99
+ Río Uruguay | San Pedro                     |      10.893 |              336.989 |                   3.23
+ Río Uruguay | Apóstoles                     |       4.753 |              336.989 |                   1.41
+(16 rows)
+
+============================================================================
+INCISO f2: LONGITUD DE RIOS PRINCIPALES POR PAIS (km)
+============================================================================
+     rio     |   pais    | longitud_km | total_medido_km | pct_recorrido 
+-------------+-----------+-------------+-----------------+---------------
+ Río Iguazú  | Argentina |     197.436 |         260.966 |         75.66
+ Río Iguazú  | Brasil    |      63.530 |         260.966 |         24.34
+ Río Paraná  | Argentina |    1511.319 |        1845.290 |         81.90
+ Río Paraná  | Paraguay  |     333.971 |        1845.290 |         18.10
+ Río Uruguay | Brasil    |     479.976 |        1060.441 |         45.26
+ Río Uruguay | Argentina |     408.683 |        1060.441 |         38.54
+ Río Uruguay | Uruguay   |     171.781 |        1060.441 |         16.20
+(7 rows)
+
+============================================================================
+INCISO g1: LOCALIDAD DE MISIONES MAS ALEJADA DEL RIO PARANA
+============================================================================
+ codigo_bahra |      localidad       |      departamento       | provincia | distancia_parana_km 
+--------------+----------------------+-------------------------+-----------+---------------------
+ 54049020     | Bernardo de Irigoyen | General Manuel Belgrano | Misiones  |              97.266
+(1 row)
+
+============================================================================
+INCISO g2: TOP 5 LOCALIDADES DE MISIONES MAS ALEJADAS DEL RIO PARANA
+============================================================================
+ ranking | codigo_bahra |      localidad       |      departamento       | distancia_parana_km 
+---------+--------------+----------------------+-------------------------+---------------------
+       1 | 54049020     | Bernardo de Irigoyen | General Manuel Belgrano |              97.266
+       2 | 54119025     | Alicia Baja          | 25 de Mayo              |              94.259
+       3 | 54056010     | El Soberbio          | Guaraní                 |              92.677
+       4 | 54119020     | Alicia Alta          | 25 de Mayo              |              89.212
+       5 | 54049050     | San Antonio          | General Manuel Belgrano |              88.006
+(5 rows)
+
+============================================================================
+INCISO h1: DISTANCIA DE CADA LOCALIDAD DE MISIONES A RUTA NACIONAL MAS CERCANA
+============================================================================
+ codigo_bahra |                    localidad                     |         departamento          | ruta_nacional | nombre_ruta | distancia_ruta_km 
+--------------+--------------------------------------------------+-------------------------------+---------------+-------------+-------------------
+ 54021005     | Barrio del Lago                                  | Candelaria                    | 12            | RN 12       |             0.011
+ 54077040     | Mbopicuá                                         | Libertador General San Martín | 12            | RN 12       |             0.014
+ 54049025     | Caburei                                          | General Manuel Belgrano       | 101           | RN 101      |             0.027
+ 54049020     | Bernardo de Irigoyen                             | General Manuel Belgrano       | 14            | RN 14       |             0.036
+ 54077030     | Garuhapé                                         | Libertador General San Martín | 12            | RN 12       |             0.052
+ 54098050     | Gobernador Roca                                  | San Ignacio                   | 12            | RN 12       |             0.053
+ 54056020     | Fracrán                                          | Guaraní                       | 14            | RN 14       |             0.070
+ 54112030     | Piñalito Sur                                     | San Pedro                     | 14            | RN 14       |             0.081
+ 54098070     | Hipólito Yrigoyen                                | San Ignacio                   | 12            | RN 12       |             0.116
+ 54112020     | Paraíso                                          | San Pedro                     | 14            | RN 14       |             0.116
+ 54084070     | Villa Parodi                                     | Montecarlo                    | 12            | RN 12       |             0.139
+ 54098060     | Helvecia                                         | San Ignacio                   | 12            | RN 12       |             0.143
+ 54042035     | Nueva Delicia                                    | Eldorado                      | 12            | RN 12       |             0.166
+ 54056030     | San Vicente                                      | Guaraní                       | 14            | RN 14       |             0.241
+ 54014080     | Salto Encantado                                  | Cainguás                      | 14            | RN 14       |             0.259
+ 54077010     | Capioví                                          | Libertador General San Martín | 12            | RN 12       |             0.288
+ 54049047     | Puerto Deseado                                   | General Manuel Belgrano       | 101           | RN 101      |             0.294
+ 54112010     | Cruce Caballero                                  | San Pedro                     | 14            | RN 14       |             0.318
+ 54042100     | Villa Roulet                                     | Eldorado                      | 12            | RN 12       |             0.378
+ 54014050     | Dos de Mayo Nucleo III (Bº Bernardino Rivadavia) | Cainguás                      | 14            | RN 14       |             0.407
+ 54098120     | Santo Pipó                                       | San Ignacio                   | 12            | RN 12       |             0.414
+ 54042030     | María Magdalena                                  | Eldorado                      | 12            | RN 12       |             0.506
+ 54091030     | Campo Viera                                      | Oberá                         | 14            | RN 14       |             0.514
+ 54084007     | Bario Ita                                        | Montecarlo                    | 12            | RN 12       |             0.515
+ 54098080     | Jardín América                                   | San Ignacio                   | 12            | RN 12       |             0.523
+ 54028040     | Posadas (Extensión)                              | Capital                       | 12            | RN 12       |             0.551
+ 54091017     | Barrio Escuela 633                               | Oberá                         | 14            | RN 14       |             0.555
+ 54112040     | San Pedro                                        | San Pedro                     | 14            | RN 14       |             0.575
+ 54070040     | Cerro Azul                                       | Leandro N. Alem               | 14            | RN 14       |             0.681
+ 54098110     | San Ignacio                                      | San Ignacio                   | 12            | RN 12       |             0.700
+ 54042010     | Colonia Victoria                                 | Eldorado                      | 12            | RN 12       |             0.756
+ 54091060     | Guaraní                                          | Oberá                         | 14            | RN 14       |             0.764
+ 54077110     | Villa Akerman                                    | Libertador General San Martín | 12            | RN 12       |             0.828
+ 54042055     | Pueblo Nuevo                                     | Eldorado                      | 12            | RN 12       |             0.842
+ 54014010     | Aristóbulo del Valle                             | Cainguás                      | 14            | RN 14       |             0.849
+ 54049050     | San Antonio                                      | General Manuel Belgrano       | 101           | RN 101      |             0.867
+ 54063020     | Puerto Libertad                                  | Iguazú                        | 12            | RN 12       |             0.896
+ 54007040     | Pindapoy                                         | Apóstoles                     | 14            | RN 14       |             0.950
+ 54021080     | Santa Ana                                        | Candelaria                    | 12            | RN 12       |             1.019
+ 54028005     | Barrio Nuevo Garupa                              | Capital                       | 12            | RN 12       |             1.080
+ 54098005     | Barrio Tungoil                                   | San Ignacio                   | 12            | RN 12       |             1.083
+ 54021020     | Candelaria                                       | Candelaria                    | 12            | RN 12       |             1.091
+ 54049043     | Piñalito Norte                                   | General Manuel Belgrano       | 101           | RN 101      |             1.281
+ 54112050     | Tobuna                                           | San Pedro                     | 14            | RN 14       |             1.298
+ 54014020     | Campo Grande                                     | Cainguás                      | 14            | RN 14       |             1.311
+ 54077060     | Puerto Rico                                      | Libertador General San Martín | 12            | RN 12       |             1.340
+ 54077080     | San Alberto                                      | Libertador General San Martín | 12            | RN 12       |             1.368
+ 54070070     | Leandro N. Alem                                  | Leandro N. Alem               | 14            | RN 14       |             1.369
+ 54098040     | General Urquiza                                  | San Ignacio                   | 12            | RN 12       |             1.389
+ 54084010     | Caraguatay                                       | Montecarlo                    | 12            | RN 12       |             1.441
+ 54007060     | San José                                         | Apóstoles                     | 14            | RN 14       |             1.443
+ 54077015     | Capioviciño                                      | Libertador General San Martín | 12            | RN 12       |             1.506
+ 54063030     | Puerto Iguazú                                    | Iguazú                        | 12            | RN 12       |             1.546
+ 54014030     | Dos de Mayo                                      | Cainguás                      | 14            | RN 14       |             1.641
+ 54063040     | Colonia Wanda                                    | Iguazú                        | 12            | RN 12       |             1.645
+ 54077050     | Puerto Leoni                                     | Libertador General San Martín | 12            | RN 12       |             1.672
+ 54091080     | Oberá                                            | Oberá                         | 14            | RN 14       |             1.734
+ 54021040     | Loreto                                           | Candelaria                    | 12            | RN 12       |             1.975
+ 54049030     | Dos Hermanas                                     | General Manuel Belgrano       | 14            | RN 14       |             2.091
+ 54028010     | Garupá                                           | Capital                       | 12            | RN 12       |             2.593
+ 54077020     | El Alcázar                                       | Libertador General San Martín | 12            | RN 12       |             2.635
+ 54042060     | Puerto Mado                                      | Eldorado                      | 12            | RN 12       |             2.695
+ 54042020     | Eldorado                                         | Eldorado                      | 12            | RN 12       |             2.838
+ 54063010     | Puerto Esperanza                                 | Iguazú                        | 12            | RN 12       |             2.907
+ 54084005     | Barrio Guatambu                                  | Montecarlo                    | 12            | RN 12       |             3.257
+ 54063035     | Villa Cooperativa                                | Iguazú                        | 12            | RN 12       |             3.286
+ 54091040     | El Salto                                         | Oberá                         | 14            | RN 14       |             3.569
+ 54021070     | Puerto Santa Ana                                 | Candelaria                    | 12            | RN 12       |             3.592
+ 54042070     | Puerto Pinares                                   | Eldorado                      | 12            | RN 12       |             3.790
+ 54084003     | Barrio Cuatro Bocas                              | Montecarlo                    | 12            | RN 12       |             3.979
+ 54077070     | Ruiz de Montoya                                  | Libertador General San Martín | 12            | RN 12       |             4.062
+ 54084030     | Montecarlo                                       | Montecarlo                    | 12            | RN 12       |             4.128
+ 54028030     | Posadas                                          | Capital                       | 12            | RN 12       |             4.260
+ 54077090     | San Gotardo                                      | Libertador General San Martín | 12            | RN 12       |             4.322
+ 54084020     | Laharrague                                       | Montecarlo                    | 12            | RN 12       |             4.892
+ 54084050     | Puerto Piray                                     | Montecarlo                    | 12            | RN 12       |             5.130
+ 54098100     | Roca Chica                                       | San Ignacio                   | 12            | RN 12       |             5.318
+ 54077100     | San Miguel                                       | Libertador General San Martín | 12            | RN 12       |             5.472
+ 54070090     | Villa Libertad                                   | Leandro N. Alem               | 14            | RN 14       |             5.560
+ 54091020     | Campo Ramón                                      | Oberá                         | 14            | RN 14       |             5.924
+ 54070020     | Arroyo del Medio                                 | Leandro N. Alem               | 14            | RN 14       |             5.954
+ 54049010     | Comandante Andresito                             | General Manuel Belgrano       | 101           | RN 101      |             6.318
+ 54070091     | Villa Libertad                                   | Leandro N. Alem               | 14            | RN 14       |             6.653
+ 54084040     | Piray Kilómetro 18                               | Montecarlo                    | 12            | RN 12       |             6.792
+ 54084060     | Tarumá                                           | Montecarlo                    | 12            | RN 12       |             6.866
+ 54028020     | Nemesio Parma                                    | Capital                       | 12            | RN 12       |             7.049
+ 54091070     | Los Helechos                                     | Oberá                         | 14            | RN 14       |             7.162
+ 54098090     | Oasis                                            | San Ignacio                   | 12            | RN 12       |             7.200
+ 54098020     | Corpus                                           | San Ignacio                   | 12            | RN 12       |             7.688
+ 54070080     | Olegario V. Andrade                              | Leandro N. Alem               | 14            | RN 14       |             7.712
+ 54014060     | 1º de Mayo                                       | Cainguás                      | 14            | RN 14       |             7.784
+ 54021030     | Cerro Corá                                       | Candelaria                    | 12            | RN 12       |             8.015
+ 54091050     | General Alvear                                   | Oberá                         | 14            | RN 14       |             8.657
+ 54070060     | Gobernador López                                 | Leandro N. Alem               | 14            | RN 14       |             9.309
+ 54021060     | Profundidad                                      | Candelaria                    | 12            | RN 12       |            10.216
+ 54070050     | Dos Arroyos                                      | Leandro N. Alem               | 14            | RN 14       |            10.291
+ 54098010     | Colonia Polana                                   | San Ignacio                   | 12            | RN 12       |            10.301
+ 54070030     | Caá - Yarí                                       | Leandro N. Alem               | 14            | RN 14       |            10.311
+ 54091110     | San Martín                                       | Oberá                         | 14            | RN 14       |            10.580
+ 54007025     | Barrio Rural                                     | Apóstoles                     | 14            | RN 14       |            11.098
+ 54014055     | Kilómetro 17                                     | Cainguás                      | 14            | RN 14       |            11.319
+ 54007030     | Estación Apóstoles                               | Apóstoles                     | 14            | RN 14       |            11.904
+ 54091120     | Villa Bonita                                     | Oberá                         | 14            | RN 14       |            12.027
+ 54042050     | 9 de Julio Kilómetro 20                          | Eldorado                      | 12            | RN 12       |            13.646
+ 54070010     | Almafuerte                                       | Leandro N. Alem               | 14            | RN 14       |            14.033
+ 54014070     | Pueblo Illia                                     | Cainguás                      | 14            | RN 14       |            14.118
+ 54105010     | Florentino Ameghino                              | San Javier                    | 14            | RN 14       |            14.634
+ 54021010     | Bonpland                                         | Candelaria                    | 12            | RN 12       |            15.066
+ 54091013     | Barrio Escuela 461                               | Oberá                         | 14            | RN 14       |            15.397
+ 54049045     | Puerto Andresito                                 | General Manuel Belgrano       | 101           | RN 101      |            15.494
+ 54077120     | Villa Urrutia                                    | Libertador General San Martín | 12            | RN 12       |            15.496
+ 54042090     | Valle Hermoso                                    | Eldorado                      | 12            | RN 12       |            15.604
+ 54049040     | Integración                                      | General Manuel Belgrano       | 101           | RN 101      |            15.811
+ 54007010     | Apóstoles                                        | Apóstoles                     | 14            | RN 14       |            15.843
+ 54091010     | Colonia Alberdi                                  | Oberá                         | 14            | RN 14       |            16.703
+ 54105030     | Mojón Grande                                     | San Javier                    | 14            | RN 14       |            16.719
+ 54042040     | 9 de Julio Kilómetro 28                          | Eldorado                      | 12            | RN 12       |            16.949
+ 54021050     | Mártires                                         | Candelaria                    | 12            | RN 12       |            18.722
+ 54098030     | Domingo Savio                                    | San Ignacio                   | 12            | RN 12       |            20.328
+ 54042080     | Santiago de Liniers                              | Eldorado                      | 12            | RN 12       |            20.678
+ 54091100     | Panambí Kilómetro 8                              | Oberá                         | 14            | RN 14       |            22.491
+ 54105020     | Itacaruaré                                       | San Javier                    | 14            | RN 14       |            26.588
+ 54091105     | Panambi Kilómetro 15                             | Oberá                         | 14            | RN 14       |            27.087
+ 54035030     | La Corita                                        | Concepción                    | 14            | RN 14       |            27.193
+ 54119060     | 25 de Mayo                                       | 25 de Mayo                    | 14            | RN 14       |            27.859
+ 54091090     | Panambí                                          | Oberá                         | 14            | RN 14       |            31.221
+ 54007020     | Azara                                            | Apóstoles                     | 14            | RN 14       |            31.435
+ 54119040     | San Francisco de Asís                            | 25 de Mayo                    | 14            | RN 14       |            31.645
+ 54007070     | Tres Capones                                     | Apóstoles                     | 14            | RN 14       |            31.942
+ 54035040     | Santa María                                      | Concepción                    | 14            | RN 14       |            32.131
+ 54105040     | San Javier                                       | San Javier                    | 14            | RN 14       |            32.197
+ 54035020     | Concepción de la Sierra                          | Concepción                    | 14            | RN 14       |            33.822
+ 54119050     | Santa Rita                                       | 25 de Mayo                    | 14            | RN 14       |            35.726
+ 54007050     | Rincón de Azara                                  | Apóstoles                     | 14            | RN 14       |            38.306
+ 54119010     | Alba Posse                                       | 25 de Mayo                    | 14            | RN 14       |            41.157
+ 54035010     | Barra Concepción                                 | Concepción                    | 14            | RN 14       |            42.689
+ 54119020     | Alicia Alta                                      | 25 de Mayo                    | 14            | RN 14       |            43.986
+ 54056010     | El Soberbio                                      | Guaraní                       | 14            | RN 14       |            44.091
+ 54119030     | Colonia Aurora                                   | 25 de Mayo                    | 14            | RN 14       |            49.662
+ 54119025     | Alicia Baja                                      | 25 de Mayo                    | 14            | RN 14       |            50.258
+(140 rows)
+
+============================================================================
+INCISO h2: RESUMEN DE ACCESIBILIDAD POR RUTA NACIONAL MAS CERCANA (MISIONES)
+============================================================================
+ ruta_nacional | cant_localidades | dist_min_km | dist_prom_km | dist_max_km 
+---------------+------------------+-------------+--------------+-------------
+ 12            |               67 |       0.011 |        4.415 |      20.678
+ 14            |               66 |       0.036 |       14.728 |      50.258
+ 101           |                7 |       0.027 |        5.727 |      15.811
+(3 rows)
+
+============================================================================
+INCISO i1: LOCALIDADES DE MISIONES A MENOS DE 200 KM DEL RIO PARANA
+============================================================================
+ codigo_bahra |                    localidad                     |         departamento          | distancia_parana_km 
+--------------+--------------------------------------------------+-------------------------------+---------------------
+ 54084050     | Puerto Piray                                     | Montecarlo                    |               0.643
+ 54042060     | Puerto Mado                                      | Eldorado                      |               0.709
+ 54021070     | Puerto Santa Ana                                 | Candelaria                    |               0.773
+ 54077090     | San Gotardo                                      | Libertador General San Martín |               1.201
+ 54042070     | Puerto Pinares                                   | Eldorado                      |               1.603
+ 54063030     | Puerto Iguazú                                    | Iguazú                        |               1.678
+ 54021020     | Candelaria                                       | Candelaria                    |               1.693
+ 54098010     | Colonia Polana                                   | San Ignacio                   |               2.001
+ 54028030     | Posadas                                          | Capital                       |               2.008
+ 54028020     | Nemesio Parma                                    | Capital                       |               2.107
+ 54077060     | Puerto Rico                                      | Libertador General San Martín |               2.124
+ 54077080     | San Alberto                                      | Libertador General San Martín |               2.136
+ 54098020     | Corpus                                           | San Ignacio                   |               2.608
+ 54042030     | María Magdalena                                  | Eldorado                      |               2.678
+ 54098090     | Oasis                                            | San Ignacio                   |               3.028
+ 54021005     | Barrio del Lago                                  | Candelaria                    |               3.114
+ 54077050     | Puerto Leoni                                     | Libertador General San Martín |               3.173
+ 54084030     | Montecarlo                                       | Montecarlo                    |               3.269
+ 54042010     | Colonia Victoria                                 | Eldorado                      |               3.309
+ 54098110     | San Ignacio                                      | San Ignacio                   |               3.329
+ 54077110     | Villa Akerman                                    | Libertador General San Martín |               3.471
+ 54021080     | Santa Ana                                        | Candelaria                    |               3.606
+ 54077030     | Garuhapé                                         | Libertador General San Martín |               3.735
+ 54063020     | Puerto Libertad                                  | Iguazú                        |               3.755
+ 54042035     | Nueva Delicia                                    | Eldorado                      |               3.889
+ 54042055     | Pueblo Nuevo                                     | Eldorado                      |               4.006
+ 54063010     | Puerto Esperanza                                 | Iguazú                        |               4.054
+ 54028005     | Barrio Nuevo Garupa                              | Capital                       |               4.288
+ 54077020     | El Alcázar                                       | Libertador General San Martín |               4.506
+ 54063040     | Colonia Wanda                                    | Iguazú                        |               4.509
+ 54028040     | Posadas (Extensión)                              | Capital                       |               4.926
+ 54077040     | Mbopicuá                                         | Libertador General San Martín |               5.509
+ 54084010     | Caraguatay                                       | Montecarlo                    |               5.578
+ 54084070     | Villa Parodi                                     | Montecarlo                    |               5.914
+ 54098120     | Santo Pipó                                       | San Ignacio                   |               5.955
+ 54042100     | Villa Roulet                                     | Eldorado                      |               6.078
+ 54084007     | Bario Ita                                        | Montecarlo                    |               6.210
+ 54077015     | Capioviciño                                      | Libertador General San Martín |               6.337
+ 54028010     | Garupá                                           | Capital                       |               6.405
+ 54063035     | Villa Cooperativa                                | Iguazú                        |               6.448
+ 54021040     | Loreto                                           | Candelaria                    |               6.473
+ 54098005     | Barrio Tungoil                                   | San Ignacio                   |               6.755
+ 54098040     | General Urquiza                                  | San Ignacio                   |               7.316
+ 54077010     | Capioví                                          | Libertador General San Martín |               7.318
+ 54077070     | Ruiz de Montoya                                  | Libertador General San Martín |               8.432
+ 54098080     | Jardín América                                   | San Ignacio                   |               8.459
+ 54084005     | Barrio Guatambu                                  | Montecarlo                    |               8.533
+ 54098050     | Gobernador Roca                                  | San Ignacio                   |               8.689
+ 54042020     | Eldorado                                         | Eldorado                      |               9.041
+ 54084003     | Barrio Cuatro Bocas                              | Montecarlo                    |               9.693
+ 54077100     | San Miguel                                       | Libertador General San Martín |              10.448
+ 54098060     | Helvecia                                         | San Ignacio                   |              10.506
+ 54084060     | Tarumá                                           | Montecarlo                    |              10.709
+ 54084020     | Laharrague                                       | Montecarlo                    |              10.802
+ 54098100     | Roca Chica                                       | San Ignacio                   |              12.330
+ 54021060     | Profundidad                                      | Candelaria                    |              13.306
+ 54098070     | Hipólito Yrigoyen                                | San Ignacio                   |              13.626
+ 54084040     | Piray Kilómetro 18                               | Montecarlo                    |              13.795
+ 54021030     | Cerro Corá                                       | Candelaria                    |              14.090
+ 54042050     | 9 de Julio Kilómetro 20                          | Eldorado                      |              18.983
+ 54077120     | Villa Urrutia                                    | Libertador General San Martín |              19.338
+ 54021010     | Bonpland                                         | Candelaria                    |              19.857
+ 54042090     | Valle Hermoso                                    | Eldorado                      |              20.235
+ 54042040     | 9 de Julio Kilómetro 28                          | Eldorado                      |              22.376
+ 54021050     | Mártires                                         | Candelaria                    |              23.321
+ 54098030     | Domingo Savio                                    | San Ignacio                   |              24.822
+ 54042080     | Santiago de Liniers                              | Eldorado                      |              25.354
+ 54014060     | 1º de Mayo                                       | Cainguás                      |              26.256
+ 54070080     | Olegario V. Andrade                              | Leandro N. Alem               |              26.304
+ 54070010     | Almafuerte                                       | Leandro N. Alem               |              26.681
+ 54014010     | Aristóbulo del Valle                             | Cainguás                      |              28.968
+ 54070040     | Cerro Azul                                       | Leandro N. Alem               |              31.293
+ 54014020     | Campo Grande                                     | Cainguás                      |              32.445
+ 54070030     | Caá - Yarí                                       | Leandro N. Alem               |              33.366
+ 54014080     | Salto Encantado                                  | Cainguás                      |              33.602
+ 54007040     | Pindapoy                                         | Apóstoles                     |              33.874
+ 54091110     | San Martín                                       | Oberá                         |              34.448
+ 54091010     | Colonia Alberdi                                  | Oberá                         |              35.299
+ 54007060     | San José                                         | Apóstoles                     |              36.076
+ 54070091     | Villa Libertad                                   | Leandro N. Alem               |              36.525
+ 54070090     | Villa Libertad                                   | Leandro N. Alem               |              37.011
+ 54014030     | Dos de Mayo                                      | Cainguás                      |              37.782
+ 54070070     | Leandro N. Alem                                  | Leandro N. Alem               |              39.806
+ 54091030     | Campo Viera                                      | Oberá                         |              42.437
+ 54091040     | El Salto                                         | Oberá                         |              42.692
+ 54091050     | General Alvear                                   | Oberá                         |              42.796
+ 54070020     | Arroyo del Medio                                 | Leandro N. Alem               |              42.860
+ 54014050     | Dos de Mayo Nucleo III (Bº Bernardino Rivadavia) | Cainguás                      |              43.089
+ 54049025     | Caburei                                          | General Manuel Belgrano       |              44.205
+ 54014055     | Kilómetro 17                                     | Cainguás                      |              46.600
+ 54091060     | Guaraní                                          | Oberá                         |              47.694
+ 54007025     | Barrio Rural                                     | Apóstoles                     |              48.408
+ 54056030     | San Vicente                                      | Guaraní                       |              48.451
+ 54091080     | Oberá                                            | Oberá                         |              49.516
+ 54056020     | Fracrán                                          | Guaraní                       |              50.291
+ 54007010     | Apóstoles                                        | Apóstoles                     |              51.894
+ 54007030     | Estación Apóstoles                               | Apóstoles                     |              51.894
+ 54070060     | Gobernador López                                 | Leandro N. Alem               |              52.354
+ 54070050     | Dos Arroyos                                      | Leandro N. Alem               |              52.419
+ 54091017     | Barrio Escuela 633                               | Oberá                         |              52.613
+ 54049010     | Comandante Andresito                             | General Manuel Belgrano       |              53.333
+ 54049047     | Puerto Deseado                                   | General Manuel Belgrano       |              55.145
+ 54091020     | Campo Ramón                                      | Oberá                         |              56.383
+ 54091070     | Los Helechos                                     | Oberá                         |              56.594
+ 54112020     | Paraíso                                          | San Pedro                     |              56.782
+ 54014070     | Pueblo Illia                                     | Cainguás                      |              56.868
+ 54049045     | Puerto Andresito                                 | General Manuel Belgrano       |              58.539
+ 54105030     | Mojón Grande                                     | San Javier                    |              59.846
+ 54105010     | Florentino Ameghino                              | San Javier                    |              59.975
+ 54091120     | Villa Bonita                                     | Oberá                         |              61.196
+ 54119060     | 25 de Mayo                                       | 25 de Mayo                    |              61.273
+ 54112040     | San Pedro                                        | San Pedro                     |              61.990
+ 54035030     | La Corita                                        | Concepción                    |              62.172
+ 54035020     | Concepción de la Sierra                          | Concepción                    |              63.018
+ 54035040     | Santa María                                      | Concepción                    |              63.213
+ 54007070     | Tres Capones                                     | Apóstoles                     |              63.220
+ 54091013     | Barrio Escuela 461                               | Oberá                         |              63.296
+ 54105020     | Itacaruaré                                       | San Javier                    |              66.334
+ 54049043     | Piñalito Norte                                   | General Manuel Belgrano       |              66.445
+ 54007020     | Azara                                            | Apóstoles                     |              68.436
+ 54119040     | San Francisco de Asís                            | 25 de Mayo                    |              68.725
+ 54091100     | Panambí Kilómetro 8                              | Oberá                         |              70.613
+ 54049040     | Integración                                      | General Manuel Belgrano       |              73.652
+ 54105040     | San Javier                                       | San Javier                    |              74.112
+ 54091105     | Panambi Kilómetro 15                             | Oberá                         |              74.310
+ 54007050     | Rincón de Azara                                  | Apóstoles                     |              74.829
+ 54119050     | Santa Rita                                       | 25 de Mayo                    |              74.988
+ 54112010     | Cruce Caballero                                  | San Pedro                     |              75.059
+ 54035010     | Barra Concepción                                 | Concepción                    |              75.977
+ 54112050     | Tobuna                                           | San Pedro                     |              77.675
+ 54091090     | Panambí                                          | Oberá                         |              79.434
+ 54112030     | Piñalito Sur                                     | San Pedro                     |              81.103
+ 54119010     | Alba Posse                                       | 25 de Mayo                    |              81.927
+ 54119030     | Colonia Aurora                                   | 25 de Mayo                    |              83.951
+ 54049030     | Dos Hermanas                                     | General Manuel Belgrano       |              86.588
+ 54049050     | San Antonio                                      | General Manuel Belgrano       |              88.006
+ 54119020     | Alicia Alta                                      | 25 de Mayo                    |              89.212
+ 54056010     | El Soberbio                                      | Guaraní                       |              92.677
+ 54119025     | Alicia Baja                                      | 25 de Mayo                    |              94.259
+ 54049020     | Bernardo de Irigoyen                             | General Manuel Belgrano       |              97.266
+(140 rows)
+
+============================================================================
+INCISO i2: RESUMEN PROVINCIAL EN ARGENTINA (LOCALIDADES < 200 KM DEL RIO PARANA)
+============================================================================
+            provincia            |      region       | total_localidades_provincia | localidades_menor_200km | pct_provincia_en_200km | dist_min_km | dist_max_dentro_200km_km 
+---------------------------------+-------------------+-----------------------------+-------------------------+------------------------+-------------+--------------------------
+ Santa Fe                        | Centro / Pampeana |                         383 |                     363 |                  94.78 |       0.789 |                  195.927
+ Buenos Aires                    | Centro / Pampeana |                         593 |                     268 |                  45.19 |       1.307 |                  199.390
+ Entre Ríos                      | Centro / Pampeana |                         169 |                     169 |                 100.00 |       0.255 |                  199.415
+ Misiones                        | NEA               |                         140 |                     140 |                 100.00 |       0.643 |                   97.266
+ Corrientes                      | NEA               |                          77 |                      74 |                  96.10 |       0.306 |                  195.157
+ Córdoba                         | Centro / Pampeana |                         523 |                      66 |                  12.62 |     105.239 |                  199.455
+ Chaco                           | NEA               |                          91 |                      58 |                  63.74 |       1.219 |                  191.975
+ Formosa                         | NEA               |                          62 |                      17 |                  27.42 |      62.033 |                  181.096
+ Ciudad Autónoma de Buenos Aires | AMBA              |                           1 |                       1 |                 100.00 |      66.646 |                   66.646
+(9 rows)
+

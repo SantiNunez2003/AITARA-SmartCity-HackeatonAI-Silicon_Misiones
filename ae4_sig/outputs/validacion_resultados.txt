@@ -1,0 +1,160 @@
+Pager usage is off.
+Null display is "(NULL)".
+============================================================================
+1. CONTEO DE FILAS DE LAS 19 TABLAS DEL ESQUEMA sig_ae4
+============================================================================
+   categoria    |          tabla          | filas 
+----------------+-------------------------+-------
+ 1_regional     | cursos_agua             |  1333
+ 1_regional     | departamentos           |   529
+ 1_regional     | localidades             |  3528
+ 1_regional     | paises                  |    12
+ 1_regional     | provincias              |    24
+ 1_regional     | rutas                   |   582
+ 2_urbana       | asfalto_sobre_empedrado |   613
+ 2_urbana       | avenidas_mano_unica     |     8
+ 2_urbana       | calles                  |  1286
+ 2_urbana       | ciclovias               |    52
+ 2_urbana       | delegaciones            |    12
+ 2_urbana       | escuelas                |   367
+ 2_urbana       | incidentes_viales       |  1429
+ 2_urbana       | intersecciones          |  7898
+ 2_urbana       | nodos_referencia_aitara |     7
+ 2_urbana       | paradas                 |   482
+ 2_urbana       | semaforos               |   280
+ 3_alfanumerica | auditoria_ediciones     |     8
+ 3_alfanumerica | exposicion_clima        |     2
+(19 rows)
+
+============================================================================
+2. VALIDACION GEOMETRICA (ST_IsValid, SRID 4326 en geom, SRID 5348 en geom_m)
+============================================================================
+   escala   |          tabla          | total_filas | geom_nulos | invalidos | srid_geom_err | srids_geom | geom_m_nulos | srid_geom_m_err | srids_geom_m | estado 
+------------+-------------------------+-------------+------------+-----------+---------------+------------+--------------+-----------------+--------------+--------
+ 1_regional | cursos_agua             |        1333 |          0 |         0 |             0 | 4326       |       (NULL) |          (NULL) | (NULL)       | OK
+ 1_regional | departamentos           |         529 |          0 |         0 |             0 | 4326       |       (NULL) |          (NULL) | (NULL)       | OK
+ 1_regional | localidades             |        3528 |          0 |         0 |             0 | 4326       |       (NULL) |          (NULL) | (NULL)       | OK
+ 1_regional | paises                  |          12 |          0 |         0 |             0 | 4326       |       (NULL) |          (NULL) | (NULL)       | OK
+ 1_regional | provincias              |          24 |          0 |         0 |             0 | 4326       |       (NULL) |          (NULL) | (NULL)       | OK
+ 1_regional | rutas                   |         582 |          0 |         0 |             0 | 4326       |       (NULL) |          (NULL) | (NULL)       | OK
+ 2_urbana   | asfalto_sobre_empedrado |         613 |          0 |         0 |             0 | 4326       |            0 |               0 | 5348         | OK
+ 2_urbana   | avenidas_mano_unica     |           8 |          0 |         0 |             0 | 4326       |            0 |               0 | 5348         | OK
+ 2_urbana   | calles                  |        1286 |          0 |         0 |             0 | 4326       |            0 |               0 | 5348         | OK
+ 2_urbana   | ciclovias               |          52 |          0 |         0 |             0 | 4326       |            0 |               0 | 5348         | OK
+ 2_urbana   | delegaciones            |          12 |          0 |         0 |             0 | 4326       |            0 |               0 | 5348         | OK
+ 2_urbana   | escuelas                |         367 |          0 |         0 |             0 | 4326       |            0 |               0 | 5348         | OK
+ 2_urbana   | incidentes_viales       |        1429 |          0 |         0 |             0 | 4326       |            0 |               0 | 5348         | OK
+ 2_urbana   | intersecciones          |        7898 |          0 |         0 |             0 | 4326       |            0 |               0 | 5348         | OK
+ 2_urbana   | nodos_referencia_aitara |           7 |          0 |         0 |             0 | 4326       |            0 |               0 | 5348         | OK
+ 2_urbana   | paradas                 |         482 |          0 |         0 |             0 | 4326       |            0 |               0 | 5348         | OK
+ 2_urbana   | semaforos               |         280 |          0 |         0 |             0 | 4326       |            0 |               0 | 5348         | OK
+(17 rows)
+
+============================================================================
+3A. INTEGRIDAD REFERENCIAL (HUERFANOS EN JERARQUIA Y VINCULOS)
+============================================================================
+                        relacion                         | huerfanos | estado 
+---------------------------------------------------------+-----------+--------
+ provincias -> paises                                    |         0 | OK
+ departamentos -> provincias                             |         0 | OK
+ localidades -> departamentos                            |         0 | OK
+ incidentes_viales -> intersecciones (no nulos)          |         0 | OK
+ incidentes_viales -> nodos_referencia_aitara (no nulos) |         0 | OK
+(5 rows)
+
+============================================================================
+3B. DESGLOSE DE incidentes_viales POR ORIGEN (TRIGGER trg_02_sync_incidente_nodos)
+============================================================================
+  origen  | total_incidentes | con_interseccion | sin_interseccion | pct_interseccion | con_nodo_aitara | sin_nodo_aitara | pct_nodo_aitara | con_algun_vinculo 
+----------+------------------+------------------+------------------+------------------+-----------------+-----------------+-----------------+-------------------
+ real     |               12 |               11 |                1 |             91.7 |               4 |               8 |            33.3 |                11
+ simulado |             1417 |             1417 |                0 |            100.0 |            1417 |               0 |           100.0 |              1417
+ TOTAL    |             1429 |             1428 |                1 |             99.9 |            1421 |               8 |            99.4 |              1428
+(3 rows)
+
+============================================================================
+4A. SANITY CHECK TOPOLOGICO — CAPITALES NACIONALES Y PROVINCIALES
+============================================================================
+ capitales_nacionales | capitales_provinciales | ambas_jerarquias | total_capitales_distintas | provincias_con_capital 
+----------------------+------------------------+------------------+---------------------------+------------------------
+                    1 |                     23 |                0 |                        24 |                     24
+(1 row)
+
+============================================================================
+4B. SANITY CHECK TOPOLOGICO — VECINDAD DE paises (ST_Touches vs ST_Intersects)
+============================================================================
+ iso3 |   pais    | cant_touches | cant_intersects | diff_micro_overlap |                                   lista_touches                                   | lista_intersects_si_difiere 
+------+-----------+--------------+-----------------+--------------------+-----------------------------------------------------------------------------------+-----------------------------
+ BRA  | Brasil    |            9 |               9 |                  0 | Argentina, Bolivia, Colombia, Guyana, Paraguay, Perú, Surinam, Uruguay, Venezuela | (identica a ST_Touches)
+ ARG  | Argentina |            5 |               5 |                  0 | Bolivia, Brasil, Chile, Paraguay, Uruguay                                         | (identica a ST_Touches)
+ BOL  | Bolivia   |            5 |               5 |                  0 | Argentina, Brasil, Chile, Paraguay, Perú                                          | (identica a ST_Touches)
+ PER  | Perú      |            5 |               5 |                  0 | Bolivia, Brasil, Chile, Colombia, Ecuador                                         | (identica a ST_Touches)
+ COL  | Colombia  |            4 |               4 |                  0 | Brasil, Ecuador, Perú, Venezuela                                                  | (identica a ST_Touches)
+ CHL  | Chile     |            3 |               3 |                  0 | Argentina, Bolivia, Perú                                                          | (identica a ST_Touches)
+ GUY  | Guyana    |            3 |               3 |                  0 | Brasil, Surinam, Venezuela                                                        | (identica a ST_Touches)
+ PRY  | Paraguay  |            3 |               3 |                  0 | Argentina, Bolivia, Brasil                                                        | (identica a ST_Touches)
+ VEN  | Venezuela |            3 |               3 |                  0 | Brasil, Colombia, Guyana                                                          | (identica a ST_Touches)
+ ECU  | Ecuador   |            2 |               2 |                  0 | Colombia, Perú                                                                    | (identica a ST_Touches)
+ SUR  | Surinam   |            2 |               2 |                  0 | Brasil, Guyana                                                                    | (identica a ST_Touches)
+ URY  | Uruguay   |            2 |               2 |                  0 | Argentina, Brasil                                                                 | (identica a ST_Touches)
+(12 rows)
+
+--- Diagnostico de pares de paises donde ST_Intersects = TRUE y ST_Touches = FALSE ---
+ pais_a | pais_b | st_touches | st_overlaps | dim_interseccion | area_solapamiento_km2 
+--------+--------+------------+-------------+------------------+-----------------------
+(0 rows)
+
+============================================================================
+4C. SANITY CHECK TOPOLOGICO — VECINDAD DE provincias VIA ST_Touches (MISIONES)
+============================================================================
+     destaque     | codigo_indec |                       provincia                       |      region       | cant_vecinos_touches | diff_overlap |                                   vecinos_touches                                    
+------------------+--------------+-------------------------------------------------------+-------------------+----------------------+--------------+--------------------------------------------------------------------------------------
+ >>> MISIONES <<< | 54           | Misiones                                              | NEA               |                    1 |            0 | Corrientes
+                  | 14           | Córdoba                                               | Centro / Pampeana |                    7 |            0 | Buenos Aires, Catamarca, La Pampa, La Rioja, San Luis, Santa Fe, Santiago del Estero
+                  | 42           | La Pampa                                              | Centro / Pampeana |                    6 |            0 | Buenos Aires, Córdoba, Mendoza, Neuquén, Río Negro, San Luis
+                  | 82           | Santa Fe                                              | Centro / Pampeana |                    6 |            0 | Buenos Aires, Chaco, Córdoba, Corrientes, Entre Ríos, Santiago del Estero
+                  | 86           | Santiago del Estero                                   | NOA               |                    6 |            0 | Catamarca, Chaco, Córdoba, Salta, Santa Fe, Tucumán
+                  | 06           | Buenos Aires                                          | Centro / Pampeana |                    5 |            1 | Ciudad Autónoma de Buenos Aires, Córdoba, La Pampa, Río Negro, Santa Fe
+                  | 10           | Catamarca                                             | NOA               |                    5 |            0 | Córdoba, La Rioja, Salta, Santiago del Estero, Tucumán
+                  | 22           | Chaco                                                 | NEA               |                    5 |            0 | Corrientes, Formosa, Salta, Santa Fe, Santiago del Estero
+                  | 50           | Mendoza                                               | Cuyo              |                    5 |            0 | La Pampa, Neuquén, Río Negro, San Juan, San Luis
+                  | 62           | Río Negro                                             | Patagonia         |                    5 |            0 | Buenos Aires, Chubut, La Pampa, Mendoza, Neuquén
+                  | 66           | Salta                                                 | NOA               |                    5 |            1 | Catamarca, Chaco, Formosa, Santiago del Estero, Tucumán
+                  | 74           | San Luis                                              | Cuyo              |                    5 |            0 | Córdoba, La Pampa, La Rioja, Mendoza, San Juan
+                  | 18           | Corrientes                                            | NEA               |                    3 |            1 | Chaco, Misiones, Santa Fe
+                  | 46           | La Rioja                                              | NOA               |                    3 |            1 | Catamarca, Córdoba, San Luis
+                  | 58           | Neuquén                                               | Patagonia         |                    3 |            0 | La Pampa, Mendoza, Río Negro
+                  | 90           | Tucumán                                               | NOA               |                    3 |            0 | Catamarca, Salta, Santiago del Estero
+                  | 26           | Chubut                                                | Patagonia         |                    2 |            0 | Río Negro, Santa Cruz
+                  | 34           | Formosa                                               | NEA               |                    2 |            0 | Chaco, Salta
+                  | 70           | San Juan                                              | Cuyo              |                    2 |            1 | Mendoza, San Luis
+                  | 02           | Ciudad Autónoma de Buenos Aires                       | AMBA              |                    1 |            0 | Buenos Aires
+                  | 30           | Entre Ríos                                            | Centro / Pampeana |                    1 |            2 | Santa Fe
+                  | 78           | Santa Cruz                                            | Patagonia         |                    1 |            0 | Chubut
+                  | 38           | Jujuy                                                 | NOA               |                    0 |            1 | (sin contiguidad terrestre)
+                  | 94           | Tierra del Fuego, Antártida e Islas del Atlántico Sur | Patagonia         |                    0 |            0 | (sin contiguidad terrestre)
+(24 rows)
+
+============================================================================
+4D. SANITY CHECK TOPOLOGICO — LONGITUD DE RIOS PRINCIPALES EN MISIONES (km)
+============================================================================
+     rio     | tramos_origen |         departamento          | longitud_km 
+-------------+---------------+-------------------------------+-------------
+ Río Iguazú  |             1 | Iguazú                        |      86.511
+ Río Iguazú  |             1 | General Manuel Belgrano       |      45.706
+ Río Paraná  |            39 | San Ignacio                   |      74.524
+ Río Paraná  |            39 | Libertador General San Martín |      61.057
+ Río Paraná  |            39 | Iguazú                        |      54.472
+ Río Paraná  |            39 | Candelaria                    |      25.067
+ Río Paraná  |            39 | Capital                       |      23.078
+ Río Paraná  |            39 | Montecarlo                    |       5.216
+ Río Paraná  |            39 | Eldorado                      |       3.027
+ Río Uruguay |             1 | 25 de Mayo                    |     107.801
+ Río Uruguay |             1 | Guaraní                       |      69.797
+ Río Uruguay |             1 | San Javier                    |      64.205
+ Río Uruguay |             1 | Concepción                    |      52.620
+ Río Uruguay |             1 | Oberá                         |      26.919
+ Río Uruguay |             1 | San Pedro                     |      10.893
+ Río Uruguay |             1 | Apóstoles                     |       4.753
+(16 rows)
+

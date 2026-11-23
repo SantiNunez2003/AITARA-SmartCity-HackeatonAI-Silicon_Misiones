@@ -1,0 +1,85 @@
+Pager usage is off.
+SET
+=== PASO 1: INSERT en sig_ae4.semaforos (TEST_QGIS_01) ===
+DELETE 0
+ id  |    id_ide    |                       nombre                       | srid_geom | srid_geom_m 
+-----+--------------+----------------------------------------------------+-----------+-------------
+ 282 | TEST_QGIS_01 | Semáforo Prueba Fase III (Av. Mitre y Av. Uruguay) |      4326 |        5348
+(1 row)
+
+INSERT 0 1
+ id  |    id_ide    | srid_geom | srid_geom_m | es_epsg_5348 | este_5348_m | norte_5348_m 
+-----+--------------+-----------+-------------+--------------+-------------+--------------
+ 282 | TEST_QGIS_01 |      4326 |        5348 | t            |  6609213.46 |   6973175.32
+(1 row)
+
+ id | tabla_nombre | operacion | registro_id | usuario  |          fecha_hora           |                      entidad                       | id_ide_nuevo |         geom_wkt         
+----+--------------+-----------+-------------+----------+-------------------------------+----------------------------------------------------+--------------+--------------------------
+  7 | semaforos    | INSERT    |         282 | ae4_user | 2026-11-23 01:25:54.816578+00 | Semáforo Prueba Fase III (Av. Mitre y Av. Uruguay) | TEST_QGIS_01 | POINT(-55.8961 -27.3671)
+(1 row)
+
+=== PASO 2: UPDATE en sig_ae4.incidentes_viales y restauración ===
+psql:/sql/05_edicion_transacciones.sql:92: NOTICE:  table "tmp_incidente_backup" does not exist, skipping
+DROP TABLE
+SELECT 1
+ id | id_origen  |  origen  | severidad_original | interseccion_original | nodo_original | srid_geom_m_original |                geom_original                
+----+------------+----------+--------------------+-----------------------+---------------+----------------------+---------------------------------------------
+ 13 | sim-000001 | simulado |                  1 |                   409 |             3 |                 5348 | POINT(-55.91742882363216 -27.4009766675513)
+(1 row)
+
+UPDATE 1
+ id | severidad_antes | severidad_despues | srid_geom_m_despues | desplazamiento_m | interseccion_antes | interseccion_despues | nodo_antes | nodo_despues 
+----+-----------------+-------------------+---------------------+------------------+--------------------+----------------------+------------+--------------
+ 13 |               1 |                 3 |                5348 |          3512.44 |                409 |                 5069 |          3 |            1
+(1 row)
+
+ id |   tabla_nombre    | operacion | registro_id |          fecha_hora          | sev_anterior | sev_nueva | intersec_anterior | intersec_nueva | nodo_anterior | nodo_nuevo 
+----+-------------------+-----------+-------------+------------------------------+--------------+-----------+-------------------+----------------+---------------+------------
+  8 | incidentes_viales | UPDATE    |          13 | 2026-11-23 01:25:54.85995+00 | 1            | 3         | 409               | 5069           | 3             | 1
+(1 row)
+
+UPDATE 1
+ id | severidad_restaurada | geom_restaurada | interseccion_restaurada | nodo_restaurado 
+----+----------------------+-----------------+-------------------------+-----------------
+ 13 | t                    | t               | t                       | t
+(1 row)
+
+DROP TABLE
+=== PASO 3: DELETE en sig_ae4.semaforos (TEST_QGIS_01) ===
+ id  |    id_ide    |                       nombre                       
+-----+--------------+----------------------------------------------------
+ 282 | TEST_QGIS_01 | Semáforo Prueba Fase III (Av. Mitre y Av. Uruguay)
+(1 row)
+
+DELETE 1
+ semaforos_test_restantes 
+--------------------------
+                        0
+(1 row)
+
+ id | tabla_nombre | operacion | registro_id | usuario  |          fecha_hora           |                      entidad                       | id_ide_eliminado 
+----+--------------+-----------+-------------+----------+-------------------------------+----------------------------------------------------+------------------
+ 10 | semaforos    | DELETE    |         282 | ae4_user | 2026-11-23 01:25:54.869988+00 | Semáforo Prueba Fase III (Av. Mitre y Av. Uruguay) | TEST_QGIS_01
+(1 row)
+
+=== PASO 4: Pruebas de rechazo por restricciones espaciales y relacionales ===
+psql:/sql/05_edicion_transacciones.sql:247: NOTICE:  Self-intersection at or near point -55.894999999999996 -27.365000000000002
+psql:/sql/05_edicion_transacciones.sql:247: NOTICE:  [RECHAZADO OK - 4a ST_IsValid] SQLSTATE=23514, SQLERRM=new row for relation "delegaciones" violates check constraint "delegaciones_geom_check"
+DO
+psql:/sql/05_edicion_transacciones.sql:276: NOTICE:  [RECHAZADO OK - 4b CHECK origen] SQLSTATE=23514, SQLERRM=new row for relation "incidentes_viales" violates check constraint "incidentes_viales_origen_check"
+DO
+psql:/sql/05_edicion_transacciones.sql:299: NOTICE:  [RECHAZADO OK - 4c FOREIGN KEY] SQLSTATE=23503, SQLERRM=insert or update on table "localidades" violates foreign key constraint "localidades_departamento_id_fkey"
+DO
+=== PASO 6: Historial completo en sig_ae4.auditoria_ediciones ===
+ id |   tabla_nombre    | operacion | registro_id | usuario  |          fecha_hora           |                      entidad                       
+----+-------------------+-----------+-------------+----------+-------------------------------+----------------------------------------------------
+  1 | semaforos         | INSERT    |         281 | ae4_user | 2026-11-23 01:24:48.105665+00 | Semáforo Prueba Fase III (Av. Mitre y Av. Uruguay)
+  2 | incidentes_viales | UPDATE    |          13 | ae4_user | 2026-11-23 01:24:48.137911+00 | Parte sintético de incidente vial
+  3 | incidentes_viales | UPDATE    |          13 | ae4_user | 2026-11-23 01:24:48.142612+00 | Parte sintético de incidente vial
+  4 | semaforos         | DELETE    |         281 | ae4_user | 2026-11-23 01:24:48.147161+00 | Semáforo Prueba Fase III (Av. Mitre y Av. Uruguay)
+  7 | semaforos         | INSERT    |         282 | ae4_user | 2026-11-23 01:25:54.816578+00 | Semáforo Prueba Fase III (Av. Mitre y Av. Uruguay)
+  8 | incidentes_viales | UPDATE    |          13 | ae4_user | 2026-11-23 01:25:54.85995+00  | Parte sintético de incidente vial
+  9 | incidentes_viales | UPDATE    |          13 | ae4_user | 2026-11-23 01:25:54.865037+00 | Parte sintético de incidente vial
+ 10 | semaforos         | DELETE    |         282 | ae4_user | 2026-11-23 01:25:54.869988+00 | Semáforo Prueba Fase III (Av. Mitre y Av. Uruguay)
+(8 rows)
+

@@ -1,0 +1,25 @@
+[Init] Semáforo objetivo id=1 (id_ide=Intersecciones_Semaforizadas20250.5, nombre='Gral. Lavalle y Urquiza') | pid_A=3616, pid_B=3617
+[Sesión A] UPDATE ejecutado sin COMMIT (lock retenido por pid=3616).
+[Observador] pg_stat_activity pid=3617 (ae4_test_sesion_b_qgis): state=active, wait_event_type=Lock, wait_event=transactionid, blocking_pids=[3616]
+[Observador] Locks relevantes en pg_locks:
+  - pid=3616 | locktype=relation | mode=RowExclusiveLock | granted=True
+  - pid=3616 | locktype=relation | mode=RowExclusiveLock | granted=True
+  - pid=3616 | locktype=relation | mode=RowExclusiveLock | granted=True
+  - pid=3616 | locktype=relation | mode=RowExclusiveLock | granted=True
+  - pid=3616 | locktype=relation | mode=RowExclusiveLock | granted=True
+  - pid=3616 | locktype=relation | mode=RowExclusiveLock | granted=True
+  - pid=3616 | locktype=relation | mode=RowExclusiveLock | granted=True
+  - pid=3616 | locktype=relation | mode=AccessShareLock | granted=True
+  - pid=3616 | locktype=relation | mode=AccessShareLock | granted=True
+  - pid=3616 | locktype=transactionid | mode=ExclusiveLock | granted=True
+  - pid=3617 | locktype=relation | mode=RowExclusiveLock | granted=True
+  - pid=3617 | locktype=relation | mode=RowExclusiveLock | granted=True
+  - pid=3617 | locktype=relation | mode=RowExclusiveLock | granted=True
+  - pid=3617 | locktype=relation | mode=RowExclusiveLock | granted=True
+  - pid=3617 | locktype=relation | mode=RowExclusiveLock | granted=True
+  - pid=3617 | locktype=transactionid | mode=ShareLock | granted=False
+  - pid=3617 | locktype=tuple | mode=ExclusiveLock | granted=True
+[Sesión A] ROLLBACK ejecutado tras ~2.0s (lock liberado).
+[Sesión B] Desbloqueada tras 2.00s; filas afectadas=1.
+[Sesión B] ROLLBACK ejecutado para preservar el estado original.
+[OK] Bloqueo MVCC verificado end-to-end y estado original preservado.

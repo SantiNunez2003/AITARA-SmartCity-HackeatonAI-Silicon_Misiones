@@ -1,0 +1,22 @@
+Herramienta: GDAL 3.13.2 "Iowa City", released 2026/07/20
+Codificacion DBF declarada: SHAPE_ENCODING=ISO-8859-1
+Origen: /vsizip/ae4_sig/datos_externos/ide_delegaciones_shp.zip/DELEGACIONES_MUNICIPALES_POSADAS_20250.shp
+Destino: staging.ide_delegaciones_ogr_demo (localhost:5433/aitara_ae4_sig)
+ogr2ogr exit code: 0
+
+
+Verificacion en PostGIS:
+ filas | srid_min | srid_max | todas_validas |  tipos_geom  
+-------+----------+----------+---------------+--------------
+    12 |     4326 |     4326 | f             | MULTIPOLYGON
+(1 row)
+
+ fid_1 |       layer        |             text              
+-------+--------------------+-------------------------------
+     1 | Villa Cabello      | DELEGACION VILLA CABELLO
+     2 | Santa Rita         | DELEGACION SANTA RITA
+     3 | Itaembé Guazú      | DELEGACION ITAEMBE GUAZU
+     4 | Dolores Sur        | DELEGACION LAS DOLORES SUR
+     5 | Itaembé Miní Oeste | DELEGACION ITAEMBE MINI OESTE
+(5 rows)
+

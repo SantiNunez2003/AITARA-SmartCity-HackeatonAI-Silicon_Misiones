@@ -1,0 +1,42 @@
+============================================================================================
+AE4 SIG — REPORTE DE VERIFICACIÓN NATIVA QGIS 4.2.1 ('Belém do Pará') vs PostgreSQL/PostGIS
+============================================================================================
+Título del proyecto : AE4 SIG — AITARA + IGN + IDE Posadas (QGIS 4.2.1)
+SRC del proyecto    : EPSG:5348 (POSGAR 2007 / Argentina 6)
+Versión XML QGIS    : 4.2.1-Belém do Pará
+Archivo generado    : qgis\proyecto_ae4.qgz (75997 bytes)
+Entradas ZIP        : proyecto_ae4.qgs, YGKbIB_styles.db
+Tokens credenciales : 0 (sin user= ni password=)
+
+Capa                                         Tipo     Valid      QGIS   Postgres Match 
+--------------------------------------------------------------------------------------------
+Autoría 1 — Escuelas sin semáforo            SQL      True        104        104 True  
+Autoría 2B — Tramos críticos por lluvia      SQL      True         30         30 True  
+Autoría 3 — Brecha por delegación            SQL      True         12         12 True  
+incidentes_viales                            PostGIS  True       1429       1429 True  
+nodos_referencia_aitara                      PostGIS  True          7          7 True  
+semaforos                                    PostGIS  True        280        280 True  
+escuelas                                     PostGIS  True        367        367 True  
+paradas                                      PostGIS  True        482        482 True  
+intersecciones                               PostGIS  True       7898       7898 True  
+avenidas_mano_unica                          PostGIS  True          8          8 True  
+asfalto_sobre_empedrado                      PostGIS  True        613        613 True  
+ciclovias                                    PostGIS  True         52         52 True  
+calles                                       PostGIS  True       1286       1286 True  
+delegaciones                                 PostGIS  True         12         12 True  
+IDE Posadas — Delegaciones (WMS)             WMS      True        N/A        N/A True  
+localidades                                  PostGIS  True       3528       3528 True  
+rutas                                        PostGIS  True        582        582 True  
+cursos_agua                                  PostGIS  True       1333       1333 True  
+departamentos                                PostGIS  True        529        529 True  
+provincias                                   PostGIS  True         24         24 True  
+paises                                       PostGIS  True         12         12 True  
+--------------------------------------------------------------------------------------------
+Resumen global      : total_capas=21 | todas_validas_y_coincidentes=True
+
+Mapas temáticos PNG renderizados vía QgsMapRendererParallelJob (1800x1150 px):
+  - outputs\mapas_qgis\mapa_01_regional_ign.png (550321 bytes)
+  - outputs\mapas_qgis\mapa_02_posadas_infraestructura_y_siniestros.png (1135961 bytes)
+  - outputs\mapas_qgis\mapa_03_autoria1_escuelas_sin_semaforo.png (1102203 bytes)
+  - outputs\mapas_qgis\mapa_04_autoria3_brecha_delegaciones.png (467483 bytes)
+============================================================================================

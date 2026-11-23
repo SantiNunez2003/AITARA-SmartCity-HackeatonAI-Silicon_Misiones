@@ -1,0 +1,25 @@
+services:
+  postgis:
+    image: postgis/postgis:16-3.4
+    container_name: ae4_postgis
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-aitara_ae4_sig}
+      POSTGRES_USER: ${POSTGRES_USER:-ae4_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ae4_sig_2026_local}
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - ae4_postgis_data:/var/lib/postgresql/data
+      - ./sql:/sql:ro
+      - ./datos_externos:/datos_externos:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ae4_user} -d ${POSTGRES_DB:-aitara_ae4_sig}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+volumes:
+  ae4_postgis_data:
