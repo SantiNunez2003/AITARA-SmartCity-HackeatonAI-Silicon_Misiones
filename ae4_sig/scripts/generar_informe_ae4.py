@@ -155,10 +155,10 @@ def add_inline_runs(
             r = paragraph.add_run(token[1:-1])
             set_run_font(
                 r,
-                name="Courier New",
-                size_pt=resolved_code_size,
+                name="Times New Roman",
+                size_pt=base_size_pt,
                 bold=base_bold,
-                italic=False,
+                italic=base_italic,
                 color=color,
             )
         pos = match.end()
@@ -627,7 +627,7 @@ def add_code_block(doc: Document, code_str: str) -> None:
     )
 
     r = p.add_run("\n".join(lines))
-    set_run_font(r, name="Courier New", size_pt=9.5, color=BLACK)
+    set_run_font(r, name="Times New Roman", size_pt=9.5, color=BLACK)
 
 
 # -----------------------------------------------------------------------------
@@ -682,10 +682,10 @@ class ReportBuilder:
         set_run_font(r_sede, size_pt=12.0)
 
         meta_items = [
-            ("Autores:", " Sánchez, Joaquín Sebastián; Núñez, Santiago Agustín"),
-            ("DNI:", " 45.452.416; [Completar DNI]"),
+            ("Autores:", " Sánchez, Joaquín Sebastián; Nuñez, Santiago Agustín"),
+            ("DNI:", " 45.452.416; 44.952.958"),
             ("Profesor:", " Edgar Rolando Ibáñez"),
-            ("Fecha de entrega:", " 21 de noviembre de 2026"),
+            ("Fecha de entrega:", " 23 de noviembre de 2026"),
         ]
         for idx, (lbl, val) in enumerate(meta_items):
             p = self.doc.add_paragraph()
@@ -720,10 +720,10 @@ class ReportBuilder:
                 "**Actividad de Evaluación 4 (AE4)**  ",
                 "Sede Posadas",
                 "",
-                "- **Autores:** Sánchez, Joaquín Sebastián; Núñez, Santiago Agustín",
-                "- **DNI:** 45.452.416; [Completar DNI]",
+                "- **Autores:** Sánchez, Joaquín Sebastián; Nuñez, Santiago Agustín",
+                "- **DNI:** 45.452.416; 44.952.958",
                 "- **Profesor:** Edgar Rolando Ibáñez",
-                "- **Fecha de entrega:** 21 de noviembre de 2026",
+                "- **Fecha de entrega:** 23 de noviembre de 2026",
                 "- **AÑO:** 2026",
                 "",
                 "---",
@@ -1026,7 +1026,8 @@ def build_report(rb: ReportBuilder) -> None:
     rb.bullets(
         [
             "**Relevamientos curados de prensa local (`origen = 'real'`):** `12` siniestros "
-            "verificados ocurridos en Posadas entre enero y noviembre de 2026, sin registro "
+            "verificados ocurridos en Posadas entre enero y noviembre de 2026 (relevados de "
+            "prensa local durante mediados de octubre y noviembre de 2026), sin registro "
             "pluviométrico asociado (`llovia IS NULL`).",
             "**Eventos sintéticos de demostración (`origen = 'simulado'`):** `1.417` incidentes "
             "generados para 2023–2025 en torno a `7` nodos de control vial, con variable booleana "
@@ -1114,8 +1115,10 @@ def build_report(rb: ReportBuilder) -> None:
         "En `cursos_agua` se consolidan 41 tramos principales (Río Paraná, Río Uruguay y Río Iguazú, "
         "filtrando homónimos patagónicos fuera de la Cuenca del Plata) y 1.292 afluentes en Misiones. "
         "En `rutas` se integran 286 tramos nacionales y 296 tramos provinciales. En `incidentes_viales` "
-        "coexisten 12 registros `real` y 1.417 `simulado`. `auditoria_ediciones` refleja las 8 "
-        "operaciones acumuladas tras las pruebas de la Fase III.",
+        "coexisten 12 registros `real` y 1.417 `simulado`. La entidad `nodos_control_vial` se denomina "
+        "así en el informe y en la Figura 1 como nombre conceptual académico de la tabla de nodos de "
+        "referencia del esquema SQL. `auditoria_ediciones` inicia en 0 tras la carga ETL y alcanza 8 "
+        "operaciones tras ejecutar el protocolo transaccional de la Fase III (`05_edicion_transacciones.sql`).",
         body_font_pt=8.8,
         cell_pad_lr_dxa=55,
     )
@@ -1574,9 +1577,11 @@ WHERE NOT EXISTS (
         t7_rows,
         [1.4, 1.6, 1.1, 1.1, 1.1, 1.1, 1.3, 2.5, 2.5, 2.2],
         [C, C, R, R, R, R, R, R, R, C],
-        "Exposición acumulada por nivel: `17.292,00` h lluvia y `61.548,00` h seco en `BAJO` "
+        "Exposición acumulada (trienio 2023–2025) por nivel: `17.292,00` h lluvia y `61.548,00` h seco en `BAJO` "
         "(3 nodos); `11.528,00` h lluvia y `41.032,00` h seco en `MEDIO` y `ALTO` (2 nodos c/u). "
-        "Severidad promedio en simulados: `1,39/1,39` (`BAJO`), `1,46/1,44` (`MEDIO`), `1,41/1,41` (`ALTO`).",
+        "Los 4 eventos `real` (2026) dentro de 500 m carecen de registro pluviométrico (`Sin dato = 100%`), "
+        "por lo que las tasas por 1.000 h-nodo y la razón de riesgo se evalúan exclusivamente sobre la "
+        "serie `simulado` (2023–2025). Severidad promedio en simulados: `1,39/1,39` (`BAJO`), `1,46/1,44` (`MEDIO`), `1,41/1,41` (`ALTO`).",
         body_font_pt=9.0,
     )
 
@@ -1615,10 +1620,12 @@ WHERE NOT EXISTS (
         t8_rows,
         [2.7, 1.1, 1.5, 1.1, 1.4, 1.4, 1.3, 1.9, 1.8, 1.7],
         [L, R, R, R, R, R, R, R, R, C],
-        "Un incidente cercano a una esquina puede computarse dentro del buffer de 40 m de más de "
-        "una calle concurrente, por lo que las razones lluvia/seco (`1,66×` vs `1,82×`) deben "
-        "interpretarse de forma relativa entre ambos conjuntos de corredores. Severidad promedio "
-        "simulada (lluvia/seco): `1,42/1,41` con obra y `1,35/1,44` sin obra.",
+        "Las columnas `Reales`, `Sim. lluvia`, `Sim. seco` y `Totales` contabilizan intersecciones "
+        "espaciales calle-evento dentro del buffer de 40 m (`18 + 5 = 23` cruces sobre los 12 siniestros "
+        "reales únicos y `2.931 + 215 = 3.146` sobre los 1.429 totales), dado que un incidente en una "
+        "esquina impacta simultáneamente a más de una arteria concurrente. Por ello, las razones "
+        "lluvia/seco (`1,66×` vs `1,82×`) se interpretan de forma relativa entre ambos grupos. "
+        "Severidad promedio simulada (lluvia/seco): `1,42/1,41` con obra y `1,35/1,44` sin obra.",
         body_font_pt=8.8,
     )
 
@@ -2014,7 +2021,7 @@ WHERE NOT EXISTS (
             "**Carpeta `03_Evidencias_y_Benchmark`:** Evidencias de validación geométrica, "
             "consultas `a–i` y de autoría, ingesta `ogr2ogr` (`ISO-8859-1`), verificación `21/21` "
             "de QGIS 4.2.1, benchmark GiST con su gráfico y registros de auditoría MVCC.",
-            "**Enlace al portafolio en Google Drive:** [Insertar enlace de carpeta AE4 en Google Drive].",
+            "**Enlace al portafolio en Google Drive:** https://drive.google.com/drive/folders/1mphEwBvYMbGbwa5v0y2jrXreNZjPw9NO",
         ],
         alignment=WD_ALIGN_PARAGRAPH.LEFT,
     )
@@ -2121,13 +2128,23 @@ def verify_outputs(docx_path: Path, md_path: Path) -> None:
                         chunks.append(cell.text)
 
     # 2. Inspeccionar también todo el texto XML dentro de word/*.xml (cualquier etiqueta)
+    w_ns = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
     xml_texts: List[str] = []
+    content_fonts: set[str] = set()
     with zipfile.ZipFile(docx_path, "r") as zf:
         for name in zf.namelist():
             if name.startswith("word/") and name.endswith(".xml"):
                 raw = zf.read(name)
                 root = ET.fromstring(raw)
                 xml_texts.extend(t for t in root.itertext() if t)
+                if name == "word/document.xml" or name.startswith(("word/header", "word/footer")):
+                    for rfonts in root.iter(f"{w_ns}rFonts"):
+                        for val in rfonts.attrib.values():
+                            content_fonts.add(val)
+
+    assert content_fonts == {"Times New Roman"}, (
+        f"FALLO TIPOGRAFÍA: fuentes detectadas en contenido DOCX {sorted(content_fonts)}"
+    )
 
     md_text = md_path.read_text(encoding="utf-8")
     all_docx_text = "\n".join(chunks) + "\n" + "\n".join(xml_texts)

@@ -5,10 +5,10 @@
 **Actividad de Evaluación 4 (AE4)**  
 Sede Posadas
 
-- **Autores:** Sánchez, Joaquín Sebastián; Núñez, Santiago Agustín
-- **DNI:** 45.452.416; [Completar DNI]
+- **Autores:** Sánchez, Joaquín Sebastián; Nuñez, Santiago Agustín
+- **DNI:** 45.452.416; 44.952.958
 - **Profesor:** Edgar Rolando Ibáñez
-- **Fecha de entrega:** 21 de noviembre de 2026
+- **Fecha de entrega:** 23 de noviembre de 2026
 - **AÑO:** 2026
 
 ---
@@ -49,7 +49,7 @@ Con el fin de modelar estas problemáticas bajo un enfoque reproducible de Siste
 
 Por rigor metodológico y transparencia científica, la tabla `sig_ae4.incidentes_viales` (`1.429` eventos) separa explícitamente dos orígenes mediante una restricción `CHECK` y reporta sus métricas por separado:
 
-- **Relevamientos curados de prensa local (`origen = 'real'`):** `12` siniestros verificados ocurridos en Posadas entre enero y noviembre de 2026, sin registro pluviométrico asociado (`llovia IS NULL`).
+- **Relevamientos curados de prensa local (`origen = 'real'`):** `12` siniestros verificados ocurridos en Posadas entre enero y noviembre de 2026 (relevados de prensa local durante mediados de octubre y noviembre de 2026), sin registro pluviométrico asociado (`llovia IS NULL`).
 - **Eventos sintéticos de demostración (`origen = 'simulado'`):** `1.417` incidentes generados para 2023–2025 en torno a `7` nodos de control vial, con variable booleana `llovia` (`457` lluvia y `960` seco) y exposición horaria acumulada (`40.348` h-nodo de lluvia y `143.612` h-nodo secas).
 - **Nodos de control vial (`nodos_control_vial`):** `7` intersecciones estratégicas caracterizadas en campo según drenaje pluvial (`ALTO`, `MEDIO`, `BAJO`), carriles y equipamiento del entorno.
 
@@ -90,7 +90,7 @@ Las capas regionales provienen del GeoServer OGC WFS del IGN (`ign:provincia`, `
 | Alfanum. | Serie meteorológica horaria (2023–2025) | `exposicion_clima` | JSON | — | 2 |
 | Auditoría | Triggers PL/pgSQL (`fn_auditar_edicion`) | `auditoria_ediciones` | JSONB | — | 8 |
 
-*Nota.* En `cursos_agua` se consolidan 41 tramos principales (Río Paraná, Río Uruguay y Río Iguazú, filtrando homónimos patagónicos fuera de la Cuenca del Plata) y 1.292 afluentes en Misiones. En `rutas` se integran 286 tramos nacionales y 296 tramos provinciales. En `incidentes_viales` coexisten 12 registros `real` y 1.417 `simulado`. `auditoria_ediciones` refleja las 8 operaciones acumuladas tras las pruebas de la Fase III.
+*Nota.* En `cursos_agua` se consolidan 41 tramos principales (Río Paraná, Río Uruguay y Río Iguazú, filtrando homónimos patagónicos fuera de la Cuenca del Plata) y 1.292 afluentes en Misiones. En `rutas` se integran 286 tramos nacionales y 296 tramos provinciales. En `incidentes_viales` coexisten 12 registros `real` y 1.417 `simulado`. La entidad `nodos_control_vial` se denomina así en el informe y en la Figura 1 como nombre conceptual académico de la tabla de nodos de referencia del esquema SQL. `auditoria_ediciones` inicia en 0 tras la carga ETL y alcanza 8 operaciones tras ejecutar el protocolo transaccional de la Fase III (`05_edicion_transacciones.sql`).
 
 ## 3. Fase I: Diseño e implementación de la base de datos espacial
 
@@ -275,7 +275,7 @@ La segunda línea analiza la vulnerabilidad húmeda de la red en tres consultas 
 | MEDIO | `simulado` | 2 | 408 | 134 | 274 | 0 | 11,624 | 6,678 | 1,74× |
 | ALTO | `simulado` | 2 | 428 | 132 | 296 | 0 | 11,450 | 7,214 | 1,59× |
 
-*Nota.* Exposición acumulada por nivel: `17.292,00` h lluvia y `61.548,00` h seco en `BAJO` (3 nodos); `11.528,00` h lluvia y `41.032,00` h seco en `MEDIO` y `ALTO` (2 nodos c/u). Severidad promedio en simulados: `1,39/1,39` (`BAJO`), `1,46/1,44` (`MEDIO`), `1,41/1,41` (`ALTO`).
+*Nota.* Exposición acumulada (trienio 2023–2025) por nivel: `17.292,00` h lluvia y `61.548,00` h seco en `BAJO` (3 nodos); `11.528,00` h lluvia y `41.032,00` h seco en `MEDIO` y `ALTO` (2 nodos c/u). Los 4 eventos `real` (2026) dentro de 500 m carecen de registro pluviométrico (`Sin dato = 100%`), por lo que las tasas por 1.000 h-nodo y la razón de riesgo se evalúan exclusivamente sobre la serie `simulado` (2023–2025). Severidad promedio en simulados: `1,39/1,39` (`BAJO`), `1,46/1,44` (`MEDIO`), `1,41/1,41` (`ALTO`).
 
 En forma complementaria, la Parte 2B jerarquiza las `30` calles con mayor índice de severidad bajo lluvia (`buffer 40 m`), encabezadas por **Avenida San Martín** (puntaje `57,89`), **Berón de Astrada** (`33,36`), **Avenida Lavalle** (`33,36`), **Carola Lorenzini** (`31,21`) y **Uruguay** (`30,68`). A su vez, la Parte 2C evalúa las `1.286` calles completas según cuenten con obras de `asfalto_sobre_empedrado` (`<= 25 m`, `Tabla 8`): aunque las arterias asfaltadas concentran el tráfico principal, su proporción relativa bajo lluvia (`1,66×`) resulta menor que en las vías sin repavimentar (`1,82×`), orientando tanto la limpieza preventiva de sumideros en corredores troncales como la pavimentación de arterias secundarias.
 
@@ -286,7 +286,7 @@ En forma complementaria, la Parte 2B jerarquiza las `30` calles con mayor índic
 | Sí (`<= 25 m`) | 552 | 1.019,30 | 18 | 926 | 1.987 | 2.931 | 0,91 | 31,8% | 1,66× |
 | No | 734 | 527,00 | 5 | 71 | 139 | 215 | 0,13 | 33,8% | 1,82× |
 
-*Nota.* Un incidente cercano a una esquina puede computarse dentro del buffer de 40 m de más de una calle concurrente, por lo que las razones lluvia/seco (`1,66×` vs `1,82×`) deben interpretarse de forma relativa entre ambos conjuntos de corredores. Severidad promedio simulada (lluvia/seco): `1,42/1,41` con obra y `1,35/1,44` sin obra.
+*Nota.* Las columnas `Reales`, `Sim. lluvia`, `Sim. seco` y `Totales` contabilizan intersecciones espaciales calle-evento dentro del buffer de 40 m (`18 + 5 = 23` cruces sobre los 12 siniestros reales únicos y `2.931 + 215 = 3.146` sobre los 1.429 totales), dado que un incidente en una esquina impacta simultáneamente a más de una arteria concurrente. Por ello, las razones lluvia/seco (`1,66×` vs `1,82×`) se interpretan de forma relativa entre ambos grupos. Severidad promedio simulada (lluvia/seco): `1,42/1,41` con obra y `1,35/1,44` sin obra.
 
 #### 4.2.3 Brecha de equipamiento por delegación municipal (Autoría 3)
 
@@ -417,7 +417,7 @@ Los scripts reproducibles, el proyecto nativo de QGIS 4.2.1, las láminas cartog
 - **Carpeta `01_Base_de_Datos_SQL`:** Scripts SQL `00_init.sql` a `05_edicion_transacciones.sql`, diccionario de datos de las `19` tablas y diagrama entidad-relación espacial (`Figura_01_modelo_entidad_relacion.png`).
 - **Carpeta `02_Proyecto_QGIS_y_Mapas`:** Proyecto nativo `proyecto_ae4.qgz` para QGIS 4.2.1 (sin credenciales almacenadas), guía operativa de la Fase III y cuatro láminas cartográficas PNG (`1800 × 1150 px`).
 - **Carpeta `03_Evidencias_y_Benchmark`:** Evidencias de validación geométrica, consultas `a–i` y de autoría, ingesta `ogr2ogr` (`ISO-8859-1`), verificación `21/21` de QGIS 4.2.1, benchmark GiST con su gráfico y registros de auditoría MVCC.
-- **Enlace al portafolio en Google Drive:** [Insertar enlace de carpeta AE4 en Google Drive].
+- **Enlace al portafolio en Google Drive:** https://drive.google.com/drive/folders/1mphEwBvYMbGbwa5v0y2jrXreNZjPw9NO
 
 ## 8. Índice de figuras
 
